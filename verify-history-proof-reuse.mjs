@@ -19,20 +19,15 @@
 // first use reads no caller value across an await, that a command's watchdog
 // runs only while it is the worker's current command, that an export whose
 // final record may have committed reports an unconfirmed outcome, and pins the
-// measured History watchdog. An import's preparation of its prior project
-// re-binds the local active checkpoint to its proofs in the happy path and
-// imports exactly as a fresh cold worker (stored rows included) under every
-// local fault, realm change, future derivation or missing pair, and its
-// validator checks never answer the History loop's. Digests an import
-// computes once are reused only within one synchronous span or, for a parts
-// list, within its own operation and, at the cold conflict check, only under
-// natives confirmed in that check's turn; each equals a fresh computation. A
-// proven root that no pair serves, and the active version's proven root, is
-// restored and digested as cold and skips only its static check when those
-// digests equal its proof's; its pair check refuses exactly as cold and mints
-// exactly what a cold import mints. These imports are also compared with a
-// cold page-realm store, which holds no proof at all, under changes that
-// undo themselves within a restore.
+// measured History watchdog. This module also holds the sections and faults
+// of the two other History proof suites (HISTORY_PROOF_SUITES):
+// verify-history-proof-import.mjs (an import's preparation of its prior
+// project re-binds the local active checkpoint to its proofs and imports
+// exactly as a fresh cold worker; digests an import computes once are reused
+// only within one synchronous span or its own operation; the input checks)
+// and verify-history-proof-restore.mjs (a proven root that no pair serves,
+// and the active version's proven root, is restored and digested as cold,
+// compared also with a cold page-realm store that holds no proof at all).
 // Ledger and decode counts are observed by in-memory source instrumentation
 // only; production files and exports are unchanged. Each intended fault runs
 // only the sections that hold its oracle.
@@ -112,7 +107,19 @@ const insertAfterFirst=(source,anchors,insert,label)=>{const anchor=anchors.find
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const plain=value=>JSON.parse(JSON.stringify(value));
 
-export const HISTORY_PROOF_SECTIONS=Object.freeze(['export','import','mid-operation','nested','permissive-writer','credential','watchdog','pair-descriptors','minting','realms','unconfirmed-export','input-capture','retained-checkpoint','digest-spans','restored-roots','input-checks']);
+export const HISTORY_PROOF_SECTIONS=Object.freeze(['export','import','mid-operation','nested','permissive-writer','credential','watchdog','pair-descriptors','minting','realms','unconfirmed-export','input-capture','retained-checkpoint','digest-spans','input-checks','restored-roots','active-roots','restored-conflicts','restored-unbound']);
+// The sections and their faults run as three suites, each one conformance
+// child within its unchanged deadline: this file (export Tier 1, Tier 2
+// import and the proof rules), verify-history-proof-import.mjs (the prior's
+// active checkpoint re-bound in an import, the digests an import reuses and
+// the input checks) and verify-history-proof-restore.mjs (Tier 1.5 and the
+// active version restored under its proof). Every section belongs to one
+// suite, and every implementation fault to the suite of its sections.
+export const HISTORY_PROOF_SUITES=Object.freeze({
+ 'verify-history-proof-reuse.mjs':Object.freeze({marker:'historyProofReuse',sections:Object.freeze(['export','import','mid-operation','nested','permissive-writer','credential','watchdog','pair-descriptors','minting','realms','unconfirmed-export','input-capture'])}),
+ 'verify-history-proof-import.mjs':Object.freeze({marker:'historyProofImport',sections:Object.freeze(['retained-checkpoint','digest-spans','input-checks'])}),
+ 'verify-history-proof-restore.mjs':Object.freeze({marker:'historyProofRestore',sections:Object.freeze(['restored-roots','active-roots','restored-conflicts','restored-unbound'])})
+});
 // Implementation faults this owner must detect (each is an in-memory mutant),
 // with the sections whose oracles detect it.
 const fault=(sections,oracle,edits)=>({sections,oracle,apply:source=>edits.reduce((text,[before,after],index)=>replaceOnce(text,before,after,oracle+' fault edit '+index),source)});
@@ -181,13 +188,13 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  // The restored value taken for the proven one without its digests (the
  // digest pass runs, its digests are not compared), and natives confirmed only
  // after the digest pass.
- 'restored-root-unbound-value':fault(['restored-roots'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[['      if(provenInputs&&verifiedProjectSha256===provenRoot.verifiedProjectSha256&&verifiedWorkSha256===provenRoot.verifiedWorkSha256){\n','      if(provenInputs){verifiedProjectSha256=provenRoot.verifiedProjectSha256;verifiedWorkSha256=provenRoot.verifiedWorkSha256;\n']]),
- 'restored-root-inputs-after-digest':fault(['restored-roots'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[['      const provenInputs=Boolean(provenRoot)&&historyProofInputsCurrent(provenRoot)&&rootValidatorsUnchanged(provenRoot.validators);\n      '+COLD_ROOT+'\n','      '+COLD_ROOT+'\n      const provenInputs=Boolean(provenRoot)&&historyProofInputsCurrent(provenRoot)&&rootValidatorsUnchanged(provenRoot.validators);\n']]),
+ 'restored-root-unbound-value':fault(['restored-unbound'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[['      if(provenInputs&&verifiedProjectSha256===provenRoot.verifiedProjectSha256&&verifiedWorkSha256===provenRoot.verifiedWorkSha256){\n','      if(provenInputs){verifiedProjectSha256=provenRoot.verifiedProjectSha256;verifiedWorkSha256=provenRoot.verifiedWorkSha256;\n']]),
+ 'restored-root-inputs-after-digest':fault(['restored-unbound'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[['      const provenInputs=Boolean(provenRoot)&&historyProofInputsCurrent(provenRoot)&&rootValidatorsUnchanged(provenRoot.validators);\n      '+COLD_ROOT+'\n','      '+COLD_ROOT+'\n      const provenInputs=Boolean(provenRoot)&&historyProofInputsCurrent(provenRoot)&&rootValidatorsUnchanged(provenRoot.validators);\n']]),
  // The conflict check takes an operation's parts digest without confirming
  // its natives in its own turn.
- 'conflict-parts-digest-unconfirmed':fault(['restored-roots'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[['  return held?.inputs&&historyProofInputsCurrent(held.inputs)?held.digest:hash.sha256Value(parts);','  return held?held.digest:hash.sha256Value(parts);']]),
+ 'conflict-parts-digest-unconfirmed':fault(['restored-conflicts'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[['  return held?.inputs&&historyProofInputsCurrent(held.inputs)?held.digest:hash.sha256Value(parts);','  return held?held.digest:hash.sha256Value(parts);']]),
  // The active version (P2) restored under its root's proof.
- 'active-root-decoded-cold':fault(['restored-roots'],'HISTORY_PROOF_ACTIVE_HIT_ORACLE',[['validatedProjections,verifiedSources,null,null,null,proofs);','validatedProjections,verifiedSources,null,null,null,entry.id!==incoming.activeId?proofs:null);']]),
+ 'active-root-decoded-cold':fault(['active-roots'],'HISTORY_PROOF_ACTIVE_HIT_ORACLE',[['validatedProjections,verifiedSources,null,null,null,proofs);','validatedProjections,verifiedSources,null,null,null,entry.id!==incoming.activeId?proofs:null);']]),
  // The input checks compare every field of a captured descriptor, and as
  // many fields as it had, with the field names read once at capture.
  'captured-fields-unread':fault(['input-checks'],'HISTORY_PROOF_INPUT_CHECK_ORACLE',[[CAPTURED_FIELDS_COMPARED,'']]),
@@ -1253,27 +1260,40 @@ async function noteFixture(b){
  return {jobId,write:async n=>{p=await store.readProject(jobId);await write(n);}};
 }
 const hasNotePart=entry=>Boolean(entry?.projectParts?.entries.some(part=>JSON.stringify(part.path)==='["vendorExtension","note"]'));
+// The state the Tier 1.5 sections share: one proof-holding worker after the
+// minting export (importFixture), its rows and ledger held, and the import
+// without pairs (in that worker, a fresh worker and a cold page-realm store)
+// whose restored roots later cases name. A verifier run computes it once, in
+// the first of these sections it runs, so that a section run alone (an
+// intended fault) starts from the state a complete run gives it.
+function restoredContext(context){
+ return context.shared.restored??=(async()=>{
+  const {source}=context;
+  const b=browser(source),{jobId,retired,backup,body,recovery,ids,rootCount}=await importFixture(b);
+  const ledgerOf=ownLedger,holding={rows:copyRows(b.rows,b.page),ledger:ledgerOf(b.worker().realm.runtime).save()};
+  const MARK='Exact retained History title 2 ';
+  const refuseMarked=runtime=>{runtime.__recoveryRefusal=project=>String(project?.job?.JOB_TITLE||'').startsWith(MARK);return ()=>{delete runtime.__recoveryRefusal;};};
+  // The root titled MARK: its title is a retained part of its snapshot.
+  const titleOf=async entry=>{const {snapshot}=await snapshotMember(body,entry.id),part=snapshot.projectParts?.entries.find(row=>JSON.stringify(row.path)==='["job","JOB_TITLE"]'),member=part&&body.artifacts.find(a=>a.archiveKind==='RECOVERY_BYTES'&&a.sha256===part.sha256);return member?JSON.parse(Buffer.from(member.base64,'base64').toString('utf8')):snapshot.project?.job?.JOB_TITLE;};
+  let marked=null;for(const entry of recovery.entries.filter(row=>!row.projectReference&&row.id!==recovery.activeId))if(String(await titleOf(entry)||'').startsWith(MARK))marked=entry;
+  // A case: the backup (edited or not) imported in the proof-holding worker
+  // without pairs (or with them shifted), in a fresh worker and in a cold
+  // page-realm store, a realm change before the import in each, or at one
+  // root's restore in each (importThreeWays).
+  // orCold: a second acceptable cold outcome (the change made from the start).
+  const compare=async(label,blob,{realm=null,at=null,ledger=ledger=>ledger.dropPairs(),held=holding,entryIds=ids,orCold=null}={})=>{
+   const result=await importThreeWays(b,source,{held,blob,jobId,entryIds,realm,at,ledger});
+   assertImportsAsCold(label,result,orCold);
+   return result;
+  };
+  const happy=await compare('without-pairs',backup);
+  const restoredIds=happy.sameCounts.restoredRootIds,nonActiveRoots=recovery.entries.filter(entry=>!entry.projectReference&&entry.id!==recovery.activeId).map(entry=>entry.id);
+  return {b,jobId,retired,backup,body,recovery,ids,rootCount,ledgerOf,holding,refuseMarked,titleOf,marked,compare,happy,restoredIds,nonActiveRoots};
+ })();
+}
 async function restoredRootsSection(context){
  const {source,emit}=context;
- const b=browser(source),{jobId,retired,backup,body,recovery,ids,rootCount}=await importFixture(b);
- const ledgerOf=ownLedger,holding={rows:copyRows(b.rows,b.page),ledger:ledgerOf(b.worker().realm.runtime).save()};
- const MARK='Exact retained History title 2 ';
- const refuseMarked=runtime=>{runtime.__recoveryRefusal=project=>String(project?.job?.JOB_TITLE||'').startsWith(MARK);return ()=>{delete runtime.__recoveryRefusal;};};
- // The root titled MARK: its title is a retained part of its snapshot.
- const titleOf=async entry=>{const {snapshot}=await snapshotMember(body,entry.id),part=snapshot.projectParts?.entries.find(row=>JSON.stringify(row.path)==='["job","JOB_TITLE"]'),member=part&&body.artifacts.find(a=>a.archiveKind==='RECOVERY_BYTES'&&a.sha256===part.sha256);return member?JSON.parse(Buffer.from(member.base64,'base64').toString('utf8')):snapshot.project?.job?.JOB_TITLE;};
- let marked=null;for(const entry of recovery.entries.filter(row=>!row.projectReference&&row.id!==recovery.activeId))if(String(await titleOf(entry)||'').startsWith(MARK))marked=entry;
- // A case: the backup (edited or not) imported in the proof-holding worker
- // without pairs (or with them shifted), in a fresh worker and in a cold
- // page-realm store, a realm change before the import in each, or at one
- // root's restore in each (importThreeWays).
- // orCold: a second acceptable cold outcome (the change made from the start).
- const compare=async(label,blob,{realm=null,at=null,ledger=ledger=>ledger.dropPairs(),held=holding,entryIds=ids,orCold=null}={})=>{
-  const result=await importThreeWays(b,source,{held,blob,jobId,entryIds,realm,at,ledger});
-  assertImportsAsCold(label,result,orCold);
-  return result;
- };
- const happy=await compare('without-pairs',backup);
- const restoredIds=happy.sameCounts.restoredRootIds,nonActiveRoots=recovery.entries.filter(entry=>!entry.projectReference&&entry.id!==recovery.activeId).map(entry=>entry.id);
+ const {b,jobId,retired,backup,body,recovery,ids,rootCount,ledgerOf,holding,refuseMarked,titleOf,marked,compare,happy,restoredIds,nonActiveRoots}=await restoredContext(context);
  assert.equal(happy.same.ok,true,'HISTORY_PROOF_TIER15_FIXTURE_ORACLE: the import without pairs succeeds');
  assert.ok(nonActiveRoots.every(id=>restoredIds.includes(id)),'HISTORY_PROOF_TIER15_HIT_ORACLE: every archived proven root without a pair is restored under its root proof');
  assert.ok(happy.samePairs.length>0,'HISTORY_PROOF_TIER15_FIXTURE_ORACLE: the pair checks mint pairs');
@@ -1322,6 +1342,11 @@ async function restoredRootsSection(context){
   assert.deepEqual(at.sameCounts.restoredRootIds,at.freshCounts.restoredRootIds,'HISTORY_PROOF_TIER15_INPUTS_ORACLE rebound-'+label+': a root restored after a change of its inputs used its proof');
   emit('HISTORY-PROOF-TIER15-REALM-rebound-'+label,{refused:!at.same.ok,code:at.same.code??null,restoredAsFresh:true});
  }
+}
+// 16. The active version (P2), from the Tier 1.5 state (restoredContext).
+async function activeRootsSection(context){
+ const {source,emit}=context;
+ const {b,jobId,retired,backup,body,recovery,ids,rootCount,ledgerOf,holding,refuseMarked,titleOf,marked,compare,happy,restoredIds,nonActiveRoots}=await restoredContext(context);
  // The active version (P2): never a Tier 2 hit, it is restored from its
  // stored bytes, and a proven root of it (the active root, or a view
  // reference's root that Tier 2 left undecoded) is restored under its proof.
@@ -1380,6 +1405,11 @@ async function restoredRootsSection(context){
   assert.deepEqual(at.sameCounts.restoredRootIds,at.freshCounts.restoredRootIds,'HISTORY_PROOF_ACTIVE_INPUTS_ORACLE rebound-'+label+': a root restored after a change of its inputs used its proof');
   emit('HISTORY-PROOF-ACTIVE-REALM-'+label,{beforeRefused:!before.same.ok,beforeCode:before.same.code??null,reboundRefused:!at.same.ok,reboundCode:at.same.code??null,restoredAsFresh:true});
  }
+}
+// 17. The IMMUTABLE_HISTORY_CONFLICT check under Tier 1.5 (restoredContext).
+async function restoredConflictsSection(context){
+ const {source,emit}=context;
+ const {b,jobId,retired,backup,body,recovery,ids,rootCount,ledgerOf,holding,refuseMarked,titleOf,marked,compare,happy,restoredIds,nonActiveRoots}=await restoredContext(context);
  // The IMMUTABLE_HISTORY_CONFLICT check is cold: a change of the parts
  // list's canonical text made at the first restored root with parts (after
  // its proof checks digested that list) is seen by it, left in place or
@@ -1394,6 +1424,11 @@ async function restoredRootsSection(context){
   assert.equal(result.cold.code,'IMMUTABLE_HISTORY_CONFLICT','HISTORY_PROOF_TIER15_FIXTURE_ORACLE conflict-'+label+': the cold conflict check refuses the changed parts digest');
   emit('HISTORY-PROOF-TIER15-CONFLICT-'+label,{refused:!result.same.ok,code:result.same.code??null,restoredAsFresh:true});
  }
+}
+// 18. Restored values bound only by their own digests (restoredContext).
+async function restoredUnboundSection(context){
+ const {source,emit}=context;
+ const {b,jobId,retired,backup,body,recovery,ids,rootCount,ledgerOf,holding,refuseMarked,titleOf,marked,compare,happy,restoredIds,nonActiveRoots}=await restoredContext(context);
  // Values bound only by natives seen unchanged around their awaited restore
  // (UNBOUND_CASES): each change is made after provenImportRoot bound the
  // proof and undoes itself within the restore, so natives are unchanged
@@ -1461,7 +1496,7 @@ async function restoredRootsSection(context){
  }
 }
 
-// 16. The input checks a proof use re-runs (the validator graph, the decode
+// 19. The input checks a proof use re-runs (the validator graph, the decode
 // natives, the byte and the digest primitives) compare each current property
 // descriptor with its capture, whose field names they read once. In a
 // storage-worker realm each check refuses every change of a captured
@@ -1517,29 +1552,38 @@ async function inputChecksSection(context){
  for(const name of INPUT_CHECKS)emit('HISTORY-PROOF-INPUT-CHECKS-'+name,results[name]);
 }
 
-const SECTION_RUNNERS=Object.freeze({'export':exportSection,'import':importSection,'mid-operation':midOperationSection,'nested':nestedSection,'permissive-writer':permissiveWriterSection,'credential':credentialSection,'watchdog':watchdogSection,'pair-descriptors':pairDescriptorSection,'minting':mintingSection,'realms':realmsSection,'unconfirmed-export':unconfirmedExportSection,'input-capture':inputCaptureSection,'retained-checkpoint':retainedCheckpointSection,'digest-spans':digestSpansSection,'restored-roots':restoredRootsSection,'input-checks':inputChecksSection});
+const SECTION_RUNNERS=Object.freeze({'export':exportSection,'import':importSection,'mid-operation':midOperationSection,'nested':nestedSection,'permissive-writer':permissiveWriterSection,'credential':credentialSection,'watchdog':watchdogSection,'pair-descriptors':pairDescriptorSection,'minting':mintingSection,'realms':realmsSection,'unconfirmed-export':unconfirmedExportSection,'input-capture':inputCaptureSection,'retained-checkpoint':retainedCheckpointSection,'digest-spans':digestSpansSection,'input-checks':inputChecksSection,'restored-roots':restoredRootsSection,'active-roots':activeRootsSection,'restored-conflicts':restoredConflictsSection,'restored-unbound':restoredUnboundSection});
 assert.deepEqual(Object.keys(SECTION_RUNNERS),[...HISTORY_PROOF_SECTIONS]);
+assert.deepEqual(Object.values(HISTORY_PROOF_SUITES).flatMap(suite=>suite.sections),[...HISTORY_PROOF_SECTIONS],'HISTORY_PROOF_SUITE_ORACLE: the suites partition the sections in order');
+// The implementation faults one suite owns: those whose sections it runs.
+export const historyProofSuiteFaults=suite=>Object.fromEntries(Object.entries(HISTORY_PROOF_FAULTS).filter(([,{sections}])=>sections.every(name=>HISTORY_PROOF_SUITES[suite].sections.includes(name))));
+assert.deepEqual(Object.keys(HISTORY_PROOF_SUITES).flatMap(suite=>Object.keys(historyProofSuiteFaults(suite))).sort(),Object.keys(HISTORY_PROOF_FAULTS).sort(),'HISTORY_PROOF_SUITE_ORACLE: every fault belongs to exactly one suite');
 
-export async function verifyHistoryProofReuse({fault=null,sections=null}={}){
+// suite: the sections run when neither a fault nor sections are given.
+export async function verifyHistoryProofReuse({fault=null,sections=null,suite='verify-history-proof-reuse.mjs'}={}){
  let production=fs.readFileSync('project-store.js','utf8');
  if(fault){assert.ok(HISTORY_PROOF_FAULTS[fault],'Unknown history proof fault: '+fault);production=HISTORY_PROOF_FAULTS[fault].apply(production);}
- const selected=sections||(fault?HISTORY_PROOF_FAULTS[fault].sections:HISTORY_PROOF_SECTIONS);
- const source=observed(production),cases=[],emit=(caseId,details={})=>cases.push({caseId,result:'PASS',...details}),timings={};
- for(const name of selected){const started=performance.now();await SECTION_RUNNERS[name]({source,production,emit,faultMode:Boolean(fault)});timings[name]=Math.round(performance.now()-started);}
+ const selected=sections||(fault?HISTORY_PROOF_FAULTS[fault].sections:HISTORY_PROOF_SUITES[suite].sections);
+ // shared: state that sections of one run compute once (restoredContext).
+ const source=observed(production),cases=[],emit=(caseId,details={})=>cases.push({caseId,result:'PASS',...details}),timings={},shared={};
+ for(const name of selected){const started=performance.now();await SECTION_RUNNERS[name]({source,production,emit,faultMode:Boolean(fault),shared});timings[name]=Math.round(performance.now()-started);}
  return {result:'PASS',synthetic:true,actualBrowser:false,transactionAdapter:true,storageWorkerRealm:true,productionSourceSha256:sha(fs.readFileSync('project-store.js','utf8')),watchdogMs:HISTORY_WATCHDOG_MS,sections:[...selected],sectionMs:timings,caseCount:cases.length,cases};
 }
 
-if(import.meta.url===pathToFileURL(process.argv[1]||'').href){
- const requested=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8)||null;
- if(requested){await verifyHistoryProofReuse({fault:requested});console.log(JSON.stringify({fault:requested,detected:false}));process.exitCode=1;}
- else{
-  const result=await verifyHistoryProofReuse(),faults=[];
-  // Each intended fault reruns only the sections holding its oracle.
-  for(const [name,{oracle,sections}]of Object.entries(HISTORY_PROOF_FAULTS)){
-   // A fault whose edit no longer applies is never counted as detected.
-   await assert.rejects(()=>verifyHistoryProofReuse({fault:name}),error=>error?.code==='ERR_ASSERTION'&&String(error.message).includes(oracle)&&!String(error.message).includes('HISTORY_PROOF_ANCHOR_ORACLE'),'HISTORY_PROOF_INTENDED_FAULT_ORACLE '+name);
-   faults.push({fault:name,detected:true,oracle,sections:[...sections]});
-  }
-  console.log(JSON.stringify({historyProofReuse:{...result,faults}},null,1));
+// One suite's command: its sections, then each of its faults (--fault=<name>
+// runs one of them alone and exits 1 once its oracle detects it).
+export async function runHistoryProofSuite(suite,argv=process.argv){
+ const {marker}=HISTORY_PROOF_SUITES[suite],owned=historyProofSuiteFaults(suite);
+ const requested=argv.find(arg=>arg.startsWith('--fault='))?.slice(8)||null;
+ if(requested){assert.ok(Object.hasOwn(owned,requested),'Unknown '+suite+' fault: '+requested);await verifyHistoryProofReuse({fault:requested});console.log(JSON.stringify({fault:requested,detected:false}));process.exitCode=1;return;}
+ const result=await verifyHistoryProofReuse({suite}),faults=[];
+ // Each intended fault reruns only the sections holding its oracle.
+ for(const [name,{oracle,sections}]of Object.entries(owned)){
+  // A fault whose edit no longer applies is never counted as detected.
+  await assert.rejects(()=>verifyHistoryProofReuse({fault:name}),error=>error?.code==='ERR_ASSERTION'&&String(error.message).includes(oracle)&&!String(error.message).includes('HISTORY_PROOF_ANCHOR_ORACLE'),'HISTORY_PROOF_INTENDED_FAULT_ORACLE '+name);
+  faults.push({fault:name,detected:true,oracle,sections:[...sections]});
  }
+ console.log(JSON.stringify({[marker]:{...result,faults}},null,1));
 }
+
+if(import.meta.url===pathToFileURL(process.argv[1]||'').href)await runHistoryProofSuite('verify-history-proof-reuse.mjs');
