@@ -29,7 +29,12 @@ const faults={
   {before:'entry.projectReference||historyPartFiles(entry.projectParts).some(part=>state.files[part.sha256]?.byteSize!==part.byteSize)',after:'entry.projectReference||historyPartFiles(entry.projectParts).some(part=>!state.files[part.sha256])'},
   {before:'if(historyPartFiles(parts).some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))',after:'if(historyPartFiles(parts).some(part=>!state.files[part.sha256]))'},
   {before:'if(verifiedByteDigests){\n      const file=await readFile(part.sha256);\n      if(!(file?.blob instanceof Blob)||file.blob.size!==part.byteSize||await historyBlobSha256(file.blob,verifiedByteDigests)!==part.sha256)',after:'if(verifiedByteDigests){\n      const file=await readFile(part.sha256);\n      if(!(file?.blob instanceof Blob)||await historyBlobSha256(file.blob,verifiedByteDigests)!==part.sha256)'},
-  {before:'if(value.byteSize!==part.byteSize)',after:'if(!verifiedByteDigests&&value.byteSize!==part.byteSize)'}
+  {before:'if(value.byteSize!==part.byteSize)',after:'if(!verifiedByteDigests&&value.byteSize!==part.byteSize)'},
+  // The declared sizes are also bound before any restore: a segments entry's
+  // bytes are its segments' bytes, and the version's projectBytes is the
+  // skeleton plus each entry's bytes.
+  {before:"    if(segments&&part.segments.reduce((total,segment)=>total+segment.byteSize-1,1)!==part.byteSize)throw storageError('Saved project content sizes conflict.','HISTORY_VERSION_MISMATCH');\n",after:''},
+  {before:"if(historyEncodedProjectBytes(body)!==body.projectBytes)throw storageError('Saved canonical project bytes do not match their checkpoint identity.','HISTORY_VERSION_MISMATCH');}",after:'}'}
  ]}
 };
 const engineFaults={
