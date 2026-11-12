@@ -24,15 +24,17 @@
 // imports exactly as a fresh cold worker (stored rows included) under every
 // local fault, realm change, future derivation or missing pair. Digests an
 // import computes once are reused only within one synchronous span and equal
-// fresh computations. A proven root that no pair serves is restored without
-// its digest pass and static check, and its pair check refuses exactly as
-// cold and mints exactly what a cold import mints.
+// fresh computations. A proven root that no pair serves, and the active
+// version's proven root, is restored without its digest pass and static
+// check, and its pair check refuses exactly as cold and mints exactly what a
+// cold import mints.
 // Ledger and decode counts are observed by in-memory source instrumentation
 // only; production files and exports are unchanged. Each intended fault runs
 // only the sections that hold its oracle.
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {createHash,randomUUID} from 'node:crypto';
+import {isDeepStrictEqual} from 'node:util';
 import {gunzipSync} from 'node:zlib';
 import {pathToFileURL} from 'node:url';
 import {projectStoreRuntime} from './test-project-store-runtime.mjs';
@@ -134,7 +136,9 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  'parts-digest-wrong-key':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_ORACLE',[['  let digest=digests.get(parts);if(digest===undefined){digest=hash.sha256Value(parts);digests.set(parts,digest);}','  let digest=digests.get(digests);if(digest===undefined){digest=hash.sha256Value(parts);digests.set(digests,digest);}']]),
  // Tier 1.5: a proven root without a usable pair restored under its proof.
  'restored-root-skip-pair-check':fault(['restored-roots'],'HISTORY_PROOF_TIER15_PAIR_CHECK_ORACLE',[['    try{return await validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests,validatedProjections,verifiedSources,rootContinuation&&body.project===rootContinuation.project);}','    try{return await validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests,validatedProjections,verifiedSources,Boolean(importProofs)||rootContinuation&&body.project===rootContinuation.project);}']]),
- 'restored-root-skip-last-inputs':fault(['restored-roots'],'HISTORY_PROOF_TIER15_INPUTS_ORACLE',[['      if(provenRoot&&historyProofInputsCurrent(provenRoot)&&rootValidatorsUnchanged(provenRoot.validators)){','      if(provenRoot){']])
+ 'restored-root-skip-last-inputs':fault(['restored-roots'],'HISTORY_PROOF_TIER15_INPUTS_ORACLE',[['      if(provenRoot&&historyProofInputsCurrent(provenRoot)&&rootValidatorsUnchanged(provenRoot.validators)){','      if(provenRoot){']]),
+ // The active version (P2) restored under its root's proof.
+ 'active-root-decoded-cold':fault(['restored-roots'],'HISTORY_PROOF_ACTIVE_HIT_ORACLE',[['validatedProjections,verifiedSources,null,null,null,proofs);','validatedProjections,verifiedSources,null,null,null,entry.id!==incoming.activeId?proofs:null);']])
 });
 
 // Test-only observation (never a production export): the worker ledger, counts
@@ -172,7 +176,7 @@ export function observed(source){
  source=insertAfterFirst(source,PAIR_INPUTS,"globalThis.__digestSpan?.open('pair-inputs');",'pair-inputs');
  source=replaceOnce(source,PAIR_INPUTS_SHARED,"    if(pair.natives===proof.natives&&pair.primitive===proof.primitive)globalThis.__digestSpan?.use('pair-inputs',true,()=>historyProofInputsCurrent(proof));\n"+PAIR_INPUTS_SHARED,'pair-inputs-shared');
  source=replaceOnce(source,RESTORED_ROOT,RESTORED_ROOT+"if(globalThis.__historyCounts){globalThis.__historyCounts.restoredRoots++;globalThis.__historyCounts.restoredRootIds.push(String(entry.id));}",'restored-root');
- source=replaceOnce(source,RESTORE_POINT,"      globalThis.__onImportReuse?.('restore-rebound',String(entry.id));\n"+RESTORE_POINT,'restore-point');
+ source=replaceOnce(source,RESTORE_POINT,"      if(importProofs)globalThis.__onImportReuse?.('restore-rebound',String(entry.id));\n"+RESTORE_POINT,'restore-point');
  source=replaceOnce(source,RETAINED_VERDICT,"rootPreparation.verifiedContinuation=rootPreparation.read.retainedRoot;}globalThis.__onImportReuse?.('retained-verdict');}catch(error){",'retained-verdict');
  // Test-only: a recovery-compatibility (derived) refusal of the versions a
  // predicate selects, raised where the derived check runs.
@@ -1050,6 +1054,7 @@ async function digestSpansSection(context){
 // pair a check mints in the import may serve a later version of it, Tier 2.)
 export const RESTORED_FAULT_CASES=Object.freeze({'retired-file-removed':'HISTORY_FILE_INTEGRITY_FAILED','manifest-label':'HISTORY_VERSION_MISMATCH','recovery-refusal':'HISTORY_VERSION_INCOMPATIBLE'});
 export const RESTORED_REALM_CASES=Object.freeze(['text-encoder','hash-sha256-bytes','json-parse','decompression-stream','blob-array-buffer','engine-property','schema-definition']);
+export const ACTIVE_FAULT_CASES=Object.freeze(['active-snapshot-member','active-part-member','active-manifest-label']);
 async function restoredRootsSection(context){
  const {source,emit}=context;
  const b=browser(source),{jobId,retired,backup,body,recovery,ids,rootCount}=await importFixture(b);
@@ -1064,26 +1069,26 @@ async function restoredRootsSection(context){
  // A case: the backup (edited or not) imported in the proof-holding worker
  // without pairs (or with them shifted) and in a fresh worker, a realm change
  // before the import in both, or at one root's restore in both.
- const compare=async(label,blob,{realm=null,at=null,ledger=ledger=>ledger.dropPairs()}={})=>{
-  for(const [name,data] of holding.rows)b.rows.set(name,new Map([...data].map(([key,value])=>[key,b.page.copy(value)])));
-  const worker=b.worker().realm.runtime;ledgerOf(worker).restore(holding.ledger);ledger(ledgerOf(worker));
+ // orCold: a second acceptable cold outcome (the change made from the start).
+ const compare=async(label,blob,{realm=null,at=null,ledger=ledger=>ledger.dropPairs(),held=holding,entryIds=ids,orCold=null}={})=>{
+  for(const [name,data] of held.rows)b.rows.set(name,new Map([...data].map(([key,value])=>[key,b.page.copy(value)])));
+  const worker=b.worker().realm.runtime;ledgerOf(worker).restore(held.ledger);ledger(ledgerOf(worker));
   const before=copyRows(b.rows,b.page),undos=[],apply=runtime=>{
    if(realm)undos.push(realm(runtime));
    if(at){let applied=false;runtime.__onImportReuse=(point,id)=>{if(point==='restore-rebound'&&id===at.id&&!applied){applied=true;undos.push(at.change(runtime));}};undos.push(()=>{delete runtime.__onImportReuse;});}
   };
   const undoAll=()=>{for(const undo of undos.splice(0).reverse())undo?.();};
   b.resetCounts();let same,other,fresh;
-  try{apply(worker);same=await importOutcome(b,blob,jobId,ids);}finally{undoAll();}
+  try{apply(worker);same=await importOutcome(b,blob,jobId,entryIds);}finally{undoAll();}
   const sameCounts={...b.counts(),restoredRootIds:[...b.counts().restoredRootIds]},samePairs=pairKeys(worker),sameProofs=proofIds(worker);
-  try{fresh=browser(source,before,{onWorker:realm||at?runtime=>apply(runtime.runtime):null});other=await importOutcome(fresh,blob,jobId,ids);}finally{undoAll();}
-  assert.deepEqual(same,other,'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE '+label+': a proof-holding worker must import exactly as a fresh cold worker');
-  return {same,sameCounts,freshCounts:{...fresh.counts(),restoredRootIds:[...fresh.counts().restoredRootIds]},samePairs,freshPairs:pairKeys(fresh.worker().realm.runtime),sameProofs,freshProofs:proofIds(fresh.worker().realm.runtime)};
+  try{fresh=browser(source,before,{onWorker:realm||at?runtime=>apply(runtime.runtime):null});other=await importOutcome(fresh,blob,jobId,entryIds);}finally{undoAll();}
+  if(orCold&&isDeepStrictEqual(same,orCold)){}else assert.deepEqual(same,other,'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE '+label+': a proof-holding worker must import exactly as a fresh cold worker');
+  return {same,other,sameCounts,freshCounts:{...fresh.counts(),restoredRootIds:[...fresh.counts().restoredRootIds]},samePairs,freshPairs:pairKeys(fresh.worker().realm.runtime),sameProofs,freshProofs:proofIds(fresh.worker().realm.runtime)};
  };
  const happy=await compare('without-pairs',backup);
  const restoredIds=happy.sameCounts.restoredRootIds,nonActiveRoots=recovery.entries.filter(entry=>!entry.projectReference&&entry.id!==recovery.activeId).map(entry=>entry.id);
  assert.equal(happy.same.ok,true,'HISTORY_PROOF_TIER15_FIXTURE_ORACLE: the import without pairs succeeds');
  assert.ok(nonActiveRoots.every(id=>restoredIds.includes(id)),'HISTORY_PROOF_TIER15_HIT_ORACLE: every archived proven root without a pair is restored under its root proof');
- assert.ok(!restoredIds.includes(recovery.activeId),'HISTORY_PROOF_TIER15_ACTIVE_ORACLE: the active version was restored under its proof before P2');
  assert.ok(happy.samePairs.length>0,'HISTORY_PROOF_TIER15_FIXTURE_ORACLE: the pair checks mint pairs');
  assert.deepEqual(happy.samePairs,happy.freshPairs,'HISTORY_PROOF_TIER15_MINT_ORACLE: the pair checks mint exactly the pairs a cold import mints');
  emit('HISTORY-PROOF-TIER15-WITHOUT-PAIRS',{restoredRoots:happy.sameCounts.restoredRoots,roots:rootCount,importHits:happy.sameCounts.importHits,coldRoots:happy.sameCounts.coldRoots,pairsMinted:happy.samePairs.length,identical:true});
@@ -1129,6 +1134,64 @@ async function restoredRootsSection(context){
   const at=await compare('rebound-'+label,backup,{at:{id:restoredIds[0],change:realm}});
   assert.deepEqual(at.sameCounts.restoredRootIds,at.freshCounts.restoredRootIds,'HISTORY_PROOF_TIER15_INPUTS_ORACLE rebound-'+label+': a root restored after a change of its inputs used its proof');
   emit('HISTORY-PROOF-TIER15-REALM-rebound-'+label,{refused:!at.same.ok,code:at.same.code??null,restoredAsFresh:true});
+ }
+ // The active version (P2): never a Tier 2 hit, it is restored from its
+ // stored bytes, and a proven root of it (the active root, or a view
+ // reference's root that Tier 2 left undecoded) is restored under its proof.
+ // With the pairs of a same-session import, for a view reference and for a
+ // root; under faults of the active version's bytes and descriptor and realm
+ // changes before the import and at its restore it imports exactly as cold.
+ const activeRootOf=(entries,id)=>{const entry=entries.find(row=>row.id===id);return entry.projectReference?entry.projectReference.checkpointId:entry.id;};
+ const keepPairs=()=>{};
+ {
+  const result=await compare('active-reference',backup,{ledger:keepPairs}),root=activeRootOf(recovery.entries,recovery.activeId);
+  assert.ok(recovery.entries.find(entry=>entry.id===recovery.activeId).projectReference,'HISTORY_PROOF_ACTIVE_FIXTURE_ORACLE: the active version is a view reference');
+  assert.ok(result.same.ok&&result.sameCounts.importHitIds.includes(root),'HISTORY_PROOF_ACTIVE_FIXTURE_ORACLE: the active version\'s root is a Tier 2 hit');
+  assert.ok(result.sameCounts.restoredRootIds.includes(root),'HISTORY_PROOF_ACTIVE_HIT_ORACLE: the active view reference\'s root is restored under its proof');
+  assert.ok(!result.sameCounts.importHitIds.includes(recovery.activeId),'HISTORY_PROOF_TIER2_ACTIVE_ORACLE: the active version took a Tier 2 hit');
+  emit('HISTORY-PROOF-ACTIVE-REFERENCE',{activeRootRestored:true,restoredRoots:result.sameCounts.restoredRoots,identical:true});
+ }
+ // A later write: the active version of the next backup is a root.
+ for(const [name,data] of holding.rows)b.rows.set(name,new Map([...data].map(([key,value])=>[key,b.page.copy(value)])));ledgerOf(b.worker().realm.runtime).restore(holding.ledger);
+ {let p=await b.store.readProject(jobId);const next=b.store.clone(p);next.job.JOB_TITLE=retainedText('active root');next.vendorExtension=b.page.copy(retainedRecords(7));await b.store.writeProject(next,{expectedProjectRevision:p.revision});}
+ assert.equal((await exportOutcome(b.store,jobId)).ok,true,'HISTORY_PROOF_ACTIVE_FIXTURE_ORACLE: the export after a later write');
+ const rootBackup=await b.store.exportPackage(jobId),rootBody=await backupBody(rootBackup),rootRecovery=rootBody.recovery,activeRoot=rootRecovery.entries.find(entry=>entry.id===rootRecovery.activeId);
+ // One same-session import first-uses the written root and proves its pair:
+ // in the state after it, every proof the next imports use predates them.
+ await b.store.importPackage(rootBackup);
+ const rootHolding={rows:copyRows(b.rows,b.page),ledger:ledgerOf(b.worker().realm.runtime).save()};
+ assert.ok(!activeRoot.projectReference&&activeRoot.projectParts,'HISTORY_PROOF_ACTIVE_FIXTURE_ORACLE: the active version is a root with retained parts');
+ const rootIds=rootRecovery.entries.map(entry=>entry.id);
+ const activeCompare=(label,blob,options={})=>compare(label,blob,{ledger:keepPairs,held:rootHolding,entryIds:rootIds,...options}).then(result=>{assert.ok(!result.sameCounts.importHitIds.includes(rootRecovery.activeId),'HISTORY_PROOF_TIER2_ACTIVE_ORACLE '+label+': the active version took a Tier 2 hit');return result;});
+ {
+  const result=await activeCompare('active-root',rootBackup);
+  assert.equal(result.same.ok,true,'HISTORY_PROOF_ACTIVE_FIXTURE_ORACLE: the same-session import with an active root');
+  assert.equal(result.sameCounts.retainedHits,1,'HISTORY_PROOF_ACTIVE_FIXTURE_ORACLE: the prior\'s checkpoint, the same root, is re-bound to its proofs');
+  assert.ok(result.sameCounts.restoredRootIds.includes(activeRoot.id),'HISTORY_PROOF_ACTIVE_HIT_ORACLE: the active root is restored under its proof');
+  emit('HISTORY-PROOF-ACTIVE-ROOT',{activeRootRestored:true,restoredRoots:result.sameCounts.restoredRoots,identical:true});
+ }
+ const editedRoot=async edit=>{const copy=plain(rootBody);await edit(copy);return encodeBackup(b.worker().realm,copy);};
+ const activeFaults={
+  'active-snapshot-member':async copy=>{const {member,snapshot}=await snapshotMember(copy,activeRoot.id);snapshot.view={...snapshot.view,scrollY:998};const bytes=Buffer.from(await (await encodeBackup(b.worker().realm,snapshot)).arrayBuffer());const entry=copy.recovery.entries.find(row=>row.id===activeRoot.id);copy.recovery.compressedProjectBytes+=bytes.length-entry.byteSize;entry.sha256=await setMemberBytes(b.worker().realm,copy,member,bytes);entry.byteSize=bytes.length;},
+  'active-part-member':async copy=>{const entry=copy.recovery.entries.find(row=>row.id===activeRoot.id),part=entry.projectParts.entries.find(row=>!row.segments),member=copy.artifacts.find(a=>a.archiveKind==='RECOVERY_BYTES'&&a.sha256===part.sha256),bytes=Buffer.concat([Buffer.from(member.base64,'base64'),Buffer.from(' ')]);const info=copy.recovery.files[part.sha256];delete copy.recovery.files[part.sha256];const sha256=await setMemberBytes(b.worker().realm,copy,member,bytes);member.filename=sha256+'.bin';member.artifactId='RECOVERY-BYTES-'+sha256;const row=copy.packageManifest.artifacts.find(a=>a.sha256===sha256);Object.assign(row,{artifactId:member.artifactId,filename:member.filename});copy.recovery.files[sha256]={...info,byteSize:bytes.length};copy.recovery.retainedFileBytes+=bytes.length-info.byteSize;part.sha256=sha256;part.byteSize=bytes.length;},
+  'active-manifest-label':copy=>{copy.recovery.entries.find(entry=>entry.id===activeRoot.id).label='Edited backup label';}
+ };
+ assert.deepEqual(Object.keys(activeFaults),[...ACTIVE_FAULT_CASES]);
+ for(const [label,edit] of Object.entries(activeFaults)){
+  const result=await activeCompare(label,await editedRoot(edit));
+  assert.equal(result.same.ok,false,'HISTORY_PROOF_ACTIVE_FIXTURE_ORACLE '+label+': the corrupted active version is refused');
+  emit('HISTORY-PROOF-ACTIVE-FAULT-'+label,{refused:true,code:result.same.code});
+ }
+ for(const [label,realm] of Object.entries({'text-encoder':swaps.textEncoder,'hash-sha256-bytes':swaps.hashBytes,'json-parse':swaps.jsonParse,'decompression-stream':swaps.decompression,'blob-array-buffer':swaps.blobArrayBuffer,'engine-property':swaps.engineProperty,'schema-definition':swaps.schemaRefusesEarly})){
+  const before=await activeCompare('active-before-'+label,rootBackup,{realm});
+  assert.deepEqual(before.sameCounts.restoredRootIds,before.freshCounts.restoredRootIds,'HISTORY_PROOF_ACTIVE_INPUTS_ORACLE before-'+label+': a root was restored under a proof whose inputs changed');
+  // A change made after proofs were used is redone cold before the import
+  // commits: its outcome is a cold import's under the change made at the
+  // same point, or (redone) from the start.
+  const at=await activeCompare('active-rebound-'+label,rootBackup,{at:{id:activeRoot.id,change:realm},orCold:before.other});
+  assert.ok(!at.sameCounts.restoredRootIds.includes(activeRoot.id),'HISTORY_PROOF_ACTIVE_INPUTS_ORACLE rebound-'+label+': the active root was restored under its proof after a change of its inputs');
+  assert.deepEqual(at.sameCounts.restoredRootIds,at.freshCounts.restoredRootIds,'HISTORY_PROOF_ACTIVE_INPUTS_ORACLE rebound-'+label+': a root restored after a change of its inputs used its proof');
+  emit('HISTORY-PROOF-ACTIVE-REALM-'+label,{beforeRefused:!before.same.ok,beforeCode:before.same.code??null,reboundRefused:!at.same.ok,reboundCode:at.same.code??null,restoredAsFresh:true});
  }
 }
 

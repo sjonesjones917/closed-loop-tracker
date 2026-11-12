@@ -5052,7 +5052,10 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   if(pendingFirstUseRoot)await firstUsePendingWriteRoot();
   // Tier 2: a non-active archived version this worker proved skips its decode
   // only after its bytes, parts, files, descriptor and inputs re-bind. The
-  // same operation re-binds the prior's active checkpoint (provenRetainedCheckpoint).
+  // same operation re-binds the prior's active checkpoint
+  // (provenRetainedCheckpoint) and restores a proven root, the active
+  // version's included, without its digest pass and static check (Tier 1.5).
+  // A miss of any of them takes the cold path.
   const proofs=coldHistory?null:historyProofOperation();
   const protectedTransport=await isEncryptedPackage(blob);if(protectedTransport)blob=await decryptPackage(blob,passphrase);
   if(typeof DecompressionStream!=='function')throw storageError('DecompressionStream is required for complete package import.','DECOMPRESSION_STREAM_REQUIRED');
@@ -5131,12 +5134,17 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
         }
        }else decoded=await decodeCheckpoint(id,snapshot,sha=>archiveFiles.get(sha),checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections,verifiedSources);
       }else if(proofs&&entry.id!==incoming.activeId&&(proven=await provenImportEntry(id,entry,snapshot,sha=>archiveFiles.get(sha),validatedRoots,provenRoots,verifiedByteDigests,validatedProjections,proofs))){
-       // The active version is always decoded: its value is the source reference.
+       // The active version is never a Tier 2 hit: its value is the source
+       // reference, so it is always restored from its own stored bytes.
        if(!entry.projectReference&&validatedRoots.has(entry.id))provenRoots.set(entry.id,{snapshotSha256:entry.sha256,projectSha256:proven.verifiedProjectSha256,workSha256:proven.verifiedWorkSha256});
       }else{
        // A proven root without a usable pair, itself or as a view reference's
-       // root, is restored under its proof (Tier 1.5, provenImportRoot).
-       decoded=await decodeCheckpoint(id,snapshot,sha=>archiveFiles.get(sha),checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections,verifiedSources,null,null,null,entry.id!==incoming.activeId?proofs:null);
+       // root, is restored under its proof (Tier 1.5, provenImportRoot). So
+       // is the active version's root: its project is still produced by
+       // restoreHistoryProject from the re-hashed stored bytes, and every
+       // other check and its pair check run as cold; only the digest pass
+       // and static check its proof attests are not repeated.
+       decoded=await decodeCheckpoint(id,snapshot,sha=>archiveFiles.get(sha),checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections,verifiedSources,null,null,null,proofs);
       }
       if(decoded&&entry.id===incoming.activeId){importedActive=decoded;importedView=incoming.activeViewOverride||decoded.view;}
 
