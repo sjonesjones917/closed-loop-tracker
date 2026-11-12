@@ -86,6 +86,9 @@ const RESTORE_POINT='      const provenRoot=importProofs&&!inspection&&!measured
 const HISTORY_LOOP='    try{for(const entry of incoming.entries){\n';
 const HISTORY_LOOP_END='    }finally{if(digestHolder.scope)hash.disposeCanonicalDigestScope(digestHolder.scope);importDigestHolders.delete(verifiedParts);}';
 const HISTORY_ENTRY='      previousRootId=rootId;\n';
+// The captured-descriptor comparison of the input checks (capturedDescriptorMatches).
+const CAPTURED_FIELD_COUNT='  if(fields.length!==Reflect.ownKeys(after).length)return false;\n';
+const CAPTURED_FIELDS_COMPARED='  for(let index=0;index<fields.length;index++)if(!Object.is(before[fields[index]],after[fields[index]]))return false;\n';
 const EXPORT_ROUTE="  if(useStoreWorker())return requestStoreWorker('EXPORT_PACKAGE',[jobId,{passphrase,historyRecovery}]);\n";
 // The measured watchdog (project-store.js HISTORY_WATCHDOG_MEASUREMENT),
 // re-derived here from its stated arithmetic at the declared History limits.
@@ -98,7 +101,7 @@ const insertAfterFirst=(source,anchors,insert,label)=>{const anchor=anchors.find
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const plain=value=>JSON.parse(JSON.stringify(value));
 
-export const HISTORY_PROOF_SECTIONS=Object.freeze(['export','import','mid-operation','nested','permissive-writer','credential','watchdog','pair-descriptors','minting','realms','unconfirmed-export','input-capture','retained-checkpoint','digest-spans','restored-roots']);
+export const HISTORY_PROOF_SECTIONS=Object.freeze(['export','import','mid-operation','nested','permissive-writer','credential','watchdog','pair-descriptors','minting','realms','unconfirmed-export','input-capture','retained-checkpoint','digest-spans','restored-roots','input-checks']);
 // Implementation faults this owner must detect (each is an in-memory mutant),
 // with the sections whose oracles detect it.
 const fault=(sections,oracle,edits)=>({sections,oracle,apply:source=>edits.reduce((text,[before,after],index)=>replaceOnce(text,before,after,oracle+' fault edit '+index),source)});
@@ -168,7 +171,11 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  // its natives in its own turn.
  'conflict-parts-digest-unconfirmed':fault(['restored-roots'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[['  return held?.inputs&&historyProofInputsCurrent(held.inputs)?held.digest:hash.sha256Value(parts);','  return held?held.digest:hash.sha256Value(parts);']]),
  // The active version (P2) restored under its root's proof.
- 'active-root-decoded-cold':fault(['restored-roots'],'HISTORY_PROOF_ACTIVE_HIT_ORACLE',[['validatedProjections,verifiedSources,null,null,null,proofs);','validatedProjections,verifiedSources,null,null,null,entry.id!==incoming.activeId?proofs:null);']])
+ 'active-root-decoded-cold':fault(['restored-roots'],'HISTORY_PROOF_ACTIVE_HIT_ORACLE',[['validatedProjections,verifiedSources,null,null,null,proofs);','validatedProjections,verifiedSources,null,null,null,entry.id!==incoming.activeId?proofs:null);']]),
+ // The input checks compare every field of a captured descriptor, and as
+ // many fields as it had, with the field names read once at capture.
+ 'captured-fields-unread':fault(['input-checks'],'HISTORY_PROOF_INPUT_CHECK_ORACLE',[[CAPTURED_FIELDS_COMPARED,'']]),
+ 'captured-field-count-unread':fault(['input-checks'],'HISTORY_PROOF_INPUT_CHECK_ORACLE',[[CAPTURED_FIELD_COUNT,'']])
 });
 
 // Test-only observation (never a production export): the worker ledger, counts
@@ -183,7 +190,7 @@ export function observed(source){
   pairList:()=>[...historyPairProofs.values()].flatMap(bucket=>[...bucket.values()]).map(pair=>({projectSha256:pair.projectSha256,descriptorsSha256:pair.descriptorsSha256,derivedAt:pair.derivedAt})),
   dropPairs:()=>{for(const bucket of historyPairProofs.values())bucket.clear();},
   shiftPairDerivedAt:ms=>{for(const bucket of historyPairProofs.values())for(const [key,pair] of bucket)if(pair.derivedAt!==null)bucket.set(key,Object.freeze({...pair,derivedAt:pair.derivedAt+ms}));},
-  internals:()=>({historyRootProof,historyProofFactsMatch,provenExportEntry,historyProofOperation,checkpointBytePrimitives,metaGet,snapshotKey}),
+  internals:()=>({historyRootProof,historyProofFactsMatch,provenExportEntry,historyProofOperation,checkpointBytePrimitives,metaGet,snapshotKey,captureRootValidators,rootValidatorsUnchanged,initialRootDigestPrimitives,captureRootDigestPrimitives,rootDigestPrimitivesUnchanged,captureHistoryProofNatives,historyProofNativesUnchanged,checkpointBytePrimitivesMatch}),
   save:()=>({roots:new Map([...historyRootProofs].map(([job,bucket])=>[job,new Map(bucket)])),pairs:new Map([...historyPairProofs].map(([job,bucket])=>[job,new Map(bucket)]))}),
   restore:saved=>{historyRootProofs.clear();for(const [job,bucket] of saved.roots)historyRootProofs.set(job,new Map(bucket));historyPairProofs.clear();for(const [job,bucket] of saved.pairs)historyPairProofs.set(job,new Map(bucket));}};
  globalThis.__compressPackage=(body,fileContents)=>compressPackage(body,fileContents);`,'ledger');
@@ -1401,7 +1408,63 @@ async function restoredRootsSection(context){
  }
 }
 
-const SECTION_RUNNERS=Object.freeze({'export':exportSection,'import':importSection,'mid-operation':midOperationSection,'nested':nestedSection,'permissive-writer':permissiveWriterSection,'credential':credentialSection,'watchdog':watchdogSection,'pair-descriptors':pairDescriptorSection,'minting':mintingSection,'realms':realmsSection,'unconfirmed-export':unconfirmedExportSection,'input-capture':inputCaptureSection,'retained-checkpoint':retainedCheckpointSection,'digest-spans':digestSpansSection,'restored-roots':restoredRootsSection});
+// 16. The input checks a proof use re-runs (the validator graph, the decode
+// natives, the byte and the digest primitives) compare each current property
+// descriptor with its capture, whose field names they read once. In a
+// storage-worker realm each check refuses every change of a captured
+// descriptor (its value, writable, enumerable, a data property made an
+// accessor, an extra field), an added own key, a changed prototype and a
+// changed Map entry of the validator graph, and accepts the state again once
+// the change is undone.
+export const INPUT_CHECKS=Object.freeze(['validators','natives','byte-primitives','digest-primitives']);
+const INPUT_CHECK_NATIVES=Object.freeze({'natives':['JSON.parse','TextDecoder.prototype.decode','DecompressionStream.prototype.readable','Response.prototype.arrayBuffer','Blob.prototype.arrayBuffer','ReadableStream.prototype.getReader','Uint16Array.prototype.set','Promise.prototype.then'],'byte-primitives':['Blob.prototype.arrayBuffer','Blob.prototype.slice','Uint8Array.prototype.set','Uint32Array.prototype.subarray','ArrayBuffer.prototype.slice','DataView.prototype.getUint32','TextEncoder.prototype.encode'],'digest-primitives':['TextEncoder.prototype.encode','TextEncoder.prototype.encodeInto']});
+async function inputChecksSection(context){
+ const {source,emit}=context;
+ const r=projectStoreRuntime({sourceOverrides:{'project-store.js':source},environment:workerEnvironment('HISTORY-PROOF-INPUT-CHECKS')}),realm=r.runtime,I=realm.__historyProofLedger.internals();
+ const blob=new realm.Blob(['input checks']);
+ const checks={
+  'validators':()=>{const captured=I.captureRootValidators(I.initialRootDigestPrimitives);assert.ok(captured,'HISTORY_PROOF_INPUT_CHECK_FIXTURE_ORACLE validators: captured');return ()=>I.rootValidatorsUnchanged(captured);},
+  'natives':()=>{const captured=I.captureHistoryProofNatives();assert.ok(captured,'HISTORY_PROOF_INPUT_CHECK_FIXTURE_ORACLE natives: captured');return ()=>I.historyProofNativesUnchanged(captured);},
+  'byte-primitives':()=>{const captured=I.checkpointBytePrimitives(blob);assert.ok(captured,'HISTORY_PROOF_INPUT_CHECK_FIXTURE_ORACLE byte primitives: captured');return ()=>I.checkpointBytePrimitivesMatch(captured);},
+  'digest-primitives':()=>{const captured=I.captureRootDigestPrimitives();assert.ok(captured,'HISTORY_PROOF_INPUT_CHECK_FIXTURE_ORACLE digest primitives: captured');return ()=>I.rootDigestPrimitivesUnchanged(captured);}};
+ const describe=realm.Object.getOwnPropertyDescriptor;
+ // Each change returns its undo; the extra field is reported only by the
+ // realm's descriptor reader, for that one property.
+ const changes={
+  'value':(target,key,d)=>{realm.Object.defineProperty(target,key,Object.hasOwn(d,'value')?{...d,value:realm.Function('return function changed(){}')()}:{...d,get:realm.Function('return function changed(){}')()});return ()=>realm.Object.defineProperty(target,key,d);},
+  'writable':(target,key,d)=>{if(!Object.hasOwn(d,'value'))return null;realm.Object.defineProperty(target,key,{...d,writable:!d.writable});return ()=>realm.Object.defineProperty(target,key,d);},
+  'enumerable':(target,key,d)=>{realm.Object.defineProperty(target,key,{...d,enumerable:!d.enumerable});return ()=>realm.Object.defineProperty(target,key,d);},
+  'accessor':(target,key,d)=>{if(!Object.hasOwn(d,'value'))return null;const value=d.value;realm.Object.defineProperty(target,key,{get:()=>value,enumerable:d.enumerable,configurable:true});return ()=>realm.Object.defineProperty(target,key,d);},
+  'extra-field':(target,key)=>{realm.Object.getOwnPropertyDescriptor=function(object,name){const found=Reflect.apply(describe,this,[object,name]);return object===target&&name===key&&found?{...found,extra:true}:found;};return ()=>{realm.Object.getOwnPropertyDescriptor=describe;};},
+  'added':target=>{if(!realm.Object.isExtensible(target))return null;realm.Object.defineProperty(target,'__inputCheckAdded',{value:1,writable:true,enumerable:true,configurable:true});return ()=>{delete target.__inputCheckAdded;};}};
+ const results=Object.fromEntries(INPUT_CHECKS.map(name=>[name,{changes:0,refused:0,acceptedAfterUndo:0}]));
+ const apply=(name,label,target,key,kind)=>{
+  const check=checks[name](),d=describe(target,key);
+  assert.equal(check(),true,'HISTORY_PROOF_INPUT_CHECK_FIXTURE_ORACLE '+name+' '+label+': unchanged state refused');
+  if(!d||!d.configurable&&kind!=='added'&&kind!=='extra-field')return;
+  const undo=changes[kind](target,key,d);if(!undo)return;
+  let during;try{during=check();}finally{undo();}
+  const after=check();results[name].changes++;
+  assert.equal(during,false,'HISTORY_PROOF_INPUT_CHECK_ORACLE '+name+' '+label+' '+kind+': a changed captured input was accepted');
+  assert.equal(after,true,'HISTORY_PROOF_INPUT_CHECK_ORACLE '+name+' '+label+' '+kind+': the restored state was refused');
+  results[name].refused++;results[name].acceptedAfterUndo++;
+ };
+ const resolve=path=>{const parts=path.split('.'),key=parts.pop();let target=realm;for(const part of parts)target=target[part];return [target,key];};
+ for(const [name,paths] of Object.entries(INPUT_CHECK_NATIVES))for(const path of paths){const [target,key]=resolve(path);for(const kind of Object.keys(changes))apply(name,path,target,key,kind);}
+ // The validator graph: nodes spread over the walk, each with a
+ // configurable property, a changed prototype and a changed Map entry.
+ const graph=I.captureRootValidators(I.initialRootDigestPrimitives).graph,open=graph.filter(row=>row.node&&!row.deep&&!row.frozen&&row.descriptors.some(([key,d])=>typeof key==='string'&&d.configurable));
+ assert.ok(open.length>=3,'HISTORY_PROOF_INPUT_CHECK_FIXTURE_ORACLE validators: open graph nodes');
+ for(const row of [open[0],open[Math.floor(open.length/2)],open.at(-1)]){
+  const [key]=row.descriptors.find(([name,d])=>typeof name==='string'&&d.configurable);
+  for(const kind of Object.keys(changes))apply('validators','node',row.node,key,kind);
+ }
+ {const check=checks.validators(),node=open.find(row=>realm.Object.isExtensible(row.node)).node,prototype=realm.Object.getPrototypeOf(node);realm.Object.setPrototypeOf(node,realm.Object.create(prototype));const during=check();realm.Object.setPrototypeOf(node,prototype);results.validators.changes++;assert.equal(during,false,'HISTORY_PROOF_INPUT_CHECK_ORACLE validators prototype: a changed prototype was accepted');assert.equal(check(),true,'HISTORY_PROOF_INPUT_CHECK_ORACLE validators prototype: the restored state was refused');results.validators.refused++;results.validators.acceptedAfterUndo++;}
+ {const map=graph.find(row=>row.entries&&!row.frozen&&row.node instanceof realm.Map)?.node;assert.ok(map,'HISTORY_PROOF_INPUT_CHECK_FIXTURE_ORACLE validators: a Map in the graph');const check=checks.validators();map.set('__inputCheckEntry',1);const during=check();map.delete('__inputCheckEntry');results.validators.changes++;assert.equal(during,false,'HISTORY_PROOF_INPUT_CHECK_ORACLE validators map: a changed Map entry was accepted');assert.equal(check(),true,'HISTORY_PROOF_INPUT_CHECK_ORACLE validators map: the restored state was refused');results.validators.refused++;results.validators.acceptedAfterUndo++;}
+ for(const name of INPUT_CHECKS)emit('HISTORY-PROOF-INPUT-CHECKS-'+name,results[name]);
+}
+
+const SECTION_RUNNERS=Object.freeze({'export':exportSection,'import':importSection,'mid-operation':midOperationSection,'nested':nestedSection,'permissive-writer':permissiveWriterSection,'credential':credentialSection,'watchdog':watchdogSection,'pair-descriptors':pairDescriptorSection,'minting':mintingSection,'realms':realmsSection,'unconfirmed-export':unconfirmedExportSection,'input-capture':inputCaptureSection,'retained-checkpoint':retainedCheckpointSection,'digest-spans':digestSpansSection,'restored-roots':restoredRootsSection,'input-checks':inputChecksSection});
 assert.deepEqual(Object.keys(SECTION_RUNNERS),[...HISTORY_PROOF_SECTIONS]);
 
 export async function verifyHistoryProofReuse({fault=null,sections=null}={}){

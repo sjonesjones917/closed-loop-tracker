@@ -2394,6 +2394,17 @@ function withdrawHistoryProofs(jobId,entry,body){
 const HISTORY_PROOF_NATIVE_GLOBALS=Object.freeze(['JSON','DecompressionStream','TextDecoder','TextEncoder','Blob','Response','ReadableStream','Uint8Array','Uint16Array','Uint32Array','ArrayBuffer','DataView','Promise','crypto']);
 // Stream and reader prototypes are reachable only through instances.
 const historyProofInstancePrototypes=(()=>{try{const stream=new Blob([]).stream(),reader=stream.getReader();reader.releaseLock?.();return [Object.getPrototypeOf(stream),Object.getPrototypeOf(reader),Object.getPrototypeOf(Uint8Array.prototype)];}catch{return [Object.getPrototypeOf(Uint8Array.prototype)];}})();
+// A current property descriptor equals a captured one: as many own fields,
+// and each captured field the same value. fields is Reflect.ownKeys(before),
+// read once: a captured descriptor is a private copy no code changes
+// afterwards, so its field names are read when it is captured (a capture
+// compared many times) or once in its comparison (a capture compared once).
+function capturedDescriptorMatches(before,fields,after){
+  if(fields.length!==Reflect.ownKeys(after).length)return false;
+  for(let index=0;index<fields.length;index++)if(!Object.is(before[fields[index]],after[fields[index]]))return false;
+  return true;
+}
+function capturedDescriptorFields(descriptors){return descriptors.map(([,descriptor])=>Reflect.ownKeys(descriptor));}
 function captureHistoryProofNatives(){
   try{
     if(globalThis.closedLoopHash!==hash)return null;
@@ -2404,8 +2415,8 @@ function captureHistoryProofNatives(){
       targets.push(value);if(typeof value==='function'&&value.prototype)targets.push(value.prototype);
       if(value===globalThis.crypto&&value.subtle){targets.push(value.subtle);const prototype=Object.getPrototypeOf(value.subtle);if(prototype)targets.push(prototype);}
     }
-    const records=[...new Set(targets)].map(target=>({target,prototype:Object.getPrototypeOf(target),descriptors:Reflect.ownKeys(target).map(key=>[key,Object.getOwnPropertyDescriptor(target,key)])}));
-    return Object.freeze({globals,records});
+    const records=[...new Set(targets)].map(target=>{const descriptors=Reflect.ownKeys(target).map(key=>[key,Object.getOwnPropertyDescriptor(target,key)]);return {target,prototype:Object.getPrototypeOf(target),descriptors,fields:capturedDescriptorFields(descriptors)};});
+    return Object.freeze({globals,globalFields:globals.map(descriptor=>descriptor&&Reflect.ownKeys(descriptor)),records});
   }catch{return null;}
 }
 function historyProofNativesUnchanged(natives){
@@ -2414,11 +2425,11 @@ function historyProofNativesUnchanged(natives){
     for(let index=0;index<HISTORY_PROOF_NATIVE_GLOBALS.length;index++){
       const before=natives.globals[index],after=Object.getOwnPropertyDescriptor(globalThis,HISTORY_PROOF_NATIVE_GLOBALS[index])||null;
       if(!before!==!after)return false;
-      if(before&&(Reflect.ownKeys(before).length!==Reflect.ownKeys(after).length||Reflect.ownKeys(before).some(field=>!Object.is(before[field],after[field]))))return false;
+      if(before&&!capturedDescriptorMatches(before,natives.globalFields[index],after))return false;
     }
-    return natives.records.every(({target,prototype,descriptors})=>{
+    return natives.records.every(({target,prototype,descriptors,fields})=>{
       const keys=Reflect.ownKeys(target);if(Object.getPrototypeOf(target)!==prototype||keys.length!==descriptors.length)return false;
-      return descriptors.every(([key,before],index)=>{const after=Object.getOwnPropertyDescriptor(target,key);return keys[index]===key&&after&&Reflect.ownKeys(before).length===Reflect.ownKeys(after).length&&Reflect.ownKeys(before).every(field=>Object.is(before[field],after[field]));});
+      return descriptors.every(([key,before],index)=>{const after=Object.getOwnPropertyDescriptor(target,key);return keys[index]===key&&after&&capturedDescriptorMatches(before,fields[index],after);});
     });
   }catch{return false;}
 }
@@ -2735,19 +2746,19 @@ function captureRootDigestPrimitives(){
     // unsupported. Native generator metadata and TextEncoder.encoding accessors
     // are descriptor-bound but never consumed by canonical digest encoding.
     if(descriptors.some(([key,entry])=>!Object.hasOwn(entry,'value')&&(functions.includes(target)||target===HISTORY_ACTIVATION_FIELDS||(target===encoderPrototype?key!=='encoding':key!=='constructor'&&key!==Symbol.toStringTag))))return null;
-    records.push({target,prototype:Object.getPrototypeOf(target),descriptors});
+    records.push({target,prototype:Object.getPrototypeOf(target),descriptors,fields:capturedDescriptorFields(descriptors)});
   }
-  return {hash,functions,records,encoderDescriptor,activation:[...HISTORY_ACTIVATION_FIELDS]};
+  return {hash,functions,records,encoderDescriptor,encoderFields:Reflect.ownKeys(encoderDescriptor),activation:[...HISTORY_ACTIVATION_FIELDS]};
 }
 const initialRootDigestPrimitives=captureRootDigestPrimitives();
 function rootDigestPrimitivesUnchanged(proof){
   const encoderDescriptor=Object.getOwnPropertyDescriptor(globalThis,'TextEncoder');
-  if(!proof||!encoderDescriptor||Reflect.ownKeys(proof.encoderDescriptor).length!==Reflect.ownKeys(encoderDescriptor).length||Reflect.ownKeys(proof.encoderDescriptor).some(field=>!Object.is(proof.encoderDescriptor[field],encoderDescriptor[field]))||proof.hash!==hash||globalThis.closedLoopHash!==hash||proof.functions.some((fn,index)=>fn!==[hash.canonicalChunks,hash.createSha256,hash.compareUnicodeScalarSequence,encoderDescriptor.value,Object.getOwnPropertyDescriptor(encoderDescriptor.value?.prototype||{},'encode')?.value][index])||!verifiedValuesEqual(proof.activation,HISTORY_ACTIVATION_FIELDS))return false;
-  for(const {target,prototype,descriptors} of proof.records){
+  if(!proof||!encoderDescriptor||!capturedDescriptorMatches(proof.encoderDescriptor,proof.encoderFields,encoderDescriptor)||proof.hash!==hash||globalThis.closedLoopHash!==hash||proof.functions.some((fn,index)=>fn!==[hash.canonicalChunks,hash.createSha256,hash.compareUnicodeScalarSequence,encoderDescriptor.value,Object.getOwnPropertyDescriptor(encoderDescriptor.value?.prototype||{},'encode')?.value][index])||!verifiedValuesEqual(proof.activation,HISTORY_ACTIVATION_FIELDS))return false;
+  for(const {target,prototype,descriptors,fields} of proof.records){
     const keys=Reflect.ownKeys(target);if(Object.getPrototypeOf(target)!==prototype||keys.length!==descriptors.length)return false;
     for(let index=0;index<keys.length;index++){
       const [key,before]=descriptors[index],after=Object.getOwnPropertyDescriptor(target,key);
-      if(keys[index]!==key||!after||Reflect.ownKeys(before).some(field=>!Object.is(before[field],after[field]))||Reflect.ownKeys(before).length!==Reflect.ownKeys(after).length)return false;
+      if(keys[index]!==key||!after||fields[index].some(field=>!Object.is(before[field],after[field]))||fields[index].length!==Reflect.ownKeys(after).length)return false;
     }
   }
   return true;
@@ -2831,7 +2842,9 @@ function captureRootValidators(primitive){
     const scope=hash.createCanonicalDigestScope(null);if(!scope)return null;
     const children=new Map(),full=rootValidatorGraph(null,children);if(!full)return null;
     const deepFrozen=deeplyFrozenValidatorNodes(full,children),graph=rootValidatorGraph(deepFrozen);if(!graph)return null;
-    const validators={primitive,scope,deepFrozen,graph,structuredClone:globalThis.structuredClone};
+    // Each captured descriptor's field names, read once (capturedDescriptorMatches).
+    const fields=graph.map((record,index)=>index?record.descriptors&&capturedDescriptorFields(record.descriptors):record.natives.map(descriptor=>descriptor&&Reflect.ownKeys(descriptor)));
+    const validators={primitive,scope,deepFrozen,graph,fields,structuredClone:globalThis.structuredClone};
     if(!rootValidatorsUnchanged(validators))return null;
     lastRootValidators=validators;return validators;
   }catch{return null;}
@@ -2839,11 +2852,11 @@ function captureRootValidators(primitive){
 function rootValidatorsUnchanged(validators){
   try{
     if(!validators||!rootDigestPrimitivesUnchanged(validators.primitive)||globalThis.structuredClone!==validators.structuredClone||!hash.canonicalDigestScopeMatches(validators.scope,null))return false;
-    const before=validators.graph,after=rootValidatorGraph(validators.deepFrozen);
+    const before=validators.graph,fields=validators.fields,after=rootValidatorGraph(validators.deepFrozen);
     if(!after||after.length!==before.length)return false;
     // Each optional native is still absent, or present with the same descriptor.
     const nativesBefore=before[0].natives,nativesAfter=after[0].natives;
-    for(let index=0;index<nativesBefore.length;index++){const left=nativesBefore[index],right=nativesAfter[index];if(!left!==!right)return false;if(left&&(Reflect.ownKeys(left).length!==Reflect.ownKeys(right).length||Reflect.ownKeys(left).some(field=>!Object.is(left[field],right[field]))))return false;}
+    for(let index=0;index<nativesBefore.length;index++){const left=nativesBefore[index],right=nativesAfter[index];if(!left!==!right)return false;if(left&&!capturedDescriptorMatches(left,fields[0][index],right))return false;}
     for(let index=1;index<before.length;index++){
       const left=before[index],right=after[index];
       if(left.node!==right.node||left.deep!==right.deep)return false;
@@ -2855,7 +2868,7 @@ function rootValidatorsUnchanged(validators){
       if(left.descriptors.length!==right.descriptors.length)return false;
       for(let position=0;position<left.descriptors.length;position++){
         const [key,descriptor]=left.descriptors[position],[otherKey,other]=right.descriptors[position];
-        if(key!==otherKey||Reflect.ownKeys(descriptor).length!==Reflect.ownKeys(other).length||Reflect.ownKeys(descriptor).some(field=>!Object.is(descriptor[field],other[field])))return false;
+        if(key!==otherKey||!capturedDescriptorMatches(descriptor,fields[index][position],other))return false;
       }
     }
     return true;
@@ -3328,7 +3341,7 @@ function checkpointBytePrimitivesMatch(proof){
   if(!proof||proof.globals.some((value,index)=>value!==[Blob,Uint8Array,Uint32Array,ArrayBuffer,DataView,TextEncoder][index])||proof.functions[0]!==hash.sha256Bytes)return false;
   return proof.records.every(({target,prototype,descriptors})=>{
     const keys=Reflect.ownKeys(target);if(Object.getPrototypeOf(target)!==prototype||keys.length!==descriptors.length)return false;
-    return descriptors.every(([key,before],index)=>{const after=Object.getOwnPropertyDescriptor(target,key);return keys[index]===key&&after&&Reflect.ownKeys(before).length===Reflect.ownKeys(after).length&&Reflect.ownKeys(before).every(field=>Object.is(before[field],after[field]));});
+    return descriptors.every(([key,before],index)=>{const after=Object.getOwnPropertyDescriptor(target,key);return keys[index]===key&&after&&capturedDescriptorMatches(before,Reflect.ownKeys(before),after);});
   });
  }catch{return false;}
 }
