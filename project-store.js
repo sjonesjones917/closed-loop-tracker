@@ -2304,17 +2304,31 @@ function historyProjectDigestsCold(project){
   return {projectSha256:projectDigest.digest(),workSha256:workDigest.digest()};
 }
 // One-use retained computations, never a validation-success cache — with one
-// exception: a History root proof. A root proof records that this store worker
-// fully decoded and verified one immutable stored root (or view reference) in
-// this worker session. It is module-private to the store worker, never
-// persisted, exported, posted or exposed, and dies with the worker. It is used
-// only by exportPackage and importPackage, and only after the using operation
-// re-binds every input of the cold check: the stored snapshot bytes and every
-// part's bytes are re-hashed, the History entry/record descriptor is compared
-// field by field, and the captured digest primitives, decode natives and
-// validator graph are confirmed unchanged. Any mismatch takes the unchanged
-// cold path, so its refusal code, message and order stand. Ordinary History
-// reads, restores, Undo/Redo and Back/Forward never consult it.
+// exception: a History root proof (with the pair proof of its project and
+// files). A root proof records that this store worker fully decoded and
+// verified one immutable stored root (or view reference) in this worker
+// session. It is module-private to the store worker, never persisted,
+// exported, posted or exposed, and dies with the worker. It is used only by
+// exportPackage and importPackage, and only after the using operation re-binds
+// every input of the cold check: the stored snapshot bytes and every part's
+// bytes are re-hashed, the History entry/record descriptor is compared field
+// by field, and the captured digest primitives, decode natives and validator
+// graph are confirmed unchanged. Its uses, each inside one of those two
+// operations and nowhere else:
+// - exportPackage's entry loop: a proven entry skips its decode (Tier 1);
+// - importPackage's History loop: an archived version whose pair proof also
+//   holds skips its decode (Tier 2, provenImportEntry); a proven root that no
+//   pair serves, and the active version's root, is still restored from its
+//   re-hashed bytes but without its digest pass and static check, its natives
+//   and validators confirmed again at that use, and its pair check runs as
+//   cold (Tier 1.5, provenImportRoot);
+// - importPackage's preparation of its prior project: the local active
+//   checkpoint, whose cold read would only be discarded, is re-bound instead
+//   (provenRetainedCheckpoint, reachable only through IMPORT_HISTORY_PROOFS).
+// Any mismatch takes the unchanged cold path, so its refusal code, message and
+// order stand. Ordinary History reads, restores, Undo/Redo and Back/Forward
+// never consult it. An operation's own computations (such as the parts-list
+// digests of historyPartsDigest) remain one-use: they die with the operation.
 const rootCertificates=new WeakSet(),checkpointDigestPairs=new WeakSet();
 // A write's root certificate holds the value the write validated, never proof
 // of the stored bytes: its encode runs through replaceable natives across
