@@ -70,14 +70,17 @@ const SOURCE_PAYLOAD='const packagePayloadDigest=payload=>';
 // The clone of a retained source's location (describeProjectSource), right
 // before its payload digest.
 const SOURCE_LOCATION='sourceLocation:clone(source.sourceLocation),parser:';
-const PACKAGE_PASS_REUSE='const packageProjectDigest=()=>packageProjectSha256??=packageDigestPass()?.projectSha256??projectSha256(project);';
+const PACKAGE_PASS_REUSE='const packageProjectDigest=()=>{const pass=packageDigestPass();return pass?(packageProjectSha256??=pass.projectSha256):projectSha256(project);};';
+// The package-project-cache-unguarded-fallback mutant restores the ??= cache of
+// the unguarded fallback; observed() instruments whichever variant is present.
+const PACKAGE_PASS_REUSE_UNGUARDED='const packageProjectDigest=()=>packageProjectSha256??=packageDigestPass()?.projectSha256??projectSha256(project);';
 // The end of the first work comparison, where the package project's work
 // digest from the pass of its project digest is reused or computed.
 const ACTIVE_WORK='?packageDigests.workSha256:historyWorkSha256(project));';
 const ACTIVE_WORK_REUSE='?activeWorkMatches:historyWorkSha256(importedActive.project)===historyWorkSha256(project))){';
 // The parts-list digests one proof operation holds, and the pair input check
 // a Tier 2 hit shares with its root proof.
-const PARTS_DIGEST='function historyPartsDigest(parts,digests=null,inputs=null){';
+const PARTS_DIGEST='function historyPartsDigest(parts,operation=null,inputs=null){';
 // The IMMUTABLE_HISTORY_CONFLICT check's parts digest: an operation's digest
 // or a fresh one.
 const CONFLICT_DIGEST='function historyConflictPartsDigest(parts,digests){';
@@ -197,7 +200,19 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  'package-pass-unconfirmed-natives':fault(['digest-spans'],'HISTORY_PROOF_DIGEST_SPAN_NATIVES_ORACLE',[[PACKAGE_PASS_NATIVES,'function packageDigestNativesUnchanged(baseline){return rootDigestPrimitivesUnchanged(initialRootDigestPrimitives);}']]),
  'digest-work-reused-across-await':fault(['digest-spans'],'HISTORY_PROOF_DIGEST_SPAN_ORACLE',[['if(importedActive&&(activatedExisting?activeWorkMatches:','if(importedActive&&(true?activeWorkMatches:']]),
  'parts-digests-shared-across-operations':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_ORACLE',[['function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),partsDigests:new WeakMap(),','const sharedPartsDigests=new WeakMap();function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),partsDigests:sharedPartsDigests,']]),
- 'parts-digest-wrong-key':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_ORACLE',[['  let held=digests.get(parts);if(held===undefined){held={digest:hash.sha256Value(parts),inputs};digests.set(parts,held);}','  let held=digests.get(digests);if(held===undefined){held={digest:hash.sha256Value(parts),inputs};digests.set(digests,held);}']]),
+ 'parts-digest-wrong-key':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_REUSE_ORACLE',[['  digests.set(parts,{digest,inputs,baselineConfirmed:before&&packageDigestNativesUnchanged(nullRootDigestScope)&&Object.isFrozen(parts)});','  digests.set(digests,{digest,inputs,baselineConfirmed:before&&packageDigestNativesUnchanged(nullRootDigestScope)&&Object.isFrozen(parts)});']]),
+ // A list's digest stored for reuse without confirming the digest-scope native
+ // baseline around its computation and reused ignoring that confirmation: a
+ // self-undoing baseline-native change at an entry poisons a digest later
+ // checks reuse.
+ 'parts-digest-skip-baseline':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_SWAP_ORACLE',[['  if(held!==undefined)return held.baselineConfirmed&&Object.isFrozen(parts)?held.digest:hash.sha256Value(parts);','  if(held!==undefined)return held.digest;'],['baselineConfirmed:before&&packageDigestNativesUnchanged(nullRootDigestScope)&&Object.isFrozen(parts)});','baselineConfirmed:true});']]),
+ // The list is not frozen after it is digested, so an in-place change across
+ // the awaits before a reuse (foreign code that captured it) is reused stale.
+ 'parts-list-unfrozen':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_SWAP_ORACLE',[['  if(before)freezePartsListTree(parts);\n','']]),
+ // packageProjectDigest caches the unguarded projectSha256(project) fallback
+ // across sites when the pass is unavailable, so bindRestoredCandidates stores a
+ // digest a native changed at the recovery check instead of digesting afresh.
+ 'package-project-cache-unguarded-fallback':fault(['digest-spans'],'HISTORY_PROOF_DIGEST_SPAN_REUSE_ORACLE',[['const packageProjectDigest=()=>{const pass=packageDigestPass();return pass?(packageProjectSha256??=pass.projectSha256):projectSha256(project);};','const packageProjectDigest=()=>packageProjectSha256??=packageDigestPass()?.projectSha256??projectSha256(project);']]),
  // Tier 1.5: a proven root without a usable pair restored under its proof.
  // A fresh worker running this mutant skips its own pair checks alike: the
  // cold page-realm store's refusal detects it.
@@ -208,9 +223,15 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  // after the digest pass.
  'restored-root-unbound-value':fault(['restored-unbound'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[['      if(provenInputs&&verifiedProjectSha256===provenRoot.verifiedProjectSha256&&verifiedWorkSha256===provenRoot.verifiedWorkSha256){\n','      if(provenInputs){verifiedProjectSha256=provenRoot.verifiedProjectSha256;verifiedWorkSha256=provenRoot.verifiedWorkSha256;\n']]),
  'restored-root-inputs-after-digest':fault(['restored-unbound'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[['      const provenInputs=Boolean(provenRoot)&&historyProofInputsCurrent(provenRoot)&&rootValidatorsUnchanged(provenRoot.validators);\n      '+COLD_ROOT+'\n','      '+COLD_ROOT+'\n      const provenInputs=Boolean(provenRoot)&&historyProofInputsCurrent(provenRoot)&&rootValidatorsUnchanged(provenRoot.validators);\n']]),
+ // rootValidatorsUnchanged confirms the digest primitives and the digest-scope
+ // baseline only before its walk, not after it: a getter the walk runs that
+ // changes a digest native and leaves it changed is not seen before the Tier 1.5
+ // digest pass (nor before a mint's record). This mutant drops the after-walk
+ // reconfirmation.
+ 'root-validators-skip-after-walk':fault(['restored-unbound'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[['    // The walk\'s own code did not change a digest primitive or a digest-scope\n    // native and leave it changed.\n    if(!rootDigestPrimitivesUnchanged(validators.primitive)||globalThis.structuredClone!==validators.structuredClone||!hash.canonicalDigestScopeMatches(validators.scope,null))return false;\n    return true;','    return true;']]),
  // The conflict check takes an operation's parts digest without confirming
  // its natives in its own turn.
- 'conflict-parts-digest-unconfirmed':fault(['restored-conflicts'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[['  return held?.inputs&&historyProofInputsCurrent(held.inputs)?held.digest:hash.sha256Value(parts);','  return held?held.digest:hash.sha256Value(parts);']]),
+ 'conflict-parts-digest-unconfirmed':fault(['restored-conflicts'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[['  return held?.baselineConfirmed&&Object.isFrozen(parts)&&packageDigestNativesUnchanged(nullRootDigestScope)?held.digest:hash.sha256Value(parts);','  return held?held.digest:hash.sha256Value(parts);']]),
  // The active version (P2) restored under its root's proof.
  'active-root-decoded-cold':fault(['active-roots'],'HISTORY_PROOF_ACTIVE_HIT_ORACLE',[['validatedProjections,verifiedSources,null,null,null,proofs);','validatedProjections,verifiedSources,null,null,null,entry.id!==incoming.activeId?proofs:null);']]),
  // The input checks compare every field of a captured descriptor, as many
@@ -250,13 +271,15 @@ export function observed(source){
  source=replaceOnce(source,PACKAGE_PASS,"packageDigests=packageProjectDigestPair(project,packageDigestBaseline);if(packageDigests){globalThis.__digestSpan?.open('source-payload');globalThis.__digestSpan?.open('package-pass');globalThis.__digestSpan?.open('package-work');}}",'package-pass');
  source=replaceOnce(source,SOURCE_PAYLOAD,"const packagePayloadDigest=payload=>{const value=packagePayloadDigestObserved(payload);if(value!==null)globalThis.__digestSpan?.use('source-payload',value,()=>hash.sha256Value(payload));return value;};const packagePayloadDigestObserved=payload=>",'source-payload');
  source=replaceOnce(source,SOURCE_LOCATION,"sourceLocation:(globalThis.__onImportReuse?.('source-location'),clone(source.sourceLocation)),parser:",'source-location');
- source=replaceOnce(source,PACKAGE_PASS_REUSE,"const packageProjectDigest=()=>{if(packageProjectSha256===null&&packageDigestPass())globalThis.__digestSpan?.use('package-pass',packageDigestPass().projectSha256,()=>projectSha256(project));return packageProjectSha256??=packageDigestPass()?.projectSha256??projectSha256(project);};",'package-pass-reuse');
+ source=source.includes(PACKAGE_PASS_REUSE)
+  ?replaceOnce(source,PACKAGE_PASS_REUSE,"const packageProjectDigest=()=>{const pass=packageDigestPass();if(packageProjectSha256===null&&pass)globalThis.__digestSpan?.use('package-pass',pass.projectSha256,()=>projectSha256(project));return pass?(packageProjectSha256??=pass.projectSha256):projectSha256(project);};",'package-pass-reuse')
+  :replaceOnce(source,PACKAGE_PASS_REUSE_UNGUARDED,"const packageProjectDigest=()=>{if(packageProjectSha256===null&&packageDigestPass())globalThis.__digestSpan?.use('package-pass',packageDigestPass().projectSha256,()=>projectSha256(project));return packageProjectSha256??=packageDigestPass()?.projectSha256??projectSha256(project);};",'package-pass-reuse-unguarded');
  source=replaceOnce(source,PACKAGE_DIGEST_REUSE,"viewRebased?null:(packageProjectSha256!==null&&globalThis.__digestSpan?.use('package-project',packageProjectSha256,()=>projectSha256(project)),packageProjectDigest()));\nglobalThis.__digestSpan?.between?.();",'package-digest-reuse');
  source=replaceOnce(source,ACTIVE_WORK,"?(globalThis.__digestSpan?.use('package-work',packageDigests.workSha256,()=>historyWorkSha256(project)),packageDigests.workSha256):historyWorkSha256(project));globalThis.__digestSpan?.open('active-work');",'active-work');
  source=replaceOnce(source,ACTIVE_WORK_REUSE,"?(globalThis.__digestSpan?.use('active-work',activeWorkMatches,()=>historyWorkSha256(importedActive.project)===historyWorkSha256(project)),activeWorkMatches):historyWorkSha256(importedActive.project)===historyWorkSha256(project))){",'active-work-reuse');
  // Every call with an operation's digests reports that map, the digest it
  // returns and a fresh computation; a shared capture reports its skipped check.
- source=replaceOnce(source,PARTS_DIGEST,"function historyPartsDigest(parts,digests=null,inputs=null){const held=Boolean(digests&&parts&&typeof parts==='object'&&digests.has(parts)),value=historyPartsDigestObserved(parts,digests,inputs);if(digests)globalThis.__partsDigest?.(digests,parts,value,()=>hash.sha256Value(parts),held);return value;}\nfunction historyPartsDigestObserved(parts,digests=null,inputs=null){",'parts-digest');
+ source=replaceOnce(source,PARTS_DIGEST,"function historyPartsDigest(parts,operation=null,inputs=null){const digests=operation&&operation.partsDigests,held=Boolean(digests&&parts&&typeof parts==='object'&&digests.has(parts)),value=historyPartsDigestObserved(parts,operation,inputs);if(digests)globalThis.__partsDigest?.(digests,parts,value,()=>hash.sha256Value(parts),held);return value;}\nfunction historyPartsDigestObserved(parts,operation=null,inputs=null){if(globalThis.__noPartsMemo&&operation&&parts&&typeof parts==='object')return hash.sha256Value(parts);",'parts-digest');
  // The conflict check reports whether an operation's digest stood in, and a
  // fresh computation in its own turn.
  source=replaceOnce(source,CONFLICT_DIGEST,"function historyConflictPartsDigest(parts,digests){const held=digests&&parts&&typeof parts==='object'?digests.get(parts):undefined,value=historyConflictPartsDigestObserved(parts,digests);if(digests)globalThis.__conflictDigest?.(digests,value,()=>hash.sha256Value(parts),Boolean(held)&&value===held.digest);return value;}\nfunction historyConflictPartsDigestObserved(parts,digests){",'conflict-digest');
@@ -1254,6 +1277,69 @@ async function digestSpanSwaps(context){
   emit('HISTORY-PROOF-DIGEST-SPAN-swap-'+label,{refused:!same.outcome.ok,code:same.outcome.code??null,activatedExisting:same.outcome.ok?same.outcome.activeId===body.recovery.activeId:false,changeFired:same.state.fired>0,equalToSiteDigests:true});
  }
 }
+// The parts-list digest memo under a self-undoing change of a native its
+// computation dispatches through but historyProofInputsCurrent does not cover
+// (Object, Array, their iterators), and under an in-place change of the list
+// across the awaits before a reuse. A segmented root's two segments are listed
+// in swapped order in the backup's recovery manifest (its snapshot body
+// untouched); a one-shot Object.getOwnPropertyDescriptor change serves indices
+// 0 and 1 of that segments array in the original order during the first parts
+// digest, then restores itself. The proof-holding worker must import exactly as
+// a control whose parts digests are each computed afresh (the parent): the
+// poisoned first digest must not stand in at historyProofPartsRetained or the
+// conflict check. And a microtask that swaps the segments in place once the
+// first digest is held (foreign code that captured the list through an earlier
+// replaced native) must not corrupt a reuse: the list is frozen.
+export const PARTS_DIGEST_SWAP_CASES=Object.freeze(['baseline-native','captured-mutation']);
+async function partsDigestSwaps(context){
+ const {source,emit}=context;
+ const SEGMENTED='closed-loop-recovery-project-parts/2',records=n=>({records:Array.from({length:1500+100*n},(_,i)=>({id:'HISTORY-PROOF-SEG-'+i,text:'Exact retained record '+i+' '+'.'.repeat(i%41)}))});
+ const b=browser(source),{store,page}=b;
+ let p=await store.createProject({commandId:'HISTORY-PROOF-REUSE-PARTS-SWAP'});const jobId=p.job.JOB_ID;
+ for(const n of [1,2]){const next=store.clone(p);next.job.JOB_TITLE='Exact parts swap title '+n+' '+'retained title text '.repeat(300);next.vendorExtension=page.copy(records(n));p=await store.writeProject(next,{expectedProjectRevision:p.revision});await store.saveCheckpoint(jobId,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:page.copy({activeStage:1,activeView:'Workflow',drafts:{},scrollX:0,scrollY:n}),label:'Saved view'});}
+ assert.equal((await exportOutcome(store,jobId)).ok,true,'HISTORY_PROOF_PARTS_DIGEST_SWAP_FIXTURE_ORACLE: the minting export');
+ const backup=await store.exportPackage(jobId),body=await backupBody(backup),ids=body.recovery.entries.map(entry=>entry.id);
+ const target=body.recovery.entries.find(entry=>!entry.projectReference&&entry.id!==body.recovery.activeId&&entry.projectParts?.schema===SEGMENTED&&entry.projectParts.entries.some(part=>part.segments?.length>=2));
+ assert.ok(target,'HISTORY_PROOF_PARTS_DIGEST_SWAP_FIXTURE_ORACLE: a non-active segmented root with two segments');
+ const partIndex=target.projectParts.entries.findIndex(part=>part.segments?.length>=2),seg0=target.projectParts.entries[partIndex].segments[0].sha256,seg1=target.projectParts.entries[partIndex].segments[1].sha256;
+ const tamperedBody=structuredClone(body);{const segments=tamperedBody.recovery.entries.find(entry=>entry.id===target.id).projectParts.entries[partIndex].segments;[segments[0],segments[1]]=[segments[1],segments[0]];}
+ const tampered=await encodeBackup(b.worker().realm,tamperedBody),held={rows:copyRows(b.rows,page),ledger:b.worker().realm.runtime.__historyProofLedger.save()};
+ // Serves the tampered segments array's indices 0 and 1 in the original order
+ // once, then restores Object.getOwnPropertyDescriptor.
+ const gopdRemap=(t,fired)=>{
+  const O=t.Object,d=Object.getOwnPropertyDescriptor(O,'getOwnPropertyDescriptor'),gopd=d.value;let active=true,served=0;
+  const undo=()=>{if(active){active=false;Object.defineProperty(O,'getOwnPropertyDescriptor',d);}};
+  Object.defineProperty(O,'getOwnPropertyDescriptor',{...d,value:function(target,key){if(active&&Array.isArray(target)&&target.length>=2&&target[0]?.sha256===seg1&&target[1]?.sha256===seg0&&(key==='0'||key==='1')){const r=Reflect.apply(gopd,O,[target,key==='0'?'1':'0']);if(++served===2){fired();undo();}return r;}return Reflect.apply(gopd,this,[target,key]);}});
+  return undo;
+ };
+ // Each run is in the one proof-holding worker (its rows and ledger reset to
+ // held), so the target is a Tier 2 candidate; memo on, then off (the parent).
+ const run=async(blob,arm,memoOff)=>{
+  for(const [name,data] of held.rows)b.rows.set(name,new Map([...data].map(([key,value])=>[key,page.copy(value)])));
+  const t=b.worker().realm.runtime;t.__historyProofLedger.restore(held.ledger);if(memoOff)t.__noPartsMemo=true;
+  const undo=arm(t);let outcome;try{outcome=await importOutcome(b,blob,jobId,ids);}finally{undo?.();delete t.__noPartsMemo;delete t.__partsDigest;delete t.__onImportReuse;}
+  return outcome;
+ };
+ // baseline-native: a self-undoing Object change poisons the first digest; the
+ // proof-holding worker must refuse exactly as it does with the memo off.
+ {
+  const armSwap=t=>{let undo=null;t.__onImportReuse=(where,id)=>{if(!undo&&where==='history-entry'&&id===target.id)undo=gopdRemap(t,()=>{});};return ()=>undo?.();};
+  const same=await run(tampered,armSwap,false),control=await run(tampered,armSwap,true);
+  assert.deepEqual(same,control,'HISTORY_PROOF_PARTS_DIGEST_SWAP_ORACLE baseline-native: a poisoned first parts digest stood in where the parent digests afresh');
+  assert.equal(same.ok,false,'HISTORY_PROOF_PARTS_DIGEST_SWAP_ORACLE baseline-native: the tampered backup is refused');
+  emit('HISTORY-PROOF-PARTS-SWAP-baseline-native',{refused:!same.ok,code:same.code??null,equalToParent:true});
+ }
+ // captured-mutation: once the target's first digest is held, a microtask
+ // swaps its two segments in place. The frozen list defeats it; the untampered
+ // backup imports exactly as without the mutation.
+ {
+  const armMutation=t=>{let done=false;t.__partsDigest=(digests,parts,value,fresh,heldBefore)=>{if(!done&&!heldBefore&&parts?.entries?.[partIndex]?.segments?.[0]?.sha256===seg0&&parts.entries[partIndex].segments[1]?.sha256===seg1&&parts.schema===SEGMENTED){done=true;const list=parts.entries[partIndex].segments;queueMicrotask(()=>{try{[list[0],list[1]]=[list[1],list[0]];}catch{/* frozen: the mutation is defeated */}});}};return ()=>{};};
+  const withMutation=await run(backup,armMutation,false),plain=await run(backup,()=>()=>{},false);
+  assert.deepEqual(withMutation,plain,'HISTORY_PROOF_PARTS_DIGEST_SWAP_ORACLE captured-mutation: an in-place change of a frozen list across an await changed the import');
+  assert.equal(withMutation.ok,true,'HISTORY_PROOF_PARTS_DIGEST_SWAP_ORACLE captured-mutation: the untampered backup imports');
+  emit('HISTORY-PROOF-PARTS-SWAP-captured-mutation',{refused:!withMutation.ok,code:withMutation.code??null,equalToUnmutated:true});
+ }
+}
 async function digestSpansSection(context){
  const {source,emit}=context;
  const b=browser(source),{jobId}=await fixture(b);
@@ -1289,7 +1375,9 @@ async function digestSpansSection(context){
  await spanImport('activated',await b.store.exportPackage(jobId),{sourcePayload:1,packagePass:1,packageProject:1,activeWork:1,packageWork:1});
  // The digest primitives changed between the sites: the work is digested at
  // its comparison (the import, whose proofs were used, is then redone cold).
- await spanImport('primitive-changed',await b.store.exportPackage(jobId),{sourcePayload:1,packagePass:1,packageProject:2,activeWork:2,packageWork:0},benignEncoderChange());
+ // packageProject is reused once, in the first (proof) run; the cold redo
+ // under the changed primitive digests afresh and caches no fallback.
+ await spanImport('primitive-changed',await b.store.exportPackage(jobId),{sourcePayload:1,packagePass:1,packageProject:1,activeWork:2,packageWork:0},benignEncoderChange());
  // An embedded project carrying its own projectSha256: the retained source's
  // payload digest (of the project as parsed) is computed at its site.
  {const body=await backupBody(await b.store.exportPackage(jobId));body.project.projectSha256=body.packageManifest.projectSha256;await spanImport('own-project-digest',await encodeBackup(b.worker().realm,body),{sourcePayload:0,packagePass:1,packageProject:1,activeWork:1,packageWork:1});}
@@ -1310,6 +1398,7 @@ async function digestSpansSection(context){
  assert.ok(pairInputs>0&&pairInputReuses.every(use=>use.sameTurn&&use.equal),'HISTORY_PROOF_PARTS_DIGEST_REUSE_ORACLE: a Tier 2 hit sharing its root proof\'s captures checked them twice');
  emit('HISTORY-PROOF-PARTS-DIGEST-ONCE',{imports:partsCalls.length,operationsPerImport:1,distinctAcrossImports:true,hits,conflictReuses,equal:true,pairInputReuses:pairInputs,sameTurn:true});
  await digestSpanSwaps(context);
+ await partsDigestSwaps(context);
 }
 
 // 15. Tier 1.5: an archived root whose root proof matches, but which no pair
@@ -1322,9 +1411,9 @@ async function digestSpansSection(context){
 // derived in the future all import exactly as a fresh worker's cold import;
 // a refused version holds no pair or proof afterwards in either worker. (A
 // pair a check mints in the import may serve a later version of it, Tier 2.)
-export const RESTORED_FAULT_CASES=Object.freeze({'retired-file-removed':'HISTORY_FILE_INTEGRITY_FAILED','manifest-label':'HISTORY_VERSION_MISMATCH','recovery-refusal':'HISTORY_VERSION_INCOMPATIBLE'});
+export const RESTORED_FAULT_CASES=Object.freeze({'retired-file-removed':'HISTORY_FILE_INTEGRITY_FAILED','manifest-label':'HISTORY_VERSION_MISMATCH','recovery-refusal':'HISTORY_VERSION_INCOMPATIBLE','segment-member-relabeled':'HISTORY_VERSION_MISMATCH','segment-count':'HISTORY_VERSION_MISMATCH','project-bytes':'HISTORY_VERSION_MISMATCH'});
 export const RESTORED_REALM_CASES=Object.freeze(['text-encoder','hash-sha256-bytes','json-parse','decompression-stream','blob-array-buffer','engine-property','schema-definition']);
-export const ACTIVE_FAULT_CASES=Object.freeze(['active-snapshot-member','active-part-member','active-manifest-label']);
+export const ACTIVE_FAULT_CASES=Object.freeze(['active-snapshot-member','active-part-member','active-manifest-label','active-segment-member','active-segment-count']);
 // A restored value bound to its proof only by natives seen unchanged around
 // its awaited restore: a change made after provenImportRoot that undoes
 // itself within the restore (archived roots, a minted pair and a later
@@ -1381,11 +1470,15 @@ async function noteFixture(b){
 }
 const hasNotePart=entry=>Boolean(entry?.projectParts?.entries.some(part=>JSON.stringify(part.path)==='["vendorExtension","note"]'));
 // The state the Tier 1.5 sections share: one proof-holding worker after the
-// minting export (importFixture), its rows and ledger held, and the import
-// without pairs (in that worker, a fresh worker and a cold page-realm store)
-// whose restored roots later cases name. A verifier run computes it once, in
-// the first of these sections it runs, so that a section run alone (an
-// intended fault) starts from the state a complete run gives it.
+// minting export (importFixture), its rows and ledger saved in holding, and the
+// import without pairs (in that worker, a fresh worker and a cold page-realm
+// store) whose restored roots later cases name. A verifier run computes it once,
+// in the first of these sections it runs. Every section resets the worker's rows
+// and ledger to holding before each of its cases (compare, importThreeWays), so
+// a write an earlier section makes on the shared worker (activeRootsSection
+// writes, exports and imports a further backup on it) never carries into another
+// section, and a section run alone (an intended fault) sees the same held state a
+// complete run gives it.
 function restoredContext(context){
  return context.shared.restored??=(async()=>{
   const {source}=context;
@@ -1423,10 +1516,21 @@ async function restoredRootsSection(context){
  // keeps no pair or proof in either worker.
  assert.ok(marked,'HISTORY_PROOF_TIER15_FIXTURE_ORACLE: the root refused by its recovery compatibility');
  const edited=async edit=>{const copy=plain(body);await edit(copy);return encodeBackup(b.worker().realm,copy);};
+ // A segmented (/2) root whose record array spans more than one segment: its
+ // second segment, a projectBytes fault of its /2 entry.
+ const segTarget=recovery.entries.find(entry=>!entry.projectReference&&entry.id!==recovery.activeId&&entry.projectParts?.schema===SEGMENTED&&entry.projectParts.entries.some(part=>part.segments&&part.segments.length>1));
+ assert.ok(segTarget&&restoredIds.includes(segTarget.id),'HISTORY_PROOF_TIER15_FIXTURE_ORACLE: a restored segmented root with a multi-segment record array');
+ const segOf=copy=>copy.recovery.entries.find(entry=>entry.id===segTarget.id).projectParts.entries.find(part=>part.segments&&part.segments.length>1).segments[1];
  const faults={
   'retired-file-removed':{blob:await edited(async copy=>{removeMember(copy,a=>a.archiveKind==='RECOVERY_BYTES'&&a.sha256===retired.sha256);copy.recovery.retainedFileBytes-=copy.recovery.files[retired.sha256].byteSize;delete copy.recovery.files[retired.sha256];})},
   'manifest-label':{blob:await edited(copy=>{copy.recovery.entries.find(entry=>entry.id===nonActiveRoots[1]).label='Edited backup label';})},
-  'recovery-refusal':{blob:backup,realm:refuseMarked}
+  'recovery-refusal':{blob:backup,realm:refuseMarked},
+  // The second segment relabelled (a retained part no longer named), its
+  // segment count raised, and the /2 entry's declared projectBytes raised: each
+  // refused by the Tier 1.5 restore's own checks exactly as a cold store.
+  'segment-member-relabeled':{blob:await edited(async copy=>{const part=segOf(copy),member=copy.artifacts.find(a=>a.archiveKind==='RECOVERY_BYTES'&&a.sha256===part.sha256),bytes=Buffer.concat([Buffer.from(member.base64,'base64'),Buffer.from(' ')]);const info=copy.recovery.files[part.sha256];delete copy.recovery.files[part.sha256];const sha256=await setMemberBytes(b.worker().realm,copy,member,bytes);member.filename=sha256+'.bin';member.artifactId='RECOVERY-BYTES-'+sha256;const row=copy.packageManifest.artifacts.find(a=>a.sha256===sha256);Object.assign(row,{artifactId:member.artifactId,filename:member.filename});copy.recovery.files[sha256]={...info,byteSize:bytes.length};copy.recovery.retainedFileBytes+=bytes.length-info.byteSize;part.sha256=sha256;part.byteSize=bytes.length;})},
+  'segment-count':{blob:await edited(copy=>{segOf(copy).count++;})},
+  'project-bytes':{blob:await edited(copy=>{copy.recovery.entries.find(entry=>entry.id===segTarget.id).projectBytes++;})}
  };
  assert.deepEqual(Object.keys(faults),Object.keys(RESTORED_FAULT_CASES));
  for(const [label,{blob,realm}] of Object.entries(faults)){
@@ -1503,10 +1607,16 @@ async function activeRootsSection(context){
   emit('HISTORY-PROOF-ACTIVE-ROOT',{activeRootRestored:true,restoredRoots:result.sameCounts.restoredRoots,identical:true});
  }
  const editedRoot=async edit=>{const copy=plain(rootBody);await edit(copy);return encodeBackup(b.worker().realm,copy);};
+ // The active root is segmented (/2) with a multi-segment record array.
+ const aseg=copy=>copy.recovery.entries.find(entry=>entry.id===activeRoot.id).projectParts.entries.find(part=>part.segments&&part.segments.length>1).segments[1];
+ assert.ok(activeRoot.projectParts?.schema===SEGMENTED&&activeRoot.projectParts.entries.some(part=>part.segments&&part.segments.length>1),'HISTORY_PROOF_ACTIVE_FIXTURE_ORACLE: the active root has a multi-segment record array');
  const activeFaults={
   'active-snapshot-member':async copy=>{const {member,snapshot}=await snapshotMember(copy,activeRoot.id);snapshot.view={...snapshot.view,scrollY:998};const bytes=Buffer.from(await (await encodeBackup(b.worker().realm,snapshot)).arrayBuffer());const entry=copy.recovery.entries.find(row=>row.id===activeRoot.id);copy.recovery.compressedProjectBytes+=bytes.length-entry.byteSize;entry.sha256=await setMemberBytes(b.worker().realm,copy,member,bytes);entry.byteSize=bytes.length;},
   'active-part-member':async copy=>{const entry=copy.recovery.entries.find(row=>row.id===activeRoot.id),part=entry.projectParts.entries.find(row=>!row.segments),member=copy.artifacts.find(a=>a.archiveKind==='RECOVERY_BYTES'&&a.sha256===part.sha256),bytes=Buffer.concat([Buffer.from(member.base64,'base64'),Buffer.from(' ')]);const info=copy.recovery.files[part.sha256];delete copy.recovery.files[part.sha256];const sha256=await setMemberBytes(b.worker().realm,copy,member,bytes);member.filename=sha256+'.bin';member.artifactId='RECOVERY-BYTES-'+sha256;const row=copy.packageManifest.artifacts.find(a=>a.sha256===sha256);Object.assign(row,{artifactId:member.artifactId,filename:member.filename});copy.recovery.files[sha256]={...info,byteSize:bytes.length};copy.recovery.retainedFileBytes+=bytes.length-info.byteSize;part.sha256=sha256;part.byteSize=bytes.length;},
-  'active-manifest-label':copy=>{copy.recovery.entries.find(entry=>entry.id===activeRoot.id).label='Edited backup label';}
+  'active-manifest-label':copy=>{copy.recovery.entries.find(entry=>entry.id===activeRoot.id).label='Edited backup label';},
+  // A segment of the active root relabelled, and its segment count raised.
+  'active-segment-member':async copy=>{const part=aseg(copy),member=copy.artifacts.find(a=>a.archiveKind==='RECOVERY_BYTES'&&a.sha256===part.sha256),bytes=Buffer.concat([Buffer.from(member.base64,'base64'),Buffer.from(' ')]);const info=copy.recovery.files[part.sha256];delete copy.recovery.files[part.sha256];const sha256=await setMemberBytes(b.worker().realm,copy,member,bytes);member.filename=sha256+'.bin';member.artifactId='RECOVERY-BYTES-'+sha256;const row=copy.packageManifest.artifacts.find(a=>a.sha256===sha256);Object.assign(row,{artifactId:member.artifactId,filename:member.filename});copy.recovery.files[sha256]={...info,byteSize:bytes.length};copy.recovery.retainedFileBytes+=bytes.length-info.byteSize;part.sha256=sha256;part.byteSize=bytes.length;},
+  'active-segment-count':copy=>{aseg(copy).count++;}
  };
  assert.deepEqual(Object.keys(activeFaults),[...ACTIVE_FAULT_CASES]);
  for(const [label,edit] of Object.entries(activeFaults)){
@@ -1544,6 +1654,43 @@ async function restoredConflictsSection(context){
   assert.equal(result.cold.code,'IMMUTABLE_HISTORY_CONFLICT','HISTORY_PROOF_TIER15_FIXTURE_ORACLE conflict-'+label+': the cold conflict check refuses the changed parts digest');
   emit('HISTORY-PROOF-TIER15-CONFLICT-'+label,{refused:!result.same.ok,code:result.same.code??null,restoredAsFresh:true});
  }
+}
+// A digest-scope native changed by a getter the Tier 1.5 validator walk runs,
+// left changed into the digest pass: rootValidatorsUnchanged checks the baseline
+// before its walk, and the walk reads @@toStringTag on each node. The getter is
+// recorded in the captured validator graph, so it runs on every walk, after the
+// baseline check; only the after-walk reconfirmation sees the change it leaves.
+const walkFrames=()=>String(new Error().stack).split('\n').slice(2).map(line=>line.trim().replace(/^at /,'').replace(/ \(.*\/([^/]+\.(?:m?js)):(\d+):\d+\)$/,' ($1:$2)'));
+const inProvenInputsWalk=stack=>{const i=stack.findIndex(f=>f.startsWith('rootValidatorsUnchanged'));return i>=0&&(stack[i+1]?.startsWith('bindCheckpointBody')||stack[i+1]?.startsWith('readCheckpointBody'));};
+function installDateTagGetter(t){Object.defineProperty(t.Date.prototype,Symbol.toStringTag,{configurable:true,enumerable:false,get(){const plan=t.__attackPlan;if(this===t.Date.prototype&&plan&&!plan.armed&&plan.when(walkFrames())){plan.armed=true;plan.undo=plan.change(t);}return undefined;}});}
+const WALK_TITLE='Exact retained walk title ';
+async function tier15WalkInputCase(context){
+ const {source,emit}=context;
+ // A: JSON.parse returns the title 1 part's string as title 8 once (restore).
+ // B: TextEncoder maps title 8 back to title 1 once (the digest pass), armed by
+ // the getter inside the provenInputs walk after its baseline check.
+ const jsonOnce=log=>t=>{const original=t.JSON.parse;t.JSON.parse=function(text,reviver){const value=original.call(this,text,reviver);if(typeof value==='string'&&value.startsWith(WALK_TITLE+'1 ')){t.JSON.parse=original;log.push('A');return WALK_TITLE+'8 '+value.slice((WALK_TITLE+'1 ').length);}return value;};return ()=>{t.JSON.parse=original;};};
+ const encoderOnce=log=>t=>{const proto=t.TextEncoder.prototype,original=proto.encode;proto.encode=function(text){if(typeof text==='string'&&text.includes(WALK_TITLE+'8 ')){proto.encode=original;log.push('B');return original.call(this,text.replace(WALK_TITLE+'8 ',WALK_TITLE+'1 '));}return original.call(this,text);};return ()=>{proto.encode=original;};};
+ const b=browser(source,null,{onWorker:realm=>installDateTagGetter(realm.runtime)}),{store,page}=b;
+ let p=await store.createProject({commandId:'HISTORY-PROOF-REUSE-WALK'});const jobId=p.job.JOB_ID;
+ for(const n of [1,2]){const next=store.clone(p);next.job.JOB_TITLE=WALK_TITLE+n+' '+'retained title text '.repeat(300);p=await store.writeProject(next,{expectedProjectRevision:p.revision});await store.saveCheckpoint(jobId,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:page.copy({activeStage:1,activeView:'Workflow',drafts:{},scrollX:0,scrollY:n}),label:'Saved view'});}
+ await store.exportPackage(jobId);
+ const backup=await store.exportPackage(jobId),body=await backupBody(backup),ids=body.recovery.entries.map(entry=>entry.id);
+ const titleOf=async entry=>{const member=body.artifacts.find(a=>a.archiveKind==='RECOVERY_SNAPSHOT'&&a.checkpointId===entry.id),snapshot=JSON.parse(gunzipSync(Buffer.from(member.base64,'base64')).toString('utf8')),part=snapshot.projectParts?.entries.find(row=>JSON.stringify(row.path)==='["job","JOB_TITLE"]'),file=part&&body.artifacts.find(a=>a.archiveKind==='RECOVERY_BYTES'&&a.sha256===part.sha256);return file?JSON.parse(Buffer.from(file.base64,'base64').toString('utf8')):snapshot.project?.job?.JOB_TITLE;};
+ let target=null;for(const entry of body.recovery.entries.filter(row=>!row.projectReference&&row.id!==body.recovery.activeId))if(String(await titleOf(entry)||'').startsWith(WALK_TITLE+'1 '))target=entry;
+ assert.ok(target,'HISTORY_PROOF_TIER15_WALK_FIXTURE_ORACLE: the archived root titled 1 with a retained title part');
+ const held={rows:copyRows(b.rows,page),ledger:ownLedger(b.worker().realm.runtime).save()};
+ const arm=t=>{const log=[];let undoA=null;t.__onImportReuse=(where,id)=>{if(!undoA&&where==='restore-rebound'&&id===target.id){undoA=jsonOnce(log)(t);t.__attackPlan={armed:false,when:stack=>log.includes('A')&&inProvenInputsWalk(stack),change:encoderOnce(log)};}};return {log,undo(){undoA?.();t.__attackPlan?.undo?.();delete t.__attackPlan;delete t.__onImportReuse;}};};
+ // HEAD: the proof-holding worker (pairs dropped, so the target is Tier 1.5).
+ for(const [name,data] of held.rows)b.rows.set(name,new Map([...data].map(([key,value])=>[key,page.copy(value)])));
+ const t=b.worker().realm.runtime;ownLedger(t).restore(held.ledger);ownLedger(t).dropPairs();
+ const armedHead=arm(t);let same;try{same=await importOutcome(b,backup,jobId,ids);}finally{armedHead.undo();}
+ // Cold page-realm store: no proofs, no walk, so B never fires.
+ const cold=coldCopy(held.rows,source);installDateTagGetter(cold.runtime);const armedCold=arm(cold.runtime);let coldOut;try{coldOut=asWorkerFrame(await importOutcome({rows:cold.rows,store:cold.store,page:cold},backup,jobId,ids));}finally{armedCold.undo();}
+ assert.deepEqual(same,coldOut,'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE digest-input-walk: a change the proven root\'s validator walk left standing skipped the static check that a cold store runs');
+ assert.equal(same.ok,false,'HISTORY_PROOF_TIER15_WALK_FIXTURE_ORACLE digest-input-walk: the altered value is refused');
+ assert.ok(armedHead.log.includes('A')&&armedHead.log.includes('B'),'HISTORY_PROOF_TIER15_WALK_FIXTURE_ORACLE digest-input-walk: both changes fired in the proof-holding worker');
+ emit('HISTORY-PROOF-TIER15-UNBOUND-digest-input-walk',{refused:!same.ok,code:same.code??null,walkChangeFired:true});
 }
 // 18. Restored values bound only by their own digests (restoredContext).
 async function restoredUnboundSection(context){
@@ -1614,6 +1761,10 @@ async function restoredUnboundSection(context){
   const both=runtime=>{const undoParse=parse.change(runtime),undoEncode=encode.change(runtime);return ()=>{undoEncode();undoParse();};};
   await unbound('digest-input',{b,held:holding,blob:backup,jobId,entryIds:ids,ledger:dropPairs,at:{id:titled.id,change:both}},[parse.counters,encode.counters],'PROJECT_INTEGRITY_FAILED');
  }
+ // The same digest-input pattern with the second change moved into the proven
+ // root's validator walk, caught only by rootValidatorsUnchanged's after-walk
+ // reconfirmation.
+ await tier15WalkInputCase(context);
 }
 
 // 19. The input checks a proof use re-runs (the validator graph, the decode

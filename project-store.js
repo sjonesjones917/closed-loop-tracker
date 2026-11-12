@@ -2560,6 +2560,14 @@ function mintHistorySnapshotProof(jobId,entry,body,payload,basis,inputs,verified
     // The same proof under the same captures needs no second mint.
     const existing=historyRootProof(jobId,entry.sha256);
     if(existing&&existing.kind===basis.kind&&existing.verifiedProjectSha256===verifiedProjectSha256&&existing.verifiedWorkSha256===verifiedWorkSha256&&existing.validators===validators&&existing.primitive===inputs.primitive&&historyProofInputsCurrent(existing))return;
+    // A root mint's rootValidatorsUnchanged walk is the only point at which
+    // foreign code (a getter on a captured validator node) can run between the
+    // input checks and the record below; it now reconfirms the digest primitives
+    // and the digest-scope native baseline after the walk, so a change the walk
+    // leaves standing, the one that could poison the password-deciding credential
+    // fact, mints nothing. A reference mint runs no walk, computes its facts
+    // under the digest primitives and decode natives (historyProofInputsCurrent),
+    // and carries no credential payload of its own.
     if(basis.kind==='root'&&!rootValidatorsUnchanged(validators))return;
     // The checks validateCheckpointArtifacts makes that read only these bytes.
     let viewChecked=false;const artifactBytes=[];
@@ -2598,27 +2606,48 @@ function mintHistoryPairProof(jobId,projectSha256,artifacts,{derived='NOT_CHECKE
 // (provenRetainedCheckpoint): rechecked before commit, never read as the
 // validators memo, so the first History entry walks the graph again.
 function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),partsDigests:new WeakMap(),retainedValidators:new Set(),used:false}:null;}
+// Freeze a parsed parts list (plain JSON: objects, arrays, strings, numbers)
+// and everything it reaches, so its content cannot change after it is digested.
+// Dispatches only through Object, which the caller confirmed unchanged.
+function freezePartsListTree(list){
+  const stack=[list];
+  while(stack.length){const node=stack.pop();if(!node||typeof node!=='object'||Object.isFrozen(node))continue;Object.freeze(node);for(const key of Object.keys(node))stack.push(node[key]);}
+}
 // The canonical digest of a parts list, computed once per proof operation, as
-// verifiedByteDigests holds one Blob's digest per import. A list is a key only
-// while no code but this module's own can reach it: importPackage parses its
-// backup's entries itself and drops a list's digest before the entry is
-// handed to clone (whose prompt-context hook is replaceable). Without an
-// operation the digest is computed afresh. inputs: the proof whose primitives
-// and natives the caller confirmed in this synchronous turn
-// (historyProofFactsMatch), recorded with the digest it computes under them.
-function historyPartsDigest(parts,digests=null,inputs=null){
+// verifiedByteDigests holds one Blob's digest per import. hash.sha256Value
+// dispatches through the digest-scope native baseline (hash.js: Object, Array,
+// String, Number, Set, Map, their prototypes, iterators and the canonicalChunks
+// generator chain) and the digest primitives. A list's digest is stored for
+// reuse only when packageDigestNativesUnchanged confirms all of those in this
+// synchronous turn immediately before and after it, so the digest equals an
+// independent one at this moment, and the list is frozen, so no later code
+// (this module's own, or one that captured the list through a replaced native)
+// can change its content across the awaits before a reuse: the list is then
+// bound to every reuse site by identity and immutability. Otherwise it is
+// digested afresh here and at each later site. Without an operation the digest
+// is computed afresh. inputs is recorded for callers that still read it.
+function historyPartsDigest(parts,operation=null,inputs=null){
+  const digests=operation&&operation.partsDigests;
   if(!digests||!parts||typeof parts!=='object')return hash.sha256Value(parts);
-  let held=digests.get(parts);if(held===undefined){held={digest:hash.sha256Value(parts),inputs};digests.set(parts,held);}
-  return held.digest;
+  const held=digests.get(parts);
+  if(held!==undefined)return held.baselineConfirmed&&Object.isFrozen(parts)?held.digest:hash.sha256Value(parts);
+  const before=packageDigestNativesUnchanged(nullRootDigestScope);
+  if(before)freezePartsListTree(parts);
+  const digest=hash.sha256Value(parts);
+  digests.set(parts,{digest,inputs,baselineConfirmed:before&&packageDigestNativesUnchanged(nullRootDigestScope)&&Object.isFrozen(parts)});
+  return digest;
 }
 // The IMMUTABLE_HISTORY_CONFLICT check runs as cold: it digests the parts list
 // under the natives of its own turn. A digest the operation holds stands in for
-// that only when it was computed under confirmed captures and those primitives
-// and natives are confirmed unchanged now, in the check's synchronous turn;
-// otherwise the list is digested afresh.
+// that only when it was stored under the digest-scope native baseline confirmed
+// around its computation (so it equals the list's true digest at that moment),
+// the list is still frozen (so no code changed its content since), and those
+// same natives are still unchanged in this check's turn (so a change made at
+// this use digests the list afresh, exactly as a cold check would); otherwise
+// the list is digested afresh here.
 function historyConflictPartsDigest(parts,digests){
   const held=digests&&parts&&typeof parts==='object'?digests.get(parts):undefined;
-  return held?.inputs&&historyProofInputsCurrent(held.inputs)?held.digest:hash.sha256Value(parts);
+  return held?.baselineConfirmed&&Object.isFrozen(parts)&&packageDigestNativesUnchanged(nullRootDigestScope)?held.digest:hash.sha256Value(parts);
 }
 function historyProofUsed(operation,proof){operation.used=true;operation.natives.add(proof.natives);operation.primitives.add(proof.primitive);}
 function historyProofValidatorsCurrent(operation,validators){
@@ -2643,7 +2672,7 @@ function historyProofFactsMatch(proof,jobId,entry,operation=null){
   if(!proof||proof.jobId!==String(jobId)||proof.snapshotSha256!==entry.sha256)return false;
   if(proof.schema!==HISTORY_SCHEMA||proof.id!==entry.id||proof.bodyJobId!==String(jobId)||proof.projectSha256!==entry.projectSha256||proof.parentId!==entry.parentId||proof.label!==entry.label||proof.createdAt!==entry.createdAt||proof.activeStage!==Number(entry.stage)||!proof.artifactsArray)return false;
   if(proof.projectReferenceSha256!==hash.sha256Value(entry.projectReference||null)||Boolean(entry.projectReference)!==(proof.kind==='reference'))return false;
-  if(Object.hasOwn(entry,'projectPartsSha256')?Object.hasOwn(entry,'projectParts')||!proof.hasProjectParts||proof.projectPartsSha256!==entry.projectPartsSha256:proof.projectPartsSha256!==historyPartsDigest(entry.projectParts||null,operation?.partsDigests,proof))return false;
+  if(Object.hasOwn(entry,'projectPartsSha256')?Object.hasOwn(entry,'projectParts')||!proof.hasProjectParts||proof.projectPartsSha256!==entry.projectPartsSha256:proof.projectPartsSha256!==historyPartsDigest(entry.projectParts||null,operation,proof))return false;
   if(entry.viewSha256&&entry.viewSha256!==proof.viewSha256)return false;
   if(proof.projectBytes!==entry.projectBytes)return false;
   if(proof.workSha256!==entry.workSha256||proof.artifactManifestSha256!==entry.artifactManifestSha256||proof.artifactManifestSha256&&proof.artifactManifestSha256!==proof.artifactsSha256)return false;
@@ -2660,7 +2689,7 @@ function historyProofPartList(entry,record){return Object.hasOwn(entry,'projectP
 // this same entry.
 async function historyProofPartsRetained(proof,parts,readFile,operation,jobId,verifiedByteDigests=null,coldParts=null){
   if(!proof.hasProjectParts)return !parts;
-  if(!parts||historyPartsDigest(parts,operation.partsDigests)!==proof.projectPartsSha256)return false;
+  if(!parts||historyPartsDigest(parts,operation)!==proof.projectPartsSha256)return false;
   assertHistoryProjectParts(parts);
   for(const part of historyPartFiles(parts)){
     const hashed=operation.hashedParts.get(part.sha256)??coldParts?.get(part.sha256)?.byteSize;
@@ -2841,6 +2870,12 @@ function captureRootDigestPrimitives(){
   return {hash,functions,records,encoderDescriptor,encoderFields:Reflect.ownKeys(encoderDescriptor),activation:[...HISTORY_ACTIVATION_FIELDS]};
 }
 const initialRootDigestPrimitives=captureRootDigestPrimitives();
+// A null-root digest scope held for this realm: canonicalDigestScopeMatches(it,
+// null) re-checks the hash.js digest-scope native baseline in the calling turn,
+// and packageDigestNativesUnchanged pairs it with the initial digest primitives.
+// A null-root scope holds no graph; created once. The parts-digest memo and the
+// proof mints confirm this exact coverage around each digest they store.
+const nullRootDigestScope=hash.createCanonicalDigestScope(null);
 function rootDigestPrimitivesUnchanged(proof){
   const encoderDescriptor=Object.getOwnPropertyDescriptor(globalThis,'TextEncoder');
   if(!proof||!encoderDescriptor||!capturedDescriptorMatches(proof.encoderDescriptor,proof.encoderFields,encoderDescriptor)||proof.hash!==hash||globalThis.closedLoopHash!==hash||proof.functions.some((fn,index)=>fn!==[hash.canonicalChunks,hash.createSha256,hash.compareUnicodeScalarSequence,encoderDescriptor.value,Object.getOwnPropertyDescriptor(encoderDescriptor.value?.prototype||{},'encode')?.value][index])||!verifiedValuesEqual(proof.activation,HISTORY_ACTIVATION_FIELDS))return false;
@@ -2942,6 +2977,15 @@ function captureRootValidators(primitive){
 function rootValidatorsUnchanged(validators){
   try{
     if(!validators||!rootDigestPrimitivesUnchanged(validators.primitive)||globalThis.structuredClone!==validators.structuredClone||!hash.canonicalDigestScopeMatches(validators.scope,null))return false;
+    // Building the current graph reads @@toStringTag on every non-frozen node
+    // (rootValidatorInternalState), which runs any getter a node or its
+    // prototype carries. Such a getter is itself part of the captured graph, so
+    // it runs on every walk; if it changed a digest primitive or a digest-scope
+    // native and left it changed, a value a using site computes right after this
+    // walk would run under the change. The primitives, structuredClone and the
+    // baseline are therefore confirmed again after the walk, before the verdict:
+    // a change the walk left standing returns false, so the using site digests
+    // cold instead of reusing the proof under it.
     const before=validators.graph,fields=validators.fields,after=rootValidatorGraph(validators.deepFrozen);
     if(!after||after.length!==before.length)return false;
     // Each optional native is still absent, or present with the same descriptor.
@@ -2961,6 +3005,9 @@ function rootValidatorsUnchanged(validators){
         if(key!==otherKey||!capturedDescriptorMatches(descriptor,fields[index][position],other))return false;
       }
     }
+    // The walk's own code did not change a digest primitive or a digest-scope
+    // native and leave it changed.
+    if(!rootDigestPrimitivesUnchanged(validators.primitive)||globalThis.structuredClone!==validators.structuredClone||!hash.canonicalDigestScopeMatches(validators.scope,null))return false;
     return true;
   }catch{return false;}
 }
@@ -5387,7 +5434,12 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   // this import's source rows are new and its source has no container.
   const importSourceRows=[],projectSource={blob:projectSourceBlob,payload:project,sourceSha256:packageSourceSha256,sourceEncoding:'UTF-8',sourceLocation:{jsonPointer:'/project',containerEncoding:'gzip'},parserIdentity:'closed-loop-project-package-json-reader',parserVersion:'1'},projectSourceJobId=projectIdentity(next),projectSourceSha256=await hash.sha256Bytes(projectSourceBlob);
   const importSource=describeProjectSource(next,projectSource,importSourceRows,projectSourceIdentity(projectSourceJobId,projectSourceSha256,projectSource),null,{recordProject:false,payloadSha256:packagePayloadDigest});
-  const packageProjectDigest=()=>packageProjectSha256??=packageDigestPass()?.projectSha256??projectSha256(project);
+  // Only the pass's value, which packageDigestPass re-confirms its natives for
+  // at each call, is cached across the recovery check and bindRestoredCandidates.
+  // When the pass is unavailable, each site digests project afresh in its own
+  // turn, never caching that unguarded fallback: a native changed at the first
+  // site then no longer stands in at the second.
+  const packageProjectDigest=()=>{const pass=packageDigestPass();return pass?(packageProjectSha256??=pass.projectSha256):projectSha256(project);};
   if(body.recovery&&body.recovery.activeProjectSha256!==packageProjectDigest())throw storageError('Backup active project does not match its recovery version.','HISTORY_VERSION_MISMATCH');
   assertRecoveryViewFiles(id,importedView,activeArtifacts);
   const viewRebased=Boolean(importedView?.pendingMutation);
