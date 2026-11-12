@@ -505,12 +505,23 @@ function parseLegacy(storage=globalThis.localStorage){
   return out;
 }
 const ORIGINAL_SOURCE_KIND='ORIGINAL_PROJECT_SOURCE',ORIGINAL_SOURCE_SCHEMA='closed-loop-original-project-source/1';
-async function retainProjectSource(project,source,rows,{recordProject=true}={}){
-  const jobId=projectIdentity(project),sha256=await hash.sha256Bytes(source.blob),artifactId='PROJECT-SOURCE-'+hash.sha256Value({jobId,sha256}),encoding=source.sourceEncoding||source.container?.sourceEncoding||'UTF-8';
-  const filename=artifactId+(encoding==='UTF-8'?'.json':'.json.utf16le'),mediaType=encoding==='UTF-8'?'application/json':'application/octet-stream',existing=rows.find(row=>row.artifactId===artifactId);
+async function retainProjectSource(project,source,rows,options={}){
+  const jobId=projectIdentity(project),identity=projectSourceIdentity(jobId,await hash.sha256Bytes(source.blob),source),{sha256,artifactId}=identity,existing=rows.find(row=>row.artifactId===artifactId);
   if(existing&&(existing.jobId!==jobId||existing.byteSize!==source.blob.size||existing.sha256!==sha256||await hash.sha256Bytes(existing.blob)!==sha256))throw storageError('Original project source bytes conflict with a retained identity.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
   const container=source.container;if(container&&!container.sha256)container.sha256=await hash.sha256Bytes(container.blob);
-  const descriptor={kind:ORIGINAL_SOURCE_KIND,schema:ORIGINAL_SOURCE_SCHEMA,operational:false,artifactId,filename,mediaType,byteSize:source.blob.size,sha256,sourceEncoding:encoding,sourceSha256:source.sourceSha256||container.sha256,sourceLocation:clone(source.sourceLocation),parser:{identity:source.parserIdentity||'closed-loop-legacy-json-reader',version:source.parserVersion||'1'},parsedPayloadSha256:hash.sha256Value(source.payload),disclosureClassification:containsCredentialSecret(source.payload)?'CREDENTIAL_SECRET':'UNKNOWN'};
+  return describeProjectSource(project,source,rows,identity,existing,options);
+}
+function projectSourceIdentity(jobId,sha256,source){
+  const artifactId='PROJECT-SOURCE-'+hash.sha256Value({jobId,sha256}),encoding=source.sourceEncoding||source.container?.sourceEncoding||'UTF-8';
+  return {jobId,sha256,artifactId,encoding,filename:artifactId+(encoding==='UTF-8'?'.json':'.json.utf16le'),mediaType:encoding==='UTF-8'?'application/json':'application/octet-stream'};
+}
+// The rest of retainProjectSource once its bytes are hashed and a retained
+// row of the same identity and the container are checked: it runs no await.
+// payloadSha256 (importPackage only): the parsed payload's digest computed in
+// this synchronous span, or null to digest it here.
+function describeProjectSource(project,source,rows,{jobId,sha256,artifactId,encoding,filename,mediaType},existing,{recordProject=true,payloadSha256=null}={}){
+  const container=source.container;
+  const descriptor={kind:ORIGINAL_SOURCE_KIND,schema:ORIGINAL_SOURCE_SCHEMA,operational:false,artifactId,filename,mediaType,byteSize:source.blob.size,sha256,sourceEncoding:encoding,sourceSha256:source.sourceSha256||container.sha256,sourceLocation:clone(source.sourceLocation),parser:{identity:source.parserIdentity||'closed-loop-legacy-json-reader',version:source.parserVersion||'1'},parsedPayloadSha256:payloadSha256?.(source.payload)??hash.sha256Value(source.payload),disclosureClassification:containsCredentialSecret(source.payload)?'CREDENTIAL_SECRET':'UNKNOWN'};
   if(recordProject){const data=project.projectData;if(!Object.hasOwn(data,'migrationArchives'))data.migrationArchives=[];if(!Array.isArray(data.migrationArchives))throw storageError('Original source archives require an array.','PROJECT_INTEGRITY_FAILED');
     if(!data.migrationArchives.some(row=>row?.kind===ORIGINAL_SOURCE_KIND&&hash.sha256Value(row)===hash.sha256Value(descriptor)))data.migrationArchives.push(descriptor);}
   if(!existing)rows.push({artifactId,jobId,filename,mediaType,byteSize:source.blob.size,sha256,blob:source.blob,lineage:{originalProjectSource:{schema:ORIGINAL_SOURCE_SCHEMA,operational:false,sourceEncoding:encoding,parsedPayloadSha256:descriptor.parsedPayloadSha256},...(containsCredentialSecret(source.payload)?{disclosureClassification:'CREDENTIAL_SECRET'}:{})},createdAt:now()});
@@ -2339,18 +2350,54 @@ function historyProjectDigestsCold(project){
   write('}');canonicalProjectByteCounts.set(project,projectBytes);
   return {projectSha256:projectDigest.digest(),workSha256:workDigest.digest()};
 }
+// sha256Value(value) equals projectSha256(value): canonicalProject leaves
+// its canonical bytes unchanged for a plain object without its own
+// projectSha256, symbol keys or accessor properties.
+function projectDigestCoversValue(value){
+  if(!value||typeof value!=='object'||Array.isArray(value)||Object.hasOwn(value,'projectSha256')||Object.getOwnPropertySymbols(value).length)return false;
+  const prototype=Object.getPrototypeOf(value);if(prototype!==Object.prototype&&prototype!==null)return false;
+  for(const key of Object.keys(value))if(!Object.hasOwn(Object.getOwnPropertyDescriptor(value,key),'value'))return false;
+  return true;
+}
+// A parsed package project's project and work digests from one canonical
+// pass, only under the initial digest primitives, confirmed in this
+// synchronous turn before and after it: the pass then hashes exactly the
+// canonical bytes projectSha256 and historyWorkSha256 hash. null leaves each
+// digest to its site, whose own refusal then stands. No byte count is kept.
+function packageProjectDigestPair(project){
+  if(!rootDigestPrimitivesUnchanged(initialRootDigestPrimitives))return null;
+  const counted=canonicalProjectByteCounts.has(project);
+  try{const digests=historyProjectDigestsCold(project);return rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?digests:null;}
+  catch{return null;}
+  finally{if(!counted)canonicalProjectByteCounts.delete(project);}
+}
 // One-use retained computations, never a validation-success cache — with one
-// exception: a History root proof. A root proof records that this store worker
-// fully decoded and verified one immutable stored root (or view reference) in
-// this worker session. It is module-private to the store worker, never
-// persisted, exported, posted or exposed, and dies with the worker. It is used
-// only by exportPackage and importPackage, and only after the using operation
-// re-binds every input of the cold check: the stored snapshot bytes and every
-// part's bytes are re-hashed, the History entry/record descriptor is compared
-// field by field, and the captured digest primitives, decode natives and
-// validator graph are confirmed unchanged. Any mismatch takes the unchanged
-// cold path, so its refusal code, message and order stand. Ordinary History
-// reads, restores, Undo/Redo and Back/Forward never consult it.
+// exception: a History root proof (with the pair proof of its project and
+// files). A root proof records that this store worker fully decoded and
+// verified one immutable stored root (or view reference) in this worker
+// session. It is module-private to the store worker, never persisted,
+// exported, posted or exposed, and dies with the worker. It is used only by
+// exportPackage and importPackage, and only after the using operation re-binds
+// every input of the cold check: the stored snapshot bytes and every part's
+// bytes are re-hashed, the History entry/record descriptor is compared field
+// by field, and the captured digest primitives, decode natives and validator
+// graph are confirmed unchanged. Its uses, each inside one of those two
+// operations and nowhere else:
+// - exportPackage's entry loop: a proven entry skips its decode (Tier 1);
+// - importPackage's History loop: an archived version whose pair proof also
+//   holds skips its decode (Tier 2, provenImportEntry); a proven root that no
+//   pair serves, and the active version's root, is still restored from its
+//   re-hashed bytes and digested as cold, and only when those digests equal
+//   its proof's, under natives and validators confirmed in the turn of that
+//   digest pass, is its static check not repeated; its pair check runs as
+//   cold (Tier 1.5, provenImportRoot);
+// - importPackage's preparation of its prior project: the local active
+//   checkpoint, whose cold read would only be discarded, is re-bound instead
+//   (provenRetainedCheckpoint, reachable only through IMPORT_HISTORY_PROOFS).
+// Any mismatch takes the unchanged cold path, so its refusal code, message and
+// order stand. Ordinary History reads, restores, Undo/Redo and Back/Forward
+// never consult it. An operation's own computations (such as the parts-list
+// digests of historyPartsDigest) remain one-use: they die with the operation.
 const rootCertificates=new WeakSet(),checkpointDigestPairs=new WeakSet();
 // A write's root certificate holds the value the write validated, never proof
 // of the stored bytes: its encode runs through replaceable natives across
@@ -2379,6 +2426,9 @@ const HISTORY_ROOT_PROOFS=STORE_WORKER&&!ARCHIVE_PARSER_WORKER;
 // An option no caller can supply (structured clone drops symbol keys): the
 // operation redone cold after an input of its proofs changed while it ran.
 const COLD_HISTORY_VERIFICATION=Symbol('private cold History verification');
+// The private option by which importPackage, and only importPackage, hands
+// its proof operation to the preparation of its prior project.
+const IMPORT_HISTORY_PROOFS=Symbol('private import History proofs');
 const HISTORY_PROOF_JOBS=16;
 const historyRootProofs=new Map(),historyPairProofs=new Map();
 function retainHistoryProof(ledger,jobId,key,record){
@@ -2412,6 +2462,17 @@ function withdrawHistoryProofs(jobId,entry,body){
 const HISTORY_PROOF_NATIVE_GLOBALS=Object.freeze(['JSON','DecompressionStream','TextDecoder','TextEncoder','Blob','Response','ReadableStream','Uint8Array','Uint16Array','Uint32Array','ArrayBuffer','DataView','Promise','crypto']);
 // Stream and reader prototypes are reachable only through instances.
 const historyProofInstancePrototypes=(()=>{try{const stream=new Blob([]).stream(),reader=stream.getReader();reader.releaseLock?.();return [Object.getPrototypeOf(stream),Object.getPrototypeOf(reader),Object.getPrototypeOf(Uint8Array.prototype)];}catch{return [Object.getPrototypeOf(Uint8Array.prototype)];}})();
+// A current property descriptor equals a captured one: as many own fields,
+// and each captured field the same value. fields is Reflect.ownKeys(before),
+// read once: a captured descriptor is a private copy no code changes
+// afterwards, so its field names are read when it is captured (a capture
+// compared many times) or once in its comparison (a capture compared once).
+function capturedDescriptorMatches(before,fields,after){
+  if(fields.length!==Reflect.ownKeys(after).length)return false;
+  for(let index=0;index<fields.length;index++)if(!Object.is(before[fields[index]],after[fields[index]]))return false;
+  return true;
+}
+function capturedDescriptorFields(descriptors){return descriptors.map(([,descriptor])=>Reflect.ownKeys(descriptor));}
 function captureHistoryProofNatives(){
   try{
     if(globalThis.closedLoopHash!==hash)return null;
@@ -2422,8 +2483,8 @@ function captureHistoryProofNatives(){
       targets.push(value);if(typeof value==='function'&&value.prototype)targets.push(value.prototype);
       if(value===globalThis.crypto&&value.subtle){targets.push(value.subtle);const prototype=Object.getPrototypeOf(value.subtle);if(prototype)targets.push(prototype);}
     }
-    const records=[...new Set(targets)].map(target=>({target,prototype:Object.getPrototypeOf(target),descriptors:Reflect.ownKeys(target).map(key=>[key,Object.getOwnPropertyDescriptor(target,key)])}));
-    return Object.freeze({globals,records});
+    const records=[...new Set(targets)].map(target=>{const descriptors=Reflect.ownKeys(target).map(key=>[key,Object.getOwnPropertyDescriptor(target,key)]);return {target,prototype:Object.getPrototypeOf(target),descriptors,fields:capturedDescriptorFields(descriptors)};});
+    return Object.freeze({globals,globalFields:globals.map(descriptor=>descriptor&&Reflect.ownKeys(descriptor)),records});
   }catch{return null;}
 }
 function historyProofNativesUnchanged(natives){
@@ -2432,11 +2493,11 @@ function historyProofNativesUnchanged(natives){
     for(let index=0;index<HISTORY_PROOF_NATIVE_GLOBALS.length;index++){
       const before=natives.globals[index],after=Object.getOwnPropertyDescriptor(globalThis,HISTORY_PROOF_NATIVE_GLOBALS[index])||null;
       if(!before!==!after)return false;
-      if(before&&(Reflect.ownKeys(before).length!==Reflect.ownKeys(after).length||Reflect.ownKeys(before).some(field=>!Object.is(before[field],after[field]))))return false;
+      if(before&&!capturedDescriptorMatches(before,natives.globalFields[index],after))return false;
     }
-    return natives.records.every(({target,prototype,descriptors})=>{
+    return natives.records.every(({target,prototype,descriptors,fields})=>{
       const keys=Reflect.ownKeys(target);if(Object.getPrototypeOf(target)!==prototype||keys.length!==descriptors.length)return false;
-      return descriptors.every(([key,before],index)=>{const after=Object.getOwnPropertyDescriptor(target,key);return keys[index]===key&&after&&Reflect.ownKeys(before).length===Reflect.ownKeys(after).length&&Reflect.ownKeys(before).every(field=>Object.is(before[field],after[field]));});
+      return descriptors.every(([key,before],index)=>{const after=Object.getOwnPropertyDescriptor(target,key);return keys[index]===key&&after&&capturedDescriptorMatches(before,fields[index],after);});
     });
   }catch{return false;}
 }
@@ -2509,7 +2570,34 @@ function mintHistoryPairProof(jobId,projectSha256,artifacts,{derived='NOT_CHECKE
 // One export or import: each distinct validator capture is checked once
 // (rootValidatorsUnchanged walks the whole validator graph), and before the
 // operation commits every capture and input it relied on is checked again.
-function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),used:false}:null;}
+// partsDigests holds, for this operation only, the canonical digest of each
+// History parts list it parsed itself (historyPartsDigest).
+// retainedValidators holds the captures the prior's preparation relied on
+// (provenRetainedCheckpoint): rechecked before commit, never read as the
+// validators memo, so the first History entry walks the graph again.
+function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),partsDigests:new WeakMap(),retainedValidators:new Set(),used:false}:null;}
+// The canonical digest of a parts list, computed once per proof operation, as
+// verifiedByteDigests holds one Blob's digest per import. A list is a key only
+// while no code but this module's own can reach it: importPackage parses its
+// backup's entries itself and drops a list's digest before the entry is
+// handed to clone (whose prompt-context hook is replaceable). Without an
+// operation the digest is computed afresh. inputs: the proof whose primitives
+// and natives the caller confirmed in this synchronous turn
+// (historyProofFactsMatch), recorded with the digest it computes under them.
+function historyPartsDigest(parts,digests=null,inputs=null){
+  if(!digests||!parts||typeof parts!=='object')return hash.sha256Value(parts);
+  let held=digests.get(parts);if(held===undefined){held={digest:hash.sha256Value(parts),inputs};digests.set(parts,held);}
+  return held.digest;
+}
+// The IMMUTABLE_HISTORY_CONFLICT check runs as cold: it digests the parts list
+// under the natives of its own turn. A digest the operation holds stands in for
+// that only when it was computed under confirmed captures and those primitives
+// and natives are confirmed unchanged now, in the check's synchronous turn;
+// otherwise the list is digested afresh.
+function historyConflictPartsDigest(parts,digests){
+  const held=digests&&parts&&typeof parts==='object'?digests.get(parts):undefined;
+  return held?.inputs&&historyProofInputsCurrent(held.inputs)?held.digest:hash.sha256Value(parts);
+}
 function historyProofUsed(operation,proof){operation.used=true;operation.natives.add(proof.natives);operation.primitives.add(proof.primitive);}
 function historyProofValidatorsCurrent(operation,validators){
   if(!validators)return false;
@@ -2519,6 +2607,7 @@ function historyProofValidatorsCurrent(operation,validators){
 function historyProofOperationCurrent(operation){
   if(!operation?.used)return true;
   for(const [validators,current] of operation.validators)if(current&&!rootValidatorsUnchanged(validators))return false;
+  for(const validators of operation.retainedValidators)if(!rootValidatorsUnchanged(validators))return false;
   for(const primitive of operation.primitives)if(!rootDigestPrimitivesUnchanged(primitive))return false;
   for(const natives of operation.natives)if(!historyProofNativesUnchanged(natives))return false;
   return true;
@@ -2526,11 +2615,13 @@ function historyProofOperationCurrent(operation){
 // The checks readCheckpointBody, and export's identity step before it, make
 // of a stored snapshot against its History entry, evaluated on a proof's
 // facts. True only when each of them would pass with these exact bytes.
-function historyProofFactsMatch(proof,jobId,entry){
+// operation: an import's proof operation, passed only by the callers that
+// confirmed proof's primitives and natives just before, in this same turn.
+function historyProofFactsMatch(proof,jobId,entry,operation=null){
   if(!proof||proof.jobId!==String(jobId)||proof.snapshotSha256!==entry.sha256)return false;
   if(proof.schema!==HISTORY_SCHEMA||proof.id!==entry.id||proof.bodyJobId!==String(jobId)||proof.projectSha256!==entry.projectSha256||proof.parentId!==entry.parentId||proof.label!==entry.label||proof.createdAt!==entry.createdAt||proof.activeStage!==Number(entry.stage)||!proof.artifactsArray)return false;
   if(proof.projectReferenceSha256!==hash.sha256Value(entry.projectReference||null)||Boolean(entry.projectReference)!==(proof.kind==='reference'))return false;
-  if(Object.hasOwn(entry,'projectPartsSha256')?Object.hasOwn(entry,'projectParts')||!proof.hasProjectParts||proof.projectPartsSha256!==entry.projectPartsSha256:proof.projectPartsSha256!==hash.sha256Value(entry.projectParts||null))return false;
+  if(Object.hasOwn(entry,'projectPartsSha256')?Object.hasOwn(entry,'projectParts')||!proof.hasProjectParts||proof.projectPartsSha256!==entry.projectPartsSha256:proof.projectPartsSha256!==historyPartsDigest(entry.projectParts||null,operation?.partsDigests,proof))return false;
   if(entry.viewSha256&&entry.viewSha256!==proof.viewSha256)return false;
   if(proof.projectBytes!==entry.projectBytes)return false;
   if(proof.workSha256!==entry.workSha256||proof.artifactManifestSha256!==entry.artifactManifestSha256||proof.artifactManifestSha256&&proof.artifactManifestSha256!==proof.artifactsSha256)return false;
@@ -2547,7 +2638,7 @@ function historyProofPartList(entry,record){return Object.hasOwn(entry,'projectP
 // this same entry.
 async function historyProofPartsRetained(proof,parts,readFile,operation,jobId,verifiedByteDigests=null,coldParts=null){
   if(!proof.hasProjectParts)return !parts;
-  if(!parts||hash.sha256Value(parts)!==proof.projectPartsSha256)return false;
+  if(!parts||historyPartsDigest(parts,operation.partsDigests)!==proof.projectPartsSha256)return false;
   assertHistoryProjectParts(parts);
   for(const part of historyPartFiles(parts)){
     const hashed=operation.hashedParts.get(part.sha256)??coldParts?.get(part.sha256)?.byteSize;
@@ -2588,7 +2679,7 @@ async function provenExportEntry(jobId,entry,saved,validatedRoots,bytePrimitive,
 async function provenImportEntry(jobId,entry,snapshot,readFile,validatedRoots,provenRoots,verifiedByteDigests,validatedProjections,operation){
   try{
     const proof=historyRootProof(jobId,entry.sha256);
-    if(!proof?.viewChecked||!historyProofInputsCurrent(proof)||!historyProofFactsMatch(proof,jobId,entry)||!historyProofValidatorsCurrent(operation,proof.validators))return null;
+    if(!proof?.viewChecked||!historyProofInputsCurrent(proof)||!historyProofFactsMatch(proof,jobId,entry,operation)||!historyProofValidatorsCurrent(operation,proof.validators))return null;
     if(!(snapshot.blob instanceof Blob)||snapshot.blob.size!==Number(entry.byteSize)||await historyBlobSha256(snapshot.blob,verifiedByteDigests)!==entry.sha256)return null;
     let verifiedProjectSha256=proof.verifiedProjectSha256,verifiedWorkSha256=proof.verifiedWorkSha256;
     if(proof.kind==='reference'){
@@ -2604,9 +2695,26 @@ async function provenImportEntry(jobId,entry,snapshot,readFile,validatedRoots,pr
     // at a checkpoint commit: it passed strictly, never in the future, under
     // unchanged validators; or this import already validated the pair.
     if(!validatedProjections.has(projectionKey)&&!(pair.derivedAt!==null&&Date.now()>=pair.derivedAt))return null;
-    if(!historyProofInputsCurrent(proof))return null;
+    // The pair's inputs were checked above in this same synchronous turn; a
+    // pair that shares the proof's captures needs no second check of them.
+    if(!(pair.natives===proof.natives&&pair.primitive===proof.primitive)&&!historyProofInputsCurrent(proof))return null;
     historyProofUsed(operation,proof);historyProofUsed(operation,pair);validatedProjections.add(projectionKey);
     return {verifiedProjectSha256,verifiedWorkSha256};
+  }catch{return null;}
+}
+// Import (Tier 1.5): a root whose proof matches its History entry under
+// unchanged primitives, natives and validators, though no pair proof serves
+// it (a version proven by an export, or a pair derived in the future or
+// under earlier validators). readCheckpointBody then restores it from its
+// re-hashed bytes and runs its digest pass as cold; only when both digests of
+// that restored value equal the proof's is the static check not repeated. The
+// pair check runs exactly as cold. null keeps the cold read.
+function provenImportRoot(jobId,entry,operation){
+  try{
+    if(!HISTORY_ROOT_PROOFS||!operation)return null;
+    const proof=historyRootProof(jobId,entry.sha256);
+    if(proof?.kind!=='root'||!historyProofInputsCurrent(proof)||!historyProofFactsMatch(proof,jobId,entry,operation)||!historyProofValidatorsCurrent(operation,proof.validators))return null;
+    return proof;
   }catch{return null;}
 }
 // A committed checkpoint's view references gain their proofs at once: the
@@ -2706,19 +2814,19 @@ function captureRootDigestPrimitives(){
     // unsupported. Native generator metadata and TextEncoder.encoding accessors
     // are descriptor-bound but never consumed by canonical digest encoding.
     if(descriptors.some(([key,entry])=>!Object.hasOwn(entry,'value')&&(functions.includes(target)||target===HISTORY_ACTIVATION_FIELDS||(target===encoderPrototype?key!=='encoding':key!=='constructor'&&key!==Symbol.toStringTag))))return null;
-    records.push({target,prototype:Object.getPrototypeOf(target),descriptors});
+    records.push({target,prototype:Object.getPrototypeOf(target),descriptors,fields:capturedDescriptorFields(descriptors)});
   }
-  return {hash,functions,records,encoderDescriptor,activation:[...HISTORY_ACTIVATION_FIELDS]};
+  return {hash,functions,records,encoderDescriptor,encoderFields:Reflect.ownKeys(encoderDescriptor),activation:[...HISTORY_ACTIVATION_FIELDS]};
 }
 const initialRootDigestPrimitives=captureRootDigestPrimitives();
 function rootDigestPrimitivesUnchanged(proof){
   const encoderDescriptor=Object.getOwnPropertyDescriptor(globalThis,'TextEncoder');
-  if(!proof||!encoderDescriptor||Reflect.ownKeys(proof.encoderDescriptor).length!==Reflect.ownKeys(encoderDescriptor).length||Reflect.ownKeys(proof.encoderDescriptor).some(field=>!Object.is(proof.encoderDescriptor[field],encoderDescriptor[field]))||proof.hash!==hash||globalThis.closedLoopHash!==hash||proof.functions.some((fn,index)=>fn!==[hash.canonicalChunks,hash.createSha256,hash.compareUnicodeScalarSequence,encoderDescriptor.value,Object.getOwnPropertyDescriptor(encoderDescriptor.value?.prototype||{},'encode')?.value][index])||!verifiedValuesEqual(proof.activation,HISTORY_ACTIVATION_FIELDS))return false;
-  for(const {target,prototype,descriptors} of proof.records){
+  if(!proof||!encoderDescriptor||!capturedDescriptorMatches(proof.encoderDescriptor,proof.encoderFields,encoderDescriptor)||proof.hash!==hash||globalThis.closedLoopHash!==hash||proof.functions.some((fn,index)=>fn!==[hash.canonicalChunks,hash.createSha256,hash.compareUnicodeScalarSequence,encoderDescriptor.value,Object.getOwnPropertyDescriptor(encoderDescriptor.value?.prototype||{},'encode')?.value][index])||!verifiedValuesEqual(proof.activation,HISTORY_ACTIVATION_FIELDS))return false;
+  for(const {target,prototype,descriptors,fields} of proof.records){
     const keys=Reflect.ownKeys(target);if(Object.getPrototypeOf(target)!==prototype||keys.length!==descriptors.length)return false;
     for(let index=0;index<keys.length;index++){
       const [key,before]=descriptors[index],after=Object.getOwnPropertyDescriptor(target,key);
-      if(keys[index]!==key||!after||Reflect.ownKeys(before).some(field=>!Object.is(before[field],after[field]))||Reflect.ownKeys(before).length!==Reflect.ownKeys(after).length)return false;
+      if(keys[index]!==key||!after||fields[index].some(field=>!Object.is(before[field],after[field]))||fields[index].length!==Reflect.ownKeys(after).length)return false;
     }
   }
   return true;
@@ -2802,7 +2910,9 @@ function captureRootValidators(primitive){
     const scope=hash.createCanonicalDigestScope(null);if(!scope)return null;
     const children=new Map(),full=rootValidatorGraph(null,children);if(!full)return null;
     const deepFrozen=deeplyFrozenValidatorNodes(full,children),graph=rootValidatorGraph(deepFrozen);if(!graph)return null;
-    const validators={primitive,scope,deepFrozen,graph,structuredClone:globalThis.structuredClone};
+    // Each captured descriptor's field names, read once (capturedDescriptorMatches).
+    const fields=graph.map((record,index)=>index?record.descriptors&&capturedDescriptorFields(record.descriptors):record.natives.map(descriptor=>descriptor&&Reflect.ownKeys(descriptor)));
+    const validators={primitive,scope,deepFrozen,graph,fields,structuredClone:globalThis.structuredClone};
     if(!rootValidatorsUnchanged(validators))return null;
     lastRootValidators=validators;return validators;
   }catch{return null;}
@@ -2810,11 +2920,11 @@ function captureRootValidators(primitive){
 function rootValidatorsUnchanged(validators){
   try{
     if(!validators||!rootDigestPrimitivesUnchanged(validators.primitive)||globalThis.structuredClone!==validators.structuredClone||!hash.canonicalDigestScopeMatches(validators.scope,null))return false;
-    const before=validators.graph,after=rootValidatorGraph(validators.deepFrozen);
+    const before=validators.graph,fields=validators.fields,after=rootValidatorGraph(validators.deepFrozen);
     if(!after||after.length!==before.length)return false;
     // Each optional native is still absent, or present with the same descriptor.
     const nativesBefore=before[0].natives,nativesAfter=after[0].natives;
-    for(let index=0;index<nativesBefore.length;index++){const left=nativesBefore[index],right=nativesAfter[index];if(!left!==!right)return false;if(left&&(Reflect.ownKeys(left).length!==Reflect.ownKeys(right).length||Reflect.ownKeys(left).some(field=>!Object.is(left[field],right[field]))))return false;}
+    for(let index=0;index<nativesBefore.length;index++){const left=nativesBefore[index],right=nativesAfter[index];if(!left!==!right)return false;if(left&&!capturedDescriptorMatches(left,fields[0][index],right))return false;}
     for(let index=1;index<before.length;index++){
       const left=before[index],right=after[index];
       if(left.node!==right.node||left.deep!==right.deep)return false;
@@ -2826,7 +2936,7 @@ function rootValidatorsUnchanged(validators){
       if(left.descriptors.length!==right.descriptors.length)return false;
       for(let position=0;position<left.descriptors.length;position++){
         const [key,descriptor]=left.descriptors[position],[otherKey,other]=right.descriptors[position];
-        if(key!==otherKey||Reflect.ownKeys(descriptor).length!==Reflect.ownKeys(other).length||Reflect.ownKeys(descriptor).some(field=>!Object.is(descriptor[field],other[field])))return false;
+        if(key!==otherKey||!capturedDescriptorMatches(descriptor,fields[index][position],other))return false;
       }
     }
     return true;
@@ -3019,11 +3129,13 @@ function assertSegmentedHistoryProjectParts(parts){
 // the complete descriptor and its parts; records, bodies and backups never
 // change. A state entry carries projectParts (legacy inline), projectPartsSha256
 // (state form) or neither; carrying both is never a state form (null).
-function historyStateForm(descriptor){
+// partsDigests: an import's proof operation's digests, used for the conflict
+// check only under its own confirmation (historyConflictPartsDigest).
+function historyStateForm(descriptor,partsDigests=null){
   if(!descriptor?.projectParts)return descriptor;
   if(Object.hasOwn(descriptor,'projectPartsSha256'))return null;
   const entry={};
-  for(const key of Object.keys(descriptor))Object.defineProperty(entry,key==='projectParts'?'projectPartsSha256':key,{value:key==='projectParts'?hash.sha256Value(descriptor.projectParts):descriptor[key],enumerable:true,writable:true,configurable:true});
+  for(const key of Object.keys(descriptor))Object.defineProperty(entry,key==='projectParts'?'projectPartsSha256':key,{value:key==='projectParts'?(partsDigests?historyConflictPartsDigest(descriptor.projectParts,partsDigests):hash.sha256Value(descriptor.projectParts)):descriptor[key],enumerable:true,writable:true,configurable:true});
   return entry;
 }
 // An immutable snapshot record always keeps its complete descriptor. A record
@@ -3321,7 +3433,7 @@ function checkpointBytePrimitivesMatch(proof){
   if(!proof||proof.globals.some((value,index)=>value!==[Blob,Uint8Array,Uint32Array,ArrayBuffer,DataView,TextEncoder][index])||proof.functions[0]!==hash.sha256Bytes)return false;
   return proof.records.every(({target,prototype,descriptors})=>{
     const keys=Reflect.ownKeys(target);if(Object.getPrototypeOf(target)!==prototype||keys.length!==descriptors.length)return false;
-    return descriptors.every(([key,before],index)=>{const after=Object.getOwnPropertyDescriptor(target,key);return keys[index]===key&&after&&Reflect.ownKeys(before).length===Reflect.ownKeys(after).length&&Reflect.ownKeys(before).every(field=>Object.is(before[field],after[field]));});
+    return descriptors.every(([key,before],index)=>{const after=Object.getOwnPropertyDescriptor(target,key);return keys[index]===key&&after&&capturedDescriptorMatches(before,Reflect.ownKeys(before),after);});
   });
  }catch{return false;}
 }
@@ -3475,7 +3587,71 @@ function mintWriteRootCertificate(preparedHistory,digest,primitive,validators,de
     if(HISTORY_ROOT_PROOFS)pendingFirstUseRoot=root;rootCertificates.add(root);unverifiedWriteRoots.add(root);return root;
   }catch{return undefined;}
 }
-async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveActiveView=false,sessionId=null,baseState=null,artifactRows=null,retainedFiles=[],verifiedRead=null,verifiedDigests=null,verifiedIntegrity=[],checkpointRootRead=false,verifiedDigestPair=null,privateEncodeSources=null}={}){
+// Import only: importPackage prepares its prior project, and that no-op
+// preparation proves the local active checkpoint still restorable with
+// readRetainedCheckpoint, whose decoded value it discards. In the store worker
+// holding that checkpoint's proofs, the import re-binds every input of that
+// cold read instead, as it re-binds an archived version (Tier 2):
+// - the manifest, as validateRecoveryManifest checks it;
+// - for a view reference its root first, then the checkpoint: the stored
+//   record's id and descriptor against its History entry, its parts
+//   retained and its declared projectBytes (the reader's checks), the stored
+//   snapshot bytes re-hashed, and the proof facts, every part re-read and
+//   re-hashed (provenExportEntry, in a parts map of this check's own);
+// - the checkpoint's own files re-read and re-hashed, its view and file checks
+//   (viewChecked), and its project/file pair, whose derived check passed
+//   strictly and never in the future (the rule carriedDerived applies);
+// - the captured digest primitives, decode natives and validators, checked
+//   (the validators walked) again in the synchronous turn of the verdict, and
+//   registered with the import's proof operation only when every check
+//   passed, so that a change before the import commits redoes it cold. Its
+//   validator checks use a map of their own: what they found never answers
+//   the History loop's Tier 2 checks, whose first walk therefore follows the
+//   prior's preparation as cold; its captures are registered for the
+//   operation's last check only (retainedValidators).
+// Any miss returns false and the unchanged readRetainedCheckpoint runs, so its
+// refusal, code, message and order stand. A hit mints nothing.
+async function provenRetainedCheckpoint(jobId,state,checkpointId,operation){
+  if(!HISTORY_ROOT_PROOFS||!operation)return false;
+  try{
+    validateRecoveryManifest(state);
+    const byId=new Map(state.entries.map(entry=>[entry.id,entry])),entry=byId.get(checkpointId);if(!entry)return false;
+    const chain=entry.projectReference?[byId.get(entry.projectReference.checkpointId),entry]:[entry],roots=new Map();
+    // Local parts are hashed, and validators checked, in this check's own
+    // maps: no archived part counts as re-read here, and no validator walk
+    // made here serves the History loop.
+    const local={validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),used:false};
+    for(const item of chain){
+      if(!item)return false;
+      const saved=await metaGet(snapshotKey(jobId,item.id));
+      if(!(saved?.blob instanceof Blob)||saved.id!==item.id)return false;
+      const {blob,...record}=saved;
+      if(hash.sha256Value(historyRecordForm(record))!==hash.sha256Value(historyStateForm(item)))return false;
+      if(Object.hasOwn(item,'projectPartsSha256'))assertHistoryPartsRetained(state,record.projectParts);
+      if(Object.hasOwn(item,'projectPartsSha256'))assertHistoryVersionProjectBytes(record);
+      const bytePrimitive=checkpointBytePrimitives(blob);
+      if(blob.size!==Number(item.byteSize)||saved.sha256!==item.sha256||await hash.sha256Bytes(blob)!==item.sha256)return false;
+      const proven=await provenExportEntry(jobId,item,saved,roots,bytePrimitive,local,null);
+      if(!proven)return false;
+      if(!item.projectReference)roots.set(item.id,{snapshotSha256:item.sha256,proven:true,projectSha256:proven.verifiedProjectSha256,workSha256:proven.verifiedWorkSha256});
+    }
+    const proof=historyRootProof(jobId,entry.sha256);
+    if(!proof?.viewChecked)return false;
+    for(let index=0;index<proof.artifactBytes.length;index+=2){const file=await metaGet(historyFileKey(jobId,proof.artifactBytes[index]));if(!(file?.blob instanceof Blob)||file.blob.size!==proof.artifactBytes[index+1]||await hash.sha256Bytes(file.blob)!==proof.artifactBytes[index])return false;}
+    const pair=historyPairProof(jobId,proof.projectSha256,proof.descriptorsSha256);
+    if(!pair||!historyProofInputsCurrent(pair)||!historyProofValidatorsCurrent(local,pair.validators)||pair.derivedAt===null||!(Date.now()>=pair.derivedAt))return false;
+    // In the synchronous turn of the verdict the natives are checked and the
+    // validators walked again: a change at any point before it reads the
+    // checkpoint cold, as the cold read would run under it.
+    const validators=new Set([proof.validators,pair.validators,...chain.map(item=>historyRootProof(jobId,item.sha256)?.validators)]);
+    if(!historyProofInputsCurrent(proof)||[...validators].some(capture=>!rootValidatorsUnchanged(capture)))return false;
+    historyProofUsed(local,proof);historyProofUsed(local,pair);
+    for(const natives of local.natives)operation.natives.add(natives);for(const primitive of local.primitives)operation.primitives.add(primitive);operation.used=true;
+    for(const capture of validators)operation.retainedValidators.add(capture);
+    return true;
+  }catch{return false;}
+}
+async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveActiveView=false,sessionId=null,baseState=null,artifactRows=null,retainedFiles=[],verifiedRead=null,verifiedDigests=null,verifiedIntegrity=[],checkpointRootRead=false,verifiedDigestPair=null,privateEncodeSources=null,[IMPORT_HISTORY_PROOFS]:importProofs=null}={}){
   // saveCheckpoint hands over its private read in the same synchronous turn in
   // which readProjectForTransaction compared the complete values; the append
   // and the commit gates compare them again after every await.
@@ -3580,9 +3756,11 @@ async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveAct
   if(prior&&(state.activeProjectSha256!==digest(prior)||state.entries.find(entry=>entry.id===state.activeId)?.artifactManifestSha256!==historyArtifactsSha256(files)))await append(prior,'Previous project',preservedPriorView||view||historyView(prior));
   // A no-op preparation still promises a restorable view/session checkpoint.
   // Matching project labels cannot certify its independently stored work.
+  // An import whose proofs re-bind that checkpoint (provenRetainedCheckpoint)
+  // reads nothing more; any miss reads it cold.
   const currentEntry=state.entries.find(entry=>entry.id===state.activeId),unchangedView=!view||hash.sha256Value(view)===(state.activeViewOverride?hash.sha256Value(state.activeViewOverride):currentEntry?.viewSha256);
   if(state.activeId&&!snapshots.length&&((sessionId&&!state.sessions[sessionId])||(viewOnly&&unchangedView))){
-    try{const retained=await readRetainedCheckpoint(jobId,state.activeId,state,rootPreparation?.read);if(rootPreparation?.read.retainedRoot&&verifiedRetainedContinuations.get(retained)===rootPreparation.read.retainedRoot)rootPreparation.verifiedContinuation=rootPreparation.read.retainedRoot;}catch(error){
+    try{if(!importProofs||rootPreparation||!await provenRetainedCheckpoint(jobId,state,state.activeId,importProofs)){const retained=await readRetainedCheckpoint(jobId,state.activeId,state,rootPreparation?.read);if(rootPreparation?.read.retainedRoot&&verifiedRetainedContinuations.get(retained)===rootPreparation.read.retainedRoot)rootPreparation.verifiedContinuation=rootPreparation.read.retainedRoot;}}catch(error){
       if(error.code!=='HISTORY_VERSION_MISMATCH'||error.message!=='Saved work identity does not match its complete project.')throw error;
       // Only the coherent stale-work defect is recoverable here. The full
       // inspection still checks all other bytes, identities, views and derived
@@ -3835,7 +4013,8 @@ async function inspectRetainedCheckpoint(jobId,checkpointId,state=null,readFile=
     measuredWorkSha256:fact.measuredWorkSha256,artifactManifestSha256:historyArtifactsSha256(checked.artifacts),
     viewSha256:hash.sha256Value(body.view),artifactCount:checked.artifacts.length};
 }
-async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Map(),inlineOnly=false,readFile=sha=>metaGet(historyFileKey(jobId,sha)),verifiedParts=new Map(),verifiedByteDigests=null,inspection=null,rootContinuation=null,measuredPair=null,rootBytes=null){
+// importProofs: the proof operation of importPackage, its only caller with it.
+async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Map(),inlineOnly=false,readFile=sha=>metaGet(historyFileKey(jobId,sha)),verifiedParts=new Map(),verifiedByteDigests=null,inspection=null,rootContinuation=null,measuredPair=null,rootBytes=null,importProofs=null){
   // In the store worker, a strict pass below mints this snapshot's root proof
   // under the digest primitives and natives captured before any byte is read.
   const proofInputs=HISTORY_ROOT_PROOFS&&!inspection?captureHistoryProofInputs():null;
@@ -3865,7 +4044,7 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
       const retained=await readSnapshot(reference.checkpointId);
       if(!retained)throw storageError('The retained project body required by this checkpoint is unavailable.','HISTORY_PROJECT_REFERENCE_UNAVAILABLE');
       if(retained.projectReference||retained.id!==reference.checkpointId||retained.sha256!==reference.snapshotSha256||retained.projectSha256!==body.projectSha256)throw storageError('Saved project reference identifies incompatible retained contents.','HISTORY_VERSION_MISMATCH');
-      const decoded=await readCheckpointBody(jobId,retained,readSnapshot,validatedRoots,true,readFile,verifiedParts,verifiedByteDigests,inspection,rootContinuation,measuredPair);
+      const decoded=await readCheckpointBody(jobId,retained,readSnapshot,validatedRoots,true,readFile,verifiedParts,verifiedByteDigests,inspection,rootContinuation,measuredPair,null,importProofs);
       base={snapshotSha256:retained.sha256,project:decoded.project,projectSha256:decoded.projectSha256,workSha256:inspection?.workFacts.get(retained.id)?.measuredWorkSha256||decoded.workSha256||historyWorkSha256(decoded.project)};if(!inspection?.issues.length)validatedRoots.set(reference.checkpointId,base);
     }
     if(base.snapshotSha256!==reference.snapshotSha256||base.projectSha256!==body.projectSha256)throw storageError('Saved project reference does not match its verified project body.','HISTORY_VERSION_MISMATCH');
@@ -3899,12 +4078,30 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
       // canonical bytes plus each entry's declared bytes in place of its null
       // (a segments entry's bytes are its segments' bytes) are exactly it.
       if(Object.hasOwn(body,'projectBytes')&&body.projectParts&&body.project&&typeof body.project==='object'){assertHistoryProjectParts(body.projectParts);if(historyEncodedProjectBytes(body)!==body.projectBytes)throw storageError('Saved canonical project bytes do not match their checkpoint identity.','HISTORY_VERSION_MISMATCH');}
+      // Tier 1.5 (importPackage only): a root this worker proved is restored
+      // from its stored bytes, which this read has re-hashed above and whose
+      // parts restoreHistoryProject re-reads and re-hashes, and its digest
+      // pass runs as cold. The restored value is the output of an awaited
+      // decode through replaceable natives: natives found unchanged before
+      // and after that await say nothing of it, so only the digests this
+      // read computes bind it to the proven bytes. Its primitives and natives
+      // are checked and its validators walked in the synchronous turn of the
+      // digest pass, before it runs, so that the pass runs under the captured
+      // natives; when both digests then equal the proof's, only the static
+      // check is not repeated, since on a value with these canonical digests
+      // under these validators its outcome is the one the proof attests
+      // (provenImportRoot). Every other check of this read and the pair check
+      // that follows it (validateCheckpointArtifacts) run as cold.
+      const provenRoot=importProofs&&!inspection&&!measuredPair?provenImportRoot(jobId,entry,importProofs):null;
       project=await restoreHistoryProject(body,readFile,verifiedParts,verifiedByteDigests);
       if(projectIdentity(project)!==String(jobId))throw storageError('Saved project belongs to another job.','HISTORY_VERSION_MISMATCH');
+      const provenInputs=Boolean(provenRoot)&&historyProofInputsCurrent(provenRoot)&&rootValidatorsUnchanged(provenRoot.validators);
       ({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=checkpointPairMatches(measuredPair,project)?measuredPair:historyProjectDigests(project));
       // The digest pass measured the restored project's canonical length.
       if(Object.hasOwn(body,'projectBytes')&&canonicalProjectByteCounts.has(project)&&canonicalProjectByteCounts.get(project)!==body.projectBytes)throw storageError('Saved canonical project bytes do not match their checkpoint identity.','HISTORY_VERSION_MISMATCH');
-      if(inspection){
+      if(provenInputs&&verifiedProjectSha256===provenRoot.verifiedProjectSha256&&verifiedWorkSha256===provenRoot.verifiedWorkSha256){
+        recoveryBodyStaticIntegrity.set(project,verifiedProjectIntegrity(project,verifiedProjectSha256));historyProofUsed(importProofs,provenRoot);
+      }else if(inspection){
         try{assertProjectIntegrity(project,{verifyDerived:false});}catch(error){if(!legacyJobPointerProjection(project,{verifyDerived:false}))throw error;}
       }else{
         // Captured in the same synchronous turn as the strict static check;
@@ -3960,7 +4157,7 @@ function certifiedRootEnvelope(entry,validatedRoots,inspection,proof){
   // descriptors only. The certified project replaces the inline project.
   return {...carried,project:undefined,artifacts:carried.artifacts.map(({blob,...descriptor})=>descriptor)};
 }
-async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey(jobId,sha)),readSnapshot=id=>metaGet(snapshotKey(jobId,id)),validatedRoots=new Map(),verifiedParts=new Map(),verifiedByteDigests=null,validatedProjections=null,verifiedSources=null,rootContinuation=null,measuredPair=null,rootBytes=null){
+async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey(jobId,sha)),readSnapshot=id=>metaGet(snapshotKey(jobId,id)),validatedRoots=new Map(),verifiedParts=new Map(),verifiedByteDigests=null,validatedProjections=null,verifiedSources=null,rootContinuation=null,measuredPair=null,rootBytes=null,importProofs=null){
   // Reuse pure digest computation only during this fresh parser-owned decode.
   // Existing import scopes and retained-root continuations keep their owners;
   // no validation, byte-custody, or activation result is borrowed or retained.
@@ -3969,7 +4166,7 @@ async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey
   const holder=!verifiedByteDigests&&!validatedRoots.size&&!verifiedParts.size&&!importDigestHolders.has(verifiedParts)?{scope:null,attempted:Boolean(rootContinuation),privateRead:true}:null;
   if(holder)importDigestHolders.set(verifiedParts,holder);
   try{
-    const body=await readCheckpointBody(jobId,entry,readSnapshot,validatedRoots,false,readFile,verifiedParts,verifiedByteDigests,null,rootContinuation,measuredPair,rootBytes);
+    const body=await readCheckpointBody(jobId,entry,readSnapshot,validatedRoots,false,readFile,verifiedParts,verifiedByteDigests,null,rootContinuation,measuredPair,rootBytes,importProofs);
     try{return await validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests,validatedProjections,verifiedSources,rootContinuation&&body.project===rootContinuation.project);}
     catch(error){withdrawHistoryProofs(jobId,entry,body);throw error;}
   }finally{
@@ -4002,11 +4199,13 @@ async function validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDiges
   if(pairCheck?.validators)mintHistoryPairProof(jobId,body.projectSha256,artifacts,{derived:pairCheck.strict?'STRICT':'NOT_STRICT',derivedAt:pairCheck.at,validators:pairCheck.validators,inputs:pairInputs});
   return {...body,artifacts};
 }
-function bindRestoredCandidates(next,saved,checkpointId,view=null){
+// savedSha256: projectSha256(saved), when the caller computed it in this same
+// synchronous span (importPackage).
+function bindRestoredCandidates(next,saved,checkpointId,view=null,savedSha256=null){
   // Only response bytes already present in this complete checkpoint may be
   // revalidated locally. A newly arriving response never acquires this binding.
   const proposals=saved.projectData?.responseProposals||[],raws=saved.projectData?.rawResponses||[];
-  next.restoredCandidates={activationId:next.historyActivationId,activationRevision:next.revision,checkpointId,sourceProjectSha256:projectSha256(saved),proposals:{},rawResponses:{},selectedFiles:{}};
+  next.restoredCandidates={activationId:next.historyActivationId,activationRevision:next.revision,checkpointId,sourceProjectSha256:savedSha256??projectSha256(saved),proposals:{},rawResponses:{},selectedFiles:{}};
   for(const raw of raws){if(!['PRESERVED','VALIDATION_FAILED','VALIDATED_PENDING_REVIEW'].includes(raw.status)||hash.sha256Text(raw.completeRawResponse)!==raw.sha256)continue;next.restoredCandidates.rawResponses[raw.rawResponseId]={rawResponseId:raw.rawResponseId,rawSha256:raw.sha256,promptId:raw.promptInstructionId,sourceRevision:Number(raw.promptScope?.projectRevision)};}
   for(const selection of Object.values(view?.fileSelections||{})){if(selection.kind!=='response'||selection.jobId!==projectIdentity(saved)||!selection.promptId)continue;for(const file of selection.files)next.restoredCandidates.selectedFiles[file.artifactId]={rawSha256:file.sha256,promptId:selection.promptId,stage:selection.stage,sourceRevision:Number((saved.projectData?.generatedPrompts||[]).find(prompt=>(prompt.instructionId||prompt.promptId)===selection.promptId)?.scope?.projectRevision)};}
   for(const proposal of proposals){
@@ -5009,7 +5208,12 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   if(useStoreWorker())return requestStoreWorker('IMPORT_PACKAGE',[blob,{passphrase}]);
   if(pendingFirstUseRoot)await firstUsePendingWriteRoot();
   // Tier 2: a non-active archived version this worker proved skips its decode
-  // only after its bytes, parts, files, descriptor and inputs re-bind.
+  // only after its bytes, parts, files, descriptor and inputs re-bind. The
+  // same operation re-binds the prior's active checkpoint
+  // (provenRetainedCheckpoint) and restores a proven root, the active
+  // version's included, without its static check once its digests, computed
+  // as cold, equal its proof's (Tier 1.5). A miss of any of them takes the
+  // cold path.
   const proofs=coldHistory?null:historyProofOperation();
   const protectedTransport=await isEncryptedPackage(blob);if(protectedTransport)blob=await decryptPackage(blob,passphrase);
   if(typeof DecompressionStream!=='function')throw storageError('DecompressionStream is required for complete package import.','DECOMPRESSION_STREAM_REQUIRED');
@@ -5037,7 +5241,8 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   const activeArtifacts=verifiedArtifacts.filter(a=>!a.archiveKind);await verifyOriginalSourceBindings(project,activeArtifacts,verifiedSources);const priorPhysical={},priorProject=await readProject(id,{[PHYSICAL_SOURCE_CAPTURE]:priorPhysical});
   if(Number(priorProject?.revision||0)!==Number(observedHeads.get(id)||0))throw storageError('This project changed while the backup was being verified. Its newer work is preserved.','STALE_PROJECT_REVISION');
   let preparedPrior=null;
-  if(priorProject){try{preparedPrior=await prepareHistoryCommit(priorProject,priorProject);}catch(error){
+  // The prior's active checkpoint: proven, it is re-bound, not decoded again.
+  if(priorProject){try{preparedPrior=await prepareHistoryCommit(priorProject,priorProject,{[IMPORT_HISTORY_PROOFS]:proofs});}catch(error){
     if(!['PACKAGE_ARTIFACT_CUSTODY_MISMATCH','HISTORY_FILE_INTEGRITY_FAILED'].includes(error.code))throw error;
     // Restoring verified bytes must remain possible when the active file copy
     // is damaged. Use the already-retained matching complete version; never
@@ -5087,13 +5292,26 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
         }
        }else decoded=await decodeCheckpoint(id,snapshot,sha=>archiveFiles.get(sha),checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections,verifiedSources);
       }else if(proofs&&entry.id!==incoming.activeId&&(proven=await provenImportEntry(id,entry,snapshot,sha=>archiveFiles.get(sha),validatedRoots,provenRoots,verifiedByteDigests,validatedProjections,proofs))){
-       // The active version is always decoded: its value is the source reference.
+       // The active version is never a Tier 2 hit: its value is the source
+       // reference, so it is always restored from its own stored bytes.
        if(!entry.projectReference&&validatedRoots.has(entry.id))provenRoots.set(entry.id,{snapshotSha256:entry.sha256,projectSha256:proven.verifiedProjectSha256,workSha256:proven.verifiedWorkSha256});
-      }else decoded=await decodeCheckpoint(id,snapshot,sha=>archiveFiles.get(sha),checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections,verifiedSources);
+      }else{
+       // A proven root without a usable pair, itself or as a view reference's
+       // root, is restored under its proof (Tier 1.5, provenImportRoot). So
+       // is the active version's root: its project is still produced by
+       // restoreHistoryProject from the re-hashed stored bytes and digested
+       // as cold, and every other check and its pair check run as cold; only
+       // the static check its proof attests for those digests is not repeated.
+       decoded=await decodeCheckpoint(id,snapshot,sha=>archiveFiles.get(sha),checkpointId=>archiveSnapshots.get(checkpointId),validatedRoots,verifiedParts,verifiedByteDigests,validatedProjections,verifiedSources,null,null,null,proofs);
+      }
       if(decoded&&entry.id===incoming.activeId){importedActive=decoded;importedView=incoming.activeViewOverride||decoded.view;}
 
       const existing=merged.entries.find(item=>item.id===entry.id);
-      if(existing&&hash.sha256Value(historyStateForm(existing))!==hash.sha256Value(historyStateForm(entry)))throw storageError('Backup History conflicts with a retained version.','IMMUTABLE_HISTORY_CONFLICT');
+      // The parts list's digest of the proof checks above stands in for this
+      // cold check's own only under primitives and natives confirmed
+      // unchanged in this turn (historyConflictPartsDigest).
+      if(existing&&hash.sha256Value(historyStateForm(existing))!==hash.sha256Value(historyStateForm(entry,proofs?.partsDigests)))throw storageError('Backup History conflicts with a retained version.','IMMUTABLE_HISTORY_CONFLICT');
+      if(entry.projectParts)proofs?.partsDigests.delete(entry.projectParts);
       if(!existing){merged.entries.push(clone(entry));merged.compressedProjectBytes+=entry.byteSize;importSnapshots.push(snapshot);}
     }
     }finally{if(digestHolder.scope)hash.disposeCanonicalDigestScope(digestHolder.scope);importDigestHolders.delete(verifiedParts);}
@@ -5119,15 +5337,46 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   let next=clone(project);next.revision=Math.max(Number(priorProject?.revision||0),Number(project.revision||0))+1;next.historyActivationId=crypto.randomUUID();delete next.projectSha256;
   if(!(projectSourceBlob instanceof Blob))throw storageError('The imported project source bytes are unavailable.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
   const packageSourceSha256=await hash.sha256Bytes(blob),extensionSources=await preparePackageExtensionSources(id,packageMembers,rootMemberCounts,packageSourceSha256,packageSha256);
-  const importSourceRows=[],importSource=await retainProjectSource(next,{blob:projectSourceBlob,payload:project,sourceSha256:packageSourceSha256,sourceEncoding:'UTF-8',sourceLocation:{jsonPointer:'/project',containerEncoding:'gzip'},parserIdentity:'closed-loop-project-package-json-reader',parserVersion:'1'},importSourceRows,{recordProject:false});
-  if(body.recovery&&body.recovery.activeProjectSha256!==projectSha256(project))throw storageError('Backup active project does not match its recovery version.','HISTORY_VERSION_MISMATCH');
+  // The package project's digests, computed once for the parsed payload of
+  // its retained source, the recovery check, bindRestoredCandidates and an
+  // incoming active version's work comparison in one synchronous span: one
+  // canonical pass yields its project and work digests
+  // (packageProjectDigestPair), each reused under the initial digest
+  // primitives confirmed at its use. Between the sites no await runs and no
+  // replaceable code receives project (the source location is cloned on its
+  // own; the view file check reads the view and files; a view without a
+  // pending correction is returned unchanged; recalculation and the
+  // integrity check receive next, a separate copy). A pending correction is
+  // rebased through replaceable code, so its project and its work are then
+  // digested anew. The payload's digest is its project digest only when
+  // canonicalProject leaves its canonical bytes unchanged
+  // (projectDigestCoversValue). Values and throw positions are the ones of a
+  // digest at each site.
+  let packageProjectSha256=null,packageDigests=null,packageDigestsTried=false;
+  const packageDigestPass=()=>{if(!packageDigestsTried){packageDigestsTried=true;packageDigests=packageProjectDigestPair(project);}return packageDigests&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?packageDigests:null;};
+  const packagePayloadDigest=payload=>payload===project&&projectDigestCoversValue(project)?packageDigestPass()?.projectSha256??null:null;
+  // The rest of retainProjectSource after its byte digest runs no await here:
+  // this import's source rows are new and its source has no container.
+  const importSourceRows=[],projectSource={blob:projectSourceBlob,payload:project,sourceSha256:packageSourceSha256,sourceEncoding:'UTF-8',sourceLocation:{jsonPointer:'/project',containerEncoding:'gzip'},parserIdentity:'closed-loop-project-package-json-reader',parserVersion:'1'},projectSourceJobId=projectIdentity(next),projectSourceSha256=await hash.sha256Bytes(projectSourceBlob);
+  const importSource=describeProjectSource(next,projectSource,importSourceRows,projectSourceIdentity(projectSourceJobId,projectSourceSha256,projectSource),null,{recordProject:false,payloadSha256:packagePayloadDigest});
+  const packageProjectDigest=()=>packageProjectSha256??=packageDigestPass()?.projectSha256??projectSha256(project);
+  if(body.recovery&&body.recovery.activeProjectSha256!==packageProjectDigest())throw storageError('Backup active project does not match its recovery version.','HISTORY_VERSION_MISMATCH');
   assertRecoveryViewFiles(id,importedView,activeArtifacts);
+  const viewRebased=Boolean(importedView?.pendingMutation);
   importedView=rebaseHistoryView(project,importedView);
-  bindRestoredCandidates(next,project,importedActive?body.recovery?.activeId||null:null,importedView);
+  bindRestoredCandidates(next,project,importedActive?body.recovery?.activeId||null:null,importedView,viewRebased?null:packageProjectDigest());
   withVerifiedRecoveryCustody(activeArtifacts,()=>{next=recalculateChangedProjection(next,{sourceProjectSha256:manifest.projectSha256});assertProjectIntegrity(next);});
   importedView=rebaseHistoryView(next,importedView);
-  let prepared;
-  if(importedActive&&historyWorkSha256(importedActive.project)===historyWorkSha256(project)&&historyArtifactsSha256(importedActive.artifacts)===historyArtifactsSha256(activeArtifacts)){
+  // The work comparison of the active version, computed once: the source
+  // reference below reuses it only after activating that existing version,
+  // whose branch runs no await and hands neither project to replaceable code
+  // (reconcileRecoveryTransfers reads rows of next, a separate copy). After
+  // a new version's preparation, an await, it is computed again.
+  let prepared,activatedExisting=false;
+  // The package project's work digest is the pass's above under the initial
+  // digest primitives, confirmed here; otherwise it is computed here.
+  const activeWorkMatches=Boolean(importedActive)&&historyWorkSha256(importedActive.project)===(packageDigests?.workSha256&&!viewRebased&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?packageDigests.workSha256:historyWorkSha256(project));
+  if(activeWorkMatches&&historyArtifactsSha256(importedActive.artifacts)===historyArtifactsSha256(activeArtifacts)){activatedExisting=true;
     // Activating an existing complete version needs no additional retention
     // slot, exactly as Undo and native history restoration do.
     merged.activeProjectSha256=projectSha256(next);merged.activeRevision=next.revision;merged.activeViewOverride=importedView;merged.title=String(next.job?.JOB_TITLE||'');merged.removed=false;merged.redo=[];merged.generation=Number(localState?.generation||0)+1;reconcileRecoveryTransfers(merged,next);
@@ -5140,7 +5389,7 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   // record the exact bytes from which this activation was read.
   const sourceRow=importSourceRows[0],sourceKey=hash.sha256Value(importSource);
   let sourceReference=null;
-  if(importedActive&&historyWorkSha256(importedActive.project)===historyWorkSha256(project)){
+  if(importedActive&&(activatedExisting?activeWorkMatches:historyWorkSha256(importedActive.project)===historyWorkSha256(project))){
     const checkpoint=prepared.state.entries.find(entry=>entry.id===body.recovery.activeId),activation=Object.fromEntries(HISTORY_ACTIVATION_FIELDS.filter(key=>Object.hasOwn(project,key)).map(key=>[key,clone(project[key])])),reference={schema:HISTORY_SOURCE_REFERENCE,checkpointId:checkpoint.id,snapshotSha256:checkpoint.sha256,activation};
     // Equality is proved against the actual received bytes before sharing.
     // Different whitespace, escapes, number spelling, and unknown extension
