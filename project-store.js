@@ -505,12 +505,23 @@ function parseLegacy(storage=globalThis.localStorage){
   return out;
 }
 const ORIGINAL_SOURCE_KIND='ORIGINAL_PROJECT_SOURCE',ORIGINAL_SOURCE_SCHEMA='closed-loop-original-project-source/1';
-async function retainProjectSource(project,source,rows,{recordProject=true}={}){
-  const jobId=projectIdentity(project),sha256=await hash.sha256Bytes(source.blob),artifactId='PROJECT-SOURCE-'+hash.sha256Value({jobId,sha256}),encoding=source.sourceEncoding||source.container?.sourceEncoding||'UTF-8';
-  const filename=artifactId+(encoding==='UTF-8'?'.json':'.json.utf16le'),mediaType=encoding==='UTF-8'?'application/json':'application/octet-stream',existing=rows.find(row=>row.artifactId===artifactId);
+async function retainProjectSource(project,source,rows,options={}){
+  const jobId=projectIdentity(project),identity=projectSourceIdentity(jobId,await hash.sha256Bytes(source.blob),source),{sha256,artifactId}=identity,existing=rows.find(row=>row.artifactId===artifactId);
   if(existing&&(existing.jobId!==jobId||existing.byteSize!==source.blob.size||existing.sha256!==sha256||await hash.sha256Bytes(existing.blob)!==sha256))throw storageError('Original project source bytes conflict with a retained identity.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
   const container=source.container;if(container&&!container.sha256)container.sha256=await hash.sha256Bytes(container.blob);
-  const descriptor={kind:ORIGINAL_SOURCE_KIND,schema:ORIGINAL_SOURCE_SCHEMA,operational:false,artifactId,filename,mediaType,byteSize:source.blob.size,sha256,sourceEncoding:encoding,sourceSha256:source.sourceSha256||container.sha256,sourceLocation:clone(source.sourceLocation),parser:{identity:source.parserIdentity||'closed-loop-legacy-json-reader',version:source.parserVersion||'1'},parsedPayloadSha256:hash.sha256Value(source.payload),disclosureClassification:containsCredentialSecret(source.payload)?'CREDENTIAL_SECRET':'UNKNOWN'};
+  return describeProjectSource(project,source,rows,identity,existing,options);
+}
+function projectSourceIdentity(jobId,sha256,source){
+  const artifactId='PROJECT-SOURCE-'+hash.sha256Value({jobId,sha256}),encoding=source.sourceEncoding||source.container?.sourceEncoding||'UTF-8';
+  return {jobId,sha256,artifactId,encoding,filename:artifactId+(encoding==='UTF-8'?'.json':'.json.utf16le'),mediaType:encoding==='UTF-8'?'application/json':'application/octet-stream'};
+}
+// The rest of retainProjectSource once its bytes are hashed and a retained
+// row of the same identity and the container are checked: it runs no await.
+// payloadSha256 (importPackage only): the parsed payload's digest computed in
+// this synchronous span, or null to digest it here.
+function describeProjectSource(project,source,rows,{jobId,sha256,artifactId,encoding,filename,mediaType},existing,{recordProject=true,payloadSha256=null}={}){
+  const container=source.container;
+  const descriptor={kind:ORIGINAL_SOURCE_KIND,schema:ORIGINAL_SOURCE_SCHEMA,operational:false,artifactId,filename,mediaType,byteSize:source.blob.size,sha256,sourceEncoding:encoding,sourceSha256:source.sourceSha256||container.sha256,sourceLocation:clone(source.sourceLocation),parser:{identity:source.parserIdentity||'closed-loop-legacy-json-reader',version:source.parserVersion||'1'},parsedPayloadSha256:payloadSha256?.(source.payload)??hash.sha256Value(source.payload),disclosureClassification:containsCredentialSecret(source.payload)?'CREDENTIAL_SECRET':'UNKNOWN'};
   if(recordProject){const data=project.projectData;if(!Object.hasOwn(data,'migrationArchives'))data.migrationArchives=[];if(!Array.isArray(data.migrationArchives))throw storageError('Original source archives require an array.','PROJECT_INTEGRITY_FAILED');
     if(!data.migrationArchives.some(row=>row?.kind===ORIGINAL_SOURCE_KIND&&hash.sha256Value(row)===hash.sha256Value(descriptor)))data.migrationArchives.push(descriptor);}
   if(!existing)rows.push({artifactId,jobId,filename,mediaType,byteSize:source.blob.size,sha256,blob:source.blob,lineage:{originalProjectSource:{schema:ORIGINAL_SOURCE_SCHEMA,operational:false,sourceEncoding:encoding,parsedPayloadSha256:descriptor.parsedPayloadSha256},...(containsCredentialSecret(source.payload)?{disclosureClassification:'CREDENTIAL_SECRET'}:{})},createdAt:now()});
@@ -2302,6 +2313,15 @@ function historyProjectDigestsCold(project){
   }
   write('}');canonicalProjectByteCounts.set(project,projectBytes);
   return {projectSha256:projectDigest.digest(),workSha256:workDigest.digest()};
+}
+// sha256Value(value) equals projectSha256(value): canonicalProject leaves
+// its canonical bytes unchanged for a plain object without its own
+// projectSha256, symbol keys or accessor properties.
+function projectDigestCoversValue(value){
+  if(!value||typeof value!=='object'||Array.isArray(value)||Object.hasOwn(value,'projectSha256')||Object.getOwnPropertySymbols(value).length)return false;
+  const prototype=Object.getPrototypeOf(value);if(prototype!==Object.prototype&&prototype!==null)return false;
+  for(const key of Object.keys(value))if(!Object.hasOwn(Object.getOwnPropertyDescriptor(value,key),'value'))return false;
+  return true;
 }
 // A parsed package project's project and work digests from one canonical
 // pass, only under the initial digest primitives, confirmed in this
@@ -5249,22 +5269,29 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   let next=clone(project);next.revision=Math.max(Number(priorProject?.revision||0),Number(project.revision||0))+1;next.historyActivationId=crypto.randomUUID();delete next.projectSha256;
   if(!(projectSourceBlob instanceof Blob))throw storageError('The imported project source bytes are unavailable.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
   const packageSourceSha256=await hash.sha256Bytes(blob),extensionSources=await preparePackageExtensionSources(id,packageMembers,rootMemberCounts,packageSourceSha256,packageSha256);
-  const importSourceRows=[],importSource=await retainProjectSource(next,{blob:projectSourceBlob,payload:project,sourceSha256:packageSourceSha256,sourceEncoding:'UTF-8',sourceLocation:{jsonPointer:'/project',containerEncoding:'gzip'},parserIdentity:'closed-loop-project-package-json-reader',parserVersion:'1'},importSourceRows,{recordProject:false});
-  // The package project's digests, computed once for the recovery check,
-  // bindRestoredCandidates and an incoming active version's work comparison
-  // in one synchronous span: between them no await runs and no replaceable
-  // code receives project (the view file check reads the view and files; a
-  // view without a pending correction is returned unchanged; recalculation
-  // and the integrity check receive next, a separate copy). A pending
-  // correction is rebased through replaceable code, so its project and its
-  // work are then digested anew. With an incoming active version one
-  // canonical pass yields both digests (packageProjectDigestPair). Values and
-  // throw positions are the ones of a digest at each site.
-  let packageProjectSha256=null,packageDigests=null;
-  const packageProjectDigest=()=>{
-    if(packageProjectSha256===null&&importedActive&&!importedView?.pendingMutation)packageDigests=packageProjectDigestPair(project);
-    return packageProjectSha256??=packageDigests?.projectSha256??projectSha256(project);
-  };
+  // The package project's digests, computed once for the parsed payload of
+  // its retained source, the recovery check, bindRestoredCandidates and an
+  // incoming active version's work comparison in one synchronous span: one
+  // canonical pass yields its project and work digests
+  // (packageProjectDigestPair), each reused under the initial digest
+  // primitives confirmed at its use. Between the sites no await runs and no
+  // replaceable code receives project (the source location is cloned on its
+  // own; the view file check reads the view and files; a view without a
+  // pending correction is returned unchanged; recalculation and the
+  // integrity check receive next, a separate copy). A pending correction is
+  // rebased through replaceable code, so its project and its work are then
+  // digested anew. The payload's digest is its project digest only when
+  // canonicalProject leaves its canonical bytes unchanged
+  // (projectDigestCoversValue). Values and throw positions are the ones of a
+  // digest at each site.
+  let packageProjectSha256=null,packageDigests=null,packageDigestsTried=false;
+  const packageDigestPass=()=>{if(!packageDigestsTried){packageDigestsTried=true;packageDigests=packageProjectDigestPair(project);}return packageDigests&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?packageDigests:null;};
+  const packagePayloadDigest=payload=>payload===project&&projectDigestCoversValue(project)?packageDigestPass()?.projectSha256??null:null;
+  // The rest of retainProjectSource after its byte digest runs no await here:
+  // this import's source rows are new and its source has no container.
+  const importSourceRows=[],projectSource={blob:projectSourceBlob,payload:project,sourceSha256:packageSourceSha256,sourceEncoding:'UTF-8',sourceLocation:{jsonPointer:'/project',containerEncoding:'gzip'},parserIdentity:'closed-loop-project-package-json-reader',parserVersion:'1'},projectSourceJobId=projectIdentity(next),projectSourceSha256=await hash.sha256Bytes(projectSourceBlob);
+  const importSource=describeProjectSource(next,projectSource,importSourceRows,projectSourceIdentity(projectSourceJobId,projectSourceSha256,projectSource),null,{recordProject:false,payloadSha256:packagePayloadDigest});
+  const packageProjectDigest=()=>packageProjectSha256??=packageDigestPass()?.projectSha256??projectSha256(project);
   if(body.recovery&&body.recovery.activeProjectSha256!==packageProjectDigest())throw storageError('Backup active project does not match its recovery version.','HISTORY_VERSION_MISMATCH');
   assertRecoveryViewFiles(id,importedView,activeArtifacts);
   const viewRebased=Boolean(importedView?.pendingMutation);
