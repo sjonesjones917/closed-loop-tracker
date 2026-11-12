@@ -79,7 +79,7 @@ const ENCODER_BEGIN='async function encodeHistoryProject(',ENCODER_END='// Recei
 function encoderSlice(source){assert.equal(source.split(ENCODER_BEGIN).length,2);assert.equal(source.split(ENCODER_END).length,2);return source.slice(source.indexOf(ENCODER_BEGIN),source.indexOf(ENCODER_END));}
 function hashRuntime(){const runtime=createVerifierRuntime({Object,Array,TextEncoder,TextDecoder,Blob,Uint8Array,ArrayBuffer,console});vm.runInContext(fs.readFileSync(new URL('./hash.js',import.meta.url),'utf8'),runtime);return runtime;}
 function hashRealm(){return hashRuntime().closedLoopHash;}
-function encoderOf(text,hash){return new Function('hash','Blob','HISTORY_PROJECT_PARTS','HISTORY_PROJECT_PARTS_SEGMENTED',text+';return encodeHistoryProject;')(hash,Blob,V1,V2);}
+function encoderOf(text,hash,max=65536){return new Function('hash','Blob','HISTORY_PROJECT_PARTS','HISTORY_PROJECT_PARTS_SEGMENTED','HISTORY_SEGMENTS_MAX',text+';return encodeHistoryProject;')(hash,Blob,V1,V2,max);}
 async function encode(encoder,value){
  const retained=[];
  const result=await encoder(structuredClone(value),async(digest,blob)=>{const bytes=Buffer.from(await blob.arrayBuffer());assert.equal(sha(bytes),digest,'SEGMENTED_RETAINED_DIGEST_ORACLE');retained.push({digest,size:blob.size,text:bytes.toString('utf8')});});
@@ -87,26 +87,43 @@ async function encode(encoder,value){
 }
 // The reference segmentation rule, written from its specification.
 function fnv1a(bytes){let h=0x811c9dc5;for(const byte of bytes){h=(h^byte)>>>0;h=Math.imul(h,0x01000193)>>>0;}return h;}
-function referenceSegments(texts){
+// A hash boundary needs S/4 bytes in the segment; at most max segments, the
+// last holding every remaining item.
+function referenceSegments(texts,max=65536){
  const segments=[];let open=[],size=0;
  const close=()=>{if(!open.length)return;const text='['+open.join(',')+']';segments.push({sha256:sha(text),byteSize:bytesOf(text),count:open.length,text});open=[];size=0;};
+ const closable=()=>segments.length<max-1;
  for(const text of texts){
   const n=bytesOf(text);
-  if(n>=S){close();open.push(text);close();continue;}
+  if(n>=S&&closable()){close();if(closable()){open.push(text);close();continue;}}
   size+=n+(open.length?1:0);open.push(text);
-  if(fnv1a(Buffer.from(text,'utf8'))/2**32<n/S||size+2>=4*S)close();
+  if(closable()&&(size+2>=S/4&&fnv1a(Buffer.from(text,'utf8'))/2**32<n/S||size+2>=4*S))close();
  }
  close();return segments;
 }
 // Expected /2 entries of one segmented array: long strings become nulls and
 // value entries with absolute paths after the segments entry.
-function referenceArrayEntries(array,path,strings=new Map()){
+function referenceArrayEntries(array,path,strings=new Map(),max=65536){
  const local=[];
  const pack=(value,at)=>{if(typeof value==='string'&&value.length>=4096){const text=JSON.stringify(value);local.push({path:at,sha256:sha(text),byteSize:bytesOf(text)});strings.set(value,true);return null;}if(!value||typeof value!=='object')return value;if(Array.isArray(value))return value.map((item,index)=>pack(item,[...at,index]));return Object.fromEntries(Object.keys(value).map(key=>[key,pack(value[key],[...at,key])]));};
- const texts=array.map((item,index)=>canonical(pack(item,[...path,index]))),whole='['+texts.join(',')+']',segments=referenceSegments(texts);
+ const texts=array.map((item,index)=>canonical(pack(item,[...path,index]))),whole='['+texts.join(',')+']',segments=referenceSegments(texts,max);
  return {entry:{path,sha256:sha(whole),byteSize:bytesOf(whole),segments:segments.map(({sha256,byteSize,count})=>({sha256,byteSize,count}))},local,segments};
 }
 const record=(i,extra='')=>({id:'REC-'+String(i).padStart(5,'0'),kind:i%7?'ordinary':'receipt',text:'Synthetic record '+i+' '+'.'.repeat((i*37)%113)+extra});
+// Items of exact canonical sizes: one whose FNV-1a32 never closes a segment
+// (quiet) and one whose FNV-1a32 always does (closer). {"t":"..."} is 8 bytes
+// plus its ASCII text.
+const closesByHash=text=>fnv1a(Buffer.from(text,'utf8'))/2**32<bytesOf(text)/S;
+function sizedItem(size,seed,closer){for(let i=0;;i++){const head=seed+'-'+i+'-',item={t:head+'x'.repeat(size-8-head.length)};if(bytesOf(canonical(item))!==size)throw new Error('sized item');if(closesByHash(canonical(item))===closer)return item;}}
+// An array whose first open segment reaches exactly `bytes` canonical bytes
+// (brackets included) at its last item, then two quiet items.
+function sizedPrefix(bytes,last,seed){
+ const items=[];let size=-1;while(size+1+100+1+2+last.size+2<=bytes-120){items.push(sizedItem(100,seed+items.length,false));size+=101;}
+ const fill=bytes-2-(size+1)-1-last.size;items.push(sizedItem(fill,seed+'fill',false));size+=fill+1;items.push(sizedItem(last.size,seed+'last',last.closer));size+=last.size+1;
+ assert.equal(size+2,bytes,'SEGMENTED_SIZED_FIXTURE');return [...items,sizedItem(100,seed+'tail0',false),sizedItem(100,seed+'tail1',false)];
+}
+// Small canonical items whose FNV-1a32 closes a segment on its own.
+const closerOf=make=>{for(let i=0;;i++){const value=make(i);if(closesByHash(canonical(value)))return value;}};
 
 async function encoderCases(source,blank){
  const hash=hashRealm(),cases=[],actual=encoderOf(encoderSlice(source),hash),frozen=encoderOf(V1_ENCODER,hash);
@@ -138,7 +155,18 @@ async function encoderCases(source,blank){
   // Exactly S canonical bytes (alone) and S-1 bytes, without a long string.
   ['item-at-target',[record(1),{k0:'z'.repeat(4088),k1:'z'.repeat(4088),k2:'z'.repeat(4088),k3:'z'.repeat(4087)},record(2),{k0:'z'.repeat(4088),k1:'z'.repeat(4088),k2:'z'.repeat(4088),k3:'z'.repeat(4086)},record(3)]],
   ['cap-4S',Array.from({length:7000},()=>heavy)],
-  ['in-item-long-strings',Array.from({length:120},(_,i)=>i%10?record(i):{...record(i),body:(i%20?'p':'q').repeat(5000)})]
+  ['in-item-long-strings',Array.from({length:120},(_,i)=>i%10?record(i):{...record(i),body:(i%20?'p':'q').repeat(5000)})],
+  // The cap: quiet items whose open segment reaches exactly 4S bytes.
+  ['cap-exact',sizedPrefix(4*S,{size:100,closer:false},'cap')],
+  // The minimum: a closer reaching exactly S/4 bytes closes; one reaching
+  // S/4-1 bytes does not.
+  ['minimum-exact',sizedPrefix(S/4,{size:40,closer:true},'min')],
+  ['minimum-below',sizedPrefix(S/4-1,{size:40,closer:true},'below')],
+  // Repeated small items that close a segment on their own: segments still
+  // hold S/4 bytes each, so their count follows the array's bytes.
+  ['closer-integers',Array(65537).fill(closerOf(i=>5000+i))],
+  ['closer-objects',Array(20000).fill(closerOf(i=>({n:i})))],
+  ['closer-strings',Array(20000).fill(closerOf(i=>'id-'+i))]
  ];
  for(const [name,array] of ruled){
   const {result,retained}=await encode(actual,{projectData:{list:array}}),expected=referenceArrayEntries(array,['projectData','list']);
@@ -151,9 +179,29 @@ async function encoderCases(source,blank){
   if(name==='threshold-4096'){assert.equal(expected.segments.length,1);assert.equal(expected.entry.byteSize,4096);}
   if(name==='item-at-target')assert.ok(expected.segments.some(segment=>segment.count===1&&segment.byteSize===S+2),'SEGMENTED_TARGET_ALONE_ORACLE');
   if(name==='cap-4S')assert.ok(expected.segments.slice(0,-1).every(segment=>segment.byteSize>=4*S&&segment.byteSize<4*S+64),'SEGMENTED_CAP_ORACLE');
+  if(name==='cap-exact')assert.equal(expected.segments[0].byteSize,4*S,'SEGMENTED_CAP_EXACT_ORACLE: a segment closes at exactly 4S bytes');
+  if(name==='minimum-exact')assert.equal(expected.segments[0].byteSize,S/4,'SEGMENTED_MINIMUM_ORACLE: a closer at exactly S/4 bytes closes');
+  if(name==='minimum-below')assert.ok(expected.segments.length===1&&expected.segments[0].byteSize>S/4,'SEGMENTED_MINIMUM_ORACLE: a closer below S/4 bytes does not close');
+  // Every segment but the last holds S/4 bytes or more here (no item of S
+  // bytes): at most B/(S/4-1)+1 segments for an array of B bytes.
+  if(name.startsWith('closer-')){assert.ok(expected.segments.slice(0,-1).every(segment=>segment.byteSize>=S/4),'SEGMENTED_MINIMUM_ORACLE '+name);assert.ok(expected.segments.length<=expected.entry.byteSize/(S/4-1)+1,'SEGMENTED_SEGMENT_COUNT_BOUND_ORACLE '+name);}
+  // The whole-array identity is that of the packed array: an extracted string
+  // is null there and bound by its own value entry.
+  if(name==='in-item-long-strings'){const value=sha(canonical(array));assert.notEqual(expected.entry.sha256,value,'SEGMENTED_PACKED_IDENTITY_ORACLE');assert.equal(entries[at].sha256,expected.entry.sha256,'SEGMENTED_PACKED_IDENTITY_ORACLE');}
   cases.push({name:'rule:'+name,segments:expected.segments.length,nested:expected.local.length});
  }
  {const below=await encode(actual,{projectData:{list:['x'.repeat(4095-4)]}});assert.equal(below.result.projectParts,undefined,'SEGMENTED_THRESHOLD_ORACLE: 4095 bytes stay inline');}
+ // At most HISTORY_SEGMENTS_MAX segments: the last one holds every remaining
+ // item, here with the cap at 4 and 3 (records, and items of S bytes or more
+ // reaching the cap before and after an open segment).
+ {const big=k=>({k0:'z'.repeat(4088),k1:'z'.repeat(4088),k2:'z'.repeat(4088),k3:'z'.repeat(4088),k:k});
+  for(const [name,array,max] of [['records',Array.from({length:900},(_,i)=>record(i)),4],['large-items',Array.from({length:6},(_,i)=>big(i)),4],['open-before-large',[record(1),big(1),record(2),big(2),big(3)],3]]){
+   const capped=encoderOf(encoderSlice(source),hash,max),{result}=await encode(capped,{projectData:{list:array}}),expected=referenceArrayEntries(array,['projectData','list'],new Map(),max),unlimited=referenceSegments(array.map(item=>canonical(item)));
+   assert.ok(unlimited.length>max,'SEGMENTED_SEGMENT_CAP_FIXTURE '+name);
+   assert.deepEqual(result.projectParts.entries.find(entry=>entry.segments),expected.entry,'SEGMENTED_SEGMENT_CAP_ORACLE '+name+': the last of the capped segments holds every remaining item');
+   assert.equal(expected.entry.segments.length,max,'SEGMENTED_SEGMENT_CAP_ORACLE '+name);
+   cases.push({name:'segment-cap:'+name,segments:max,unlimited:unlimited.length});
+  }}
  // A string of 4096 or more code units is canonicalized once, for its own
  // retained part, whether the project is encoded as /1 (arrays below the
  // threshold) or /2: no discarded pass reads it.
@@ -193,8 +241,17 @@ async function resignRoot(r,jobId,id,change){
  record.projectParts=structuredClone(body.projectParts);record.blob=new Blob([bytes]);
  if(Object.hasOwn(entry,'projectPartsSha256'))entry.projectPartsSha256=sha(canonical(body.projectParts));else entry.projectParts=structuredClone(body.projectParts);
 }
+// Re-sign one root's snapshot after changing its body; the record and History
+// entry take the new snapshot identity and changeRows(row) for each of them.
+async function resignBody(r,jobId,id,changeBody,changeRows=()=>{}){
+ const meta=r.rows.get('meta'),state=meta.get(jobKey(jobId)).value,entry=state.entries.find(row=>row.id===id),record=meta.get(snapshotKey(jobId,id)).value,body=await decodeBody(record.blob);
+ changeBody(body);delete body.packageSha256;body.packageSha256=sha(canonical(body));
+ const bytes=gzipSync(Buffer.from(canonical(body)));state.compressedProjectBytes+=bytes.length-entry.byteSize;
+ for(const row of [entry,record]){row.sha256=sha(bytes);row.byteSize=bytes.length;changeRows(row);}
+ record.blob=new Blob([bytes]);
+}
 const refusal=async(work,code,message,label)=>{await assert.rejects(work,error=>{assert.equal(error.code,code,label+': code');assert.equal(error.message,message,label+': message');return true;});};
-const MISSING='Saved project contents are missing or corrupt. The current version is preserved.',SIZES='Saved project content sizes conflict.',INVALID='Saved project content identity is invalid.',UNRETAINED='Recovery project contents are not retained in this complete history.',UNSUPPORTED='Saved project content references are unsupported.';
+const MISSING='Saved project contents are missing or corrupt. The current version is preserved.',SIZES='Saved project content sizes conflict.',INVALID='Saved project content identity is invalid.',UNRETAINED='Recovery project contents are not retained in this complete history.',UNSUPPORTED='Saved project content references are unsupported.',ACCOUNTING='Recovery storage accounting does not match its retained contents.';
 
 async function storeCases(source){
  const cases=[],overrides={'project-store.js':source},base=projectStoreRuntime({storageWorker:false,sourceOverrides:overrides}),{store,core,engine,copy}=base;
@@ -228,6 +285,37 @@ async function storeCases(source){
  const freshRoot=await fresh.store.restoreCheckpoint(jobId,secondId,{expectedProjectRevision:imported.revision});
  assert.equal(freshRoot.project.vendorExtension.records.length,601,'SEGMENTED_STORE_IMPORT_ORACLE');
  cases.push({name:'store-round-trip',segments:segmentsEntry.segments.length,sharedSegments:segmentsEntry.segments.length-1});
+ // Arrays of small items that each close a segment by hash (65,537 integers
+ // and repeated objects): every reader accepts what the write committed.
+ {const r=projectStoreRuntime({storageWorker:false,sourceOverrides:overrides});let q=r.core.createBlankState('HISTORY-SEGMENTED-CLOSERS');
+  const closers={counts:Array(65537).fill(closerOf(i=>5000+i)),objects:Array(3000).fill(closerOf(i=>({n:i})))};
+  q.vendorExtension=r.copy(closers);r.engine.ensureShape(q);r.engine.recalculate(q);q=await r.store.writeProject(q,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});
+  const closerJob=q.job.JOB_ID,closerRoot=(await r.store.historyList(closerJob)).activeId,list=r.rows.get('meta').get(snapshotKey(closerJob,closerRoot)).value.projectParts;
+  for(const entry of list.entries.filter(row=>row.segments))assert.ok(entry.segments.length<=entry.byteSize/(S/4-1)+1,'SEGMENTED_SEGMENT_COUNT_BOUND_ORACLE: '+entry.path.join('.'));
+  const checkpoint=await r.store.saveCheckpoint(closerJob,{expectedProjectRevision:q.revision,expectedStateSha256:q.projectSha256,view:r.copy({activeStage:1,activeView:'Workflow',drafts:{},scrollX:0,scrollY:5}),label:'Saved view'});
+  assert.ok(checkpoint,'SEGMENTED_CLOSER_ITEMS_ORACLE: view checkpoint');
+  const later=r.copy(q);later.job.JOB_TITLE='After closer items';r.engine.recalculate(later);q=await r.store.writeProject(later,{expectedProjectRevision:q.revision});
+  const back=await r.store.restoreCheckpoint(closerJob,closerRoot,{expectedProjectRevision:q.revision});assert.deepEqual(r.copy(back.project.vendorExtension),r.copy(closers),'SEGMENTED_CLOSER_ITEMS_ORACLE: restore');
+  // The backup export verifies every retained version cold.
+  assert.equal((await r.store.exportPackage(closerJob)).type,'application/gzip','SEGMENTED_CLOSER_ITEMS_ORACLE: export');
+  cases.push({name:'closer-items-round-trip',segments:list.entries.reduce((n,row)=>n+(row.segments?.length||0),0),items:65537+3000});}
+ // The segment cap through the store: the shared constant at 4, the last
+ // segment holding every remaining item, read, exported and imported; an
+ // encoder that ignored it is refused at the write, which changes nothing.
+ {const capAnchor='const HISTORY_SEGMENTS_MAX=65536;',closeAnchor='const closable=()=>segments.length<HISTORY_SEGMENTS_MAX-1;';
+  assert.equal(source.split(capAnchor).length,2,'SEGMENTED_SEGMENT_CAP_ANCHOR');assert.equal(source.split(closeAnchor).length,2,'SEGMENTED_SEGMENT_CAP_ANCHOR');
+  const capped={'project-store.js':source.replace(capAnchor,'const HISTORY_SEGMENTS_MAX=4;')},uncapped={'project-store.js':capped['project-store.js'].replace(closeAnchor,'const closable=()=>true;')};
+  const records=Array.from({length:900},(_,i)=>record(i)),start=async r=>{let q=r.core.createBlankState('HISTORY-SEGMENTED-CAP');r.engine.ensureShape(q);r.engine.recalculate(q);return r.store.writeProject(q,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});};
+  const r=projectStoreRuntime({storageWorker:false,sourceOverrides:capped});let q=await start(r);const next=r.copy(q);next.vendorExtension=r.copy({records});r.engine.recalculate(next);q=await r.store.writeProject(next,{expectedProjectRevision:q.revision});
+  const capJob=q.job.JOB_ID,capRoot=(await r.store.historyList(capJob)).activeId,entry=r.rows.get('meta').get(snapshotKey(capJob,capRoot)).value.projectParts.entries.find(row=>row.segments);
+  assert.equal(entry.segments.length,4,'SEGMENTED_SEGMENT_CAP_STORE_ORACLE');await r.store.readHistoryView(capJob,capRoot);
+  const capBackup=await r.store.exportPackage(capJob),target=projectStoreRuntime({storageWorker:false,sourceOverrides:capped}),imported=await target.store.importPackage(capBackup);
+  const later=target.copy(imported);later.job.JOB_TITLE='After the capped root';target.engine.recalculate(later);const after=await target.store.writeProject(later,{expectedProjectRevision:imported.revision});
+  assert.deepEqual(target.copy((await target.store.restoreCheckpoint(capJob,capRoot,{expectedProjectRevision:after.revision})).project.vendorExtension.records),target.copy(records),'SEGMENTED_SEGMENT_CAP_STORE_ORACLE: restored after import');
+  const u=projectStoreRuntime({storageWorker:false,sourceOverrides:uncapped});let w=await start(u);const before={project:u.copy(await u.store.readProject(w.job.JOB_ID)),history:u.copy(await u.store.historyList(w.job.JOB_ID))},grown=u.copy(w);grown.vendorExtension=u.copy({records});u.engine.recalculate(grown);
+  await refusal(()=>u.store.writeProject(grown,{expectedProjectRevision:w.revision}),'HISTORY_VERSION_MISMATCH',INVALID,'SEGMENTED_COMMIT_LIST_CHECK_ORACLE: a write whose part list its readers refuse');
+  assert.deepEqual(u.copy(await u.store.readProject(w.job.JOB_ID)),before.project,'SEGMENTED_COMMIT_LIST_CHECK_ORACLE: the project is unchanged');assert.deepEqual(u.copy(await u.store.historyList(w.job.JOB_ID)),before.history,'SEGMENTED_COMMIT_LIST_CHECK_ORACLE: History is unchanged');
+  cases.push({name:'segment-cap-store',segments:4,uncappedWrite:'HISTORY_VERSION_MISMATCH'});}
  // Refusals, each on its own copy of the stored rows.
  const segment=segmentsEntry.segments[1],read=r=>r.store.readHistoryView(jobId,rootId),exported=r=>r.store.exportPackage(jobId);
  const matrix=[
@@ -265,6 +353,16 @@ async function storeCases(source){
    ['project-bytes-type',r=>{const m=r.rows.get('meta');for(const row of [m.get(jobKey(jobId)).value.entries.find(entry=>entry.id===rootId),m.get(snapshotKey(jobId,rootId)).value])row.projectBytes=String(row.projectBytes);},'HISTORY_VERSION_MISMATCH','Recovery storage accounting does not match its retained contents.']
   ];
   for(const [name,mutate,code,message] of bytesCases){const r=cloneRuntime(pristine,overrides);await mutate(r);await refusal(()=>read(r),code,message,'SEGMENTED_PROJECT_BYTES_ORACLE read '+name);await refusal(()=>exported(r),code,message,'SEGMENTED_PROJECT_BYTES_ORACLE export '+name);cases.push({name:'refusal:'+name,code,message});}
+  // A /2 version always declares projectBytes: one without it (body, record
+  // and entry, re-signed) is refused, so its decode work cannot escape the
+  // limit. The declared value bounds the restore before any segment is read.
+  {const IDENTITY='Saved project identity or contents do not match the checkpoint.',MEASURED='Saved canonical project bytes do not match their checkpoint identity.';
+   const stripped=cloneRuntime(pristine,overrides);await resignBody(stripped,jobId,rootId,body=>{delete body.projectBytes;},row=>{delete row.projectBytes;});
+   await refusal(()=>read(stripped),'HISTORY_VERSION_MISMATCH',ACCOUNTING,'SEGMENTED_PROJECT_BYTES_REQUIRED_ORACLE read');await refusal(()=>exported(stripped),'HISTORY_VERSION_MISMATCH',IDENTITY,'SEGMENTED_PROJECT_BYTES_REQUIRED_ORACLE export');
+   const early=cloneRuntime(pristine,overrides);await resignBody(early,jobId,rootId,body=>{body.projectBytes++;},row=>{row.projectBytes++;});early.rows.get('meta').delete(fileKey(jobId,segment.sha256));
+   await refusal(()=>read(early),'HISTORY_VERSION_MISMATCH',MEASURED,'SEGMENTED_PROJECT_BYTES_BEFORE_RESTORE_ORACLE read');await refusal(()=>exported(early),'HISTORY_VERSION_MISMATCH',MEASURED,'SEGMENTED_PROJECT_BYTES_BEFORE_RESTORE_ORACLE export');
+   cases.push({name:'refusal:project-bytes-stripped',read:ACCOUNTING,export:IDENTITY});cases.push({name:'refusal:project-bytes-before-restore',code:'HISTORY_VERSION_MISMATCH',message:MEASURED});
+}
   const total=roots.reduce((n,entry)=>n+entry.projectBytes,0),limitAnchor='maxRestoredProjectBytes:32*1024*1024*1024';
   assert.equal(source.split(limitAnchor).length,2,'SEGMENTED_LIMIT_ANCHOR');
   const limited={'project-store.js':source.replace(limitAnchor,'maxRestoredProjectBytes:'+(total+1024))},r=cloneRuntime(pristine,limited),before={project:r.copy(await r.store.readProject(jobId)),history:r.copy(await r.store.historyList(jobId))};
@@ -274,6 +372,17 @@ async function storeCases(source){
   const small=projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':source.replace(limitAnchor,'maxRestoredProjectBytes:'+(total-1))}}),pristineBackup=await pristine.store.exportPackage(jobId);
   await refusal(()=>small.store.importPackage(pristineBackup),'HISTORY_LIMIT_REACHED','History storage limit reached. The current project and every retained version are preserved. Export a complete backup before continuing in a new project.','SEGMENTED_DECODE_WORK_LIMIT_ORACLE import');
   assert.equal(small.rows.get('meta').get(jobKey(jobId)),undefined,'SEGMENTED_DECODE_WORK_LIMIT_ORACLE: a refused import leaves no History');
+  // A backup whose /2 versions omit projectBytes is refused, in this build
+  // and in one whose limit refuses the honest backup.
+  {const archive=JSON.parse(gunzipSync(Buffer.from(await pristineBackup.arrayBuffer())).toString('utf8'));let removed=0;
+   for(const entry of archive.recovery.entries)if(entry.projectParts?.schema===V2&&Object.hasOwn(entry,'projectBytes')){delete entry.projectBytes;removed++;}
+   assert.ok(removed>=2,'SEGMENTED_PROJECT_BYTES_REQUIRED_FIXTURE');delete archive.packageSha256;archive.packageSha256=pristine.runtime.closedLoopHash.sha256Value(pristine.copy(archive));
+   const crafted=new Blob([gzipSync(Buffer.from(JSON.stringify(archive)))],{type:'application/gzip'});
+   for(const [label,target] of [['this-build',projectStoreRuntime({storageWorker:false,sourceOverrides:overrides})],['limited-build',projectStoreRuntime({storageWorker:false,sourceOverrides:{'project-store.js':source.replace(limitAnchor,'maxRestoredProjectBytes:'+(total-1))}})]]){
+    await refusal(()=>target.store.importPackage(crafted),'HISTORY_VERSION_MISMATCH',ACCOUNTING,'SEGMENTED_PROJECT_BYTES_REQUIRED_ORACLE import '+label);
+    assert.equal(target.rows.get('meta').get(jobKey(jobId)),undefined,'SEGMENTED_PROJECT_BYTES_REQUIRED_ORACLE: a refused import leaves no History');
+   }
+   cases.push({name:'refusal:import-without-project-bytes',code:'HISTORY_VERSION_MISMATCH',message:ACCOUNTING});}
   cases.push({name:'decode-work-limit',declaredBytes:total,limitAtCommit:'HISTORY_LIMIT_REACHED',limitAtImport:'HISTORY_LIMIT_REACHED'});
  }
  // A build without /2 refuses every /2 list with its existing message.
@@ -300,12 +409,28 @@ async function storeCases(source){
   const mutant={'project-store.js':source.replace(before,after)},r=name==='retained-parts'?cloneRuntime(base,mutant):projectStoreRuntime({storageWorker:false,sourceOverrides:mutant});
   await refusal(()=>work(r),'HISTORY_VERSION_MISMATCH',UNRETAINED,'SEGMENTED_FAIL_CLOSED_ORACLE '+name);
   cases.push({name:'unconverted-site-refuses:'+name});
+  // The one exception: a one-segment array without extracted strings has its
+  // segment as exactly the whole-array identity, so the same unconverted site
+  // finds that file and passes with the very bytes historyPartFiles names
+  // (reads, export and import stay exact). For such an array the custody-site
+  // scan (HISTORY_PART_CUSTODY_SITE_ORACLE) is the guard.
+  {const one=projectStoreRuntime({storageWorker:false,sourceOverrides:mutant});let q=one.core.createBlankState('HISTORY-SEGMENTED-ONE-'+name);
+   const records=Array.from({length:60},(_,i)=>record(i));q.vendorExtension=one.copy({records});one.engine.ensureShape(q);one.engine.recalculate(q);q=await one.store.writeProject(q,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});
+   const oneJob=q.job.JOB_ID,oneRoot=(await one.store.historyList(oneJob)).activeId,entry=one.rows.get('meta').get(snapshotKey(oneJob,oneRoot)).value.projectParts.entries.find(row=>row.segments);
+   assert.ok(entry&&entry.segments.length===1&&entry.segments[0].sha256===entry.sha256&&entry.segments[0].byteSize===entry.byteSize&&one.rows.get('meta').get(fileKey(oneJob,entry.sha256)),'SEGMENTED_ONE_SEGMENT_IDENTITY_ORACLE: the one segment is the whole-array identity');
+   const later=one.copy(q);later.job.JOB_TITLE='After one segment';one.engine.recalculate(later);q=await one.store.writeProject(later,{expectedProjectRevision:q.revision});
+   await one.store.readHistoryView(oneJob,oneRoot);const oneBackup=await one.store.exportPackage(oneJob),target=projectStoreRuntime({storageWorker:false,sourceOverrides:mutant}),imported=await target.store.importPackage(oneBackup);
+   assert.deepEqual(target.copy((await target.store.restoreCheckpoint(oneJob,oneRoot,{expectedProjectRevision:imported.revision})).project.vendorExtension.records),target.copy(records),'SEGMENTED_ONE_SEGMENT_IDENTITY_ORACLE: exact under the unconverted site');
+   cases.push({name:'one-segment-identity-is-its-file:'+name});}
  }
  return cases;
 }
 
 // Every part-custody loop goes through historyPartFiles. Any other loop over a
 // part list's entries outside the owners allowed to read entries fails here.
+// For a one-segment array without extracted strings this scan is the guard:
+// that segment is exactly the entry's whole-array identity, so an unconverted
+// site would find it and pass (SEGMENTED_ONE_SEGMENT_IDENTITY_ORACLE).
 export const PART_ENTRY_READERS=Object.freeze(['assertHistoryProjectParts','assertSegmentedHistoryProjectParts','historyPartFiles','restoreHistoryProject','historyEncodedProjectBytes']);
 export const PART_CUSTODY_SITES=Object.freeze(['validateRecoveryManifest','historyProofPartsRetained','commitRootCheckpoint','assertHistoryPartsRetained','prepareHistoryCommit','readRetainedCheckpoint','exportPackage']);
 export function historyPartCustodySites(source){

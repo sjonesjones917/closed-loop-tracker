@@ -40,8 +40,12 @@ const IMPORT_HIT='historyProofUsed(operation,proof);historyProofUsed(operation,p
 const EXPORT_ROUTE="  if(useStoreWorker())return requestStoreWorker('EXPORT_PACKAGE',[jobId,{passphrase,historyRecovery}]);\n";
 // The measured watchdog (project-store.js HISTORY_WATCHDOG_MEASUREMENT),
 // re-derived here from its stated arithmetic at the declared History limits.
-export const HISTORY_WATCHDOG_PIN=Object.freeze({coldMsPerSnapshotMiB:3638,coldMsPerRestoredMiB:122,transportMsPerFileMiB:129,hostedSlowdown:2,maxCompressedProjectMiB:512,maxRestoredProjectMiB:32768,maxRetainedFileMiB:1024});
-export const HISTORY_WATCHDOG_MS=Math.ceil(HISTORY_WATCHDOG_PIN.hostedSlowdown*(HISTORY_WATCHDOG_PIN.coldMsPerSnapshotMiB*HISTORY_WATCHDOG_PIN.maxCompressedProjectMiB+HISTORY_WATCHDOG_PIN.coldMsPerRestoredMiB*HISTORY_WATCHDOG_PIN.maxRestoredProjectMiB+HISTORY_WATCHDOG_PIN.transportMsPerFileMiB*HISTORY_WATCHDOG_PIN.maxRetainedFileMiB));
+export const HISTORY_WATCHDOG_PIN=Object.freeze({coldMsPerSnapshotMiB:3638,coldMsPerVersion:103,coldMsPerRestoredMiB:8834,transportMsPerFileMiB:129,hostedSlowdown:2,maxCompressedProjectMiB:512,maxCheckpoints:2048,maxRestoredProjectMiB:32768,maxRetainedFileMiB:1024});
+export const HISTORY_WATCHDOG_MS=Math.ceil(HISTORY_WATCHDOG_PIN.hostedSlowdown*(HISTORY_WATCHDOG_PIN.coldMsPerSnapshotMiB*HISTORY_WATCHDOG_PIN.maxCompressedProjectMiB+HISTORY_WATCHDOG_PIN.coldMsPerVersion*HISTORY_WATCHDOG_PIN.maxCheckpoints+HISTORY_WATCHDOG_PIN.coldMsPerRestoredMiB*HISTORY_WATCHDOG_PIN.maxRestoredProjectMiB+HISTORY_WATCHDOG_PIN.transportMsPerFileMiB*HISTORY_WATCHDOG_PIN.maxRetainedFileMiB));
+// The fully cold import rates measured on the production worker path for the
+// shapes the bound must cover (ms per declared restored MiB, and per version
+// for blank-project versions); the pinned rates cover each of them.
+export const HISTORY_WATCHDOG_MEASURED_SHAPES=Object.freeze({restoredMiB:Object.freeze({'real-store-v2':122,'long-strings':135,'text-records':417,'integers':1116,'closing-integers':1099,'small-objects':1646,'zeros':3026,'empty-arrays':5770,'empty-objects':8834}),perVersion:Object.freeze({'blank-project-versions':103,'view-references':7})});
 const replaceOnce=(source,before,after,label)=>{assert.equal(source.split(before).length,2,'HISTORY_PROOF_ANCHOR_ORACLE '+label);return source.replace(before,after);};
 const sha=value=>createHash('sha256').update(value).digest('hex');
 const plain=value=>JSON.parse(JSON.stringify(value));
@@ -53,6 +57,8 @@ const fault=(sections,oracle,edits)=>({sections,oracle,apply:source=>edits.reduc
 export const HISTORY_PROOF_FAULTS=Object.freeze({
  // Export Tier 1.
  'skip-part-rehash':fault(['export'],'HISTORY_PROOF_EQUIVALENCE_ORACLE',[["    const file=await readFile(part.sha256),bytePrimitive=checkpointBytePrimitives(file?.blob);\n    if(!(file?.blob instanceof Blob)||file.blob.size!==part.byteSize||await historyBlobSha256(file.blob,verifiedByteDigests)!==part.sha256||!checkpointBytePrimitivesMatch(bytePrimitive))return false;","    const file=await readFile(part.sha256);if(!file)return false;"]]),
+ // A proof that rereads every value part but no segment of a segmented root.
+ 'skip-segment-rehash':fault(['export'],'HISTORY_PROOF_EQUIVALENCE_ORACLE',[['  for(const part of historyPartFiles(parts)){','  for(const part of historyPartFiles({...parts,entries:parts.entries.filter(entry=>!entry.segments)})){']]),
  'skip-descriptor-match':fault(['export'],'HISTORY_PROOF_EQUIVALENCE_ORACLE',[["  if(proof.schema!==HISTORY_SCHEMA||proof.id!==entry.id||proof.bodyJobId!==String(jobId)||proof.projectSha256!==entry.projectSha256||proof.parentId!==entry.parentId||proof.label!==entry.label||proof.createdAt!==entry.createdAt||proof.activeStage!==Number(entry.stage)||!proof.artifactsArray)return false;","  if(proof.schema!==HISTORY_SCHEMA||proof.id!==entry.id)return false;"]]),
  'skip-native-check':fault(['export'],'HISTORY_PROOF_EQUIVALENCE_ORACLE',[['function historyProofNativesUnchanged(natives){','function historyProofNativesUnchanged(natives){return Boolean(natives);']]),
  'skip-validator-check':fault(['export'],'HISTORY_PROOF_EQUIVALENCE_ORACLE',[['  if(!operation.validators.has(validators))operation.validators.set(validators,rootValidatorsUnchanged(validators));','  if(!operation.validators.has(validators))operation.validators.set(validators,true);'],['  for(const [validators,current] of operation.validators)if(current&&!rootValidatorsUnchanged(validators))return false;\n','']]),
@@ -395,7 +401,10 @@ async function importSection(context){
  // same import can be carried within it.
  assert.ok(happy.freshCounts.importHits<happy.sameCounts.importHits,'HISTORY_PROOF_TIER2_ORACLE: a fresh worker imports cold');
  assert.ok(happy.sameCounts.coldRoots<happy.freshCounts.coldRoots,'HISTORY_PROOF_TIER2_ORACLE: proven versions are not decoded again');
- emit('HISTORY-PROOF-IMPORT-TIER2',{importHits:happy.sameCounts.importHits,coldRoots:happy.sameCounts.coldRoots,freshColdRoots:happy.freshCounts.coldRoots,identical:true});
+ // Tier 2 serves segmented (/2) roots: their proofs reread every segment.
+ const segmentedHits=happy.sameCounts.importHitIds.filter(id=>recovery.entries.some(entry=>entry.id===id&&!entry.projectReference&&entry.projectParts?.schema===SEGMENTED)).length;
+ assert.ok(segmentedHits>0,'HISTORY_PROOF_TIER2_ORACLE: the same-session import serves a segmented root from its proof');
+ emit('HISTORY-PROOF-IMPORT-TIER2',{importHits:happy.sameCounts.importHits,segmentedHits,coldRoots:happy.sameCounts.coldRoots,freshColdRoots:happy.freshCounts.coldRoots,identical:true});
  // Byte and descriptor faults in the backup, packageSha256 recomputed.
  const target=recovery.entries.find(entry=>!entry.projectReference&&entry.id!==recovery.activeId&&entry.projectParts?.schema===SEGMENTED),reference=recovery.entries.find(entry=>entry.projectReference&&entry.id!==recovery.activeId);
  const edited=async edit=>{const copy=plain(body);await edit(copy);return encodeBackup(b.worker().realm,copy);};
@@ -411,6 +420,11 @@ async function importSection(context){
   ['manifest-reference-label',editEntry(reference.id,'label','Edited backup label')],
   ['manifest-reference-view-digest',editEntry(reference.id,'viewSha256','e'.repeat(64))],
   ['snapshot-member-bytes',async copy=>{const {member,snapshot}=await snapshotMember(copy,target.id);snapshot.view={...snapshot.view,scrollY:999};const bytes=Buffer.from(await (await encodeBackup(b.worker().realm,snapshot)).arrayBuffer());const entry=copy.recovery.entries.find(row=>row.id===target.id);copy.recovery.compressedProjectBytes+=bytes.length-entry.byteSize;entry.sha256=await setMemberBytes(b.worker().realm,copy,member,bytes);entry.byteSize=bytes.length;}],
+  // A changed part or segment member changes its digest, so its version's
+  // descriptor no longer matches any proof: manifest validation and the
+  // member digests refuse it cold. A proof's reread of the archived files is
+  // defense in depth on import; the export matrix detects a proof that skips
+  // it (skip-part-rehash, skip-segment-rehash).
   ['part-member-bytes',async copy=>{const entry=copy.recovery.entries.find(row=>row.id===target.id),part=entry.projectParts.entries[0],member=copy.artifacts.find(a=>a.archiveKind==='RECOVERY_BYTES'&&a.sha256===part.sha256),bytes=Buffer.concat([Buffer.from(member.base64,'base64'),Buffer.from(' ')]);const info=copy.recovery.files[part.sha256];delete copy.recovery.files[part.sha256];const sha256=await setMemberBytes(b.worker().realm,copy,member,bytes);member.filename=sha256+'.bin';member.artifactId='RECOVERY-BYTES-'+sha256;const row=copy.packageManifest.artifacts.find(a=>a.sha256===sha256);Object.assign(row,{artifactId:member.artifactId,filename:member.filename});copy.recovery.files[sha256]={...info,byteSize:bytes.length};copy.recovery.retainedFileBytes+=bytes.length-info.byteSize;part.sha256=sha256;part.byteSize=bytes.length;}],
   ['segment-member-bytes',async copy=>{const entry=copy.recovery.entries.find(row=>row.id===target.id),part=entry.projectParts.entries.find(row=>row.segments&&row.segments.length>1).segments[1],member=copy.artifacts.find(a=>a.archiveKind==='RECOVERY_BYTES'&&a.sha256===part.sha256),bytes=Buffer.concat([Buffer.from(member.base64,'base64'),Buffer.from(' ')]);const info=copy.recovery.files[part.sha256];delete copy.recovery.files[part.sha256];const sha256=await setMemberBytes(b.worker().realm,copy,member,bytes);member.filename=sha256+'.bin';member.artifactId='RECOVERY-BYTES-'+sha256;const row=copy.packageManifest.artifacts.find(a=>a.sha256===sha256);Object.assign(row,{artifactId:member.artifactId,filename:member.filename});copy.recovery.files[sha256]={...info,byteSize:bytes.length};copy.recovery.retainedFileBytes+=bytes.length-info.byteSize;part.sha256=sha256;part.byteSize=bytes.length;}],
  ];
@@ -568,6 +582,10 @@ async function watchdogSection(context){
   const {r,delays,timers,workers,reply}=page();
   assert.equal(r.store.STORAGE_WORKER_HISTORY_TIMEOUT_MS,HISTORY_WATCHDOG_MS,'HISTORY_PROOF_WATCHDOG_PIN_ORACLE: the exported bound equals its stated arithmetic');
   assert.ok(Number.isFinite(HISTORY_WATCHDOG_MS)&&HISTORY_WATCHDOG_MS>r.store.STORAGE_WORKER_TIMEOUT_MS,'HISTORY_PROOF_WATCHDOG_PIN_ORACLE: finite and above the command watchdog');
+  // setTimeout fires at once for a delay above 2^31-1 ms.
+  assert.ok(HISTORY_WATCHDOG_MS<=2147483647,'HISTORY_PROOF_WATCHDOG_PIN_ORACLE: within the timer range');
+  assert.deepEqual([HISTORY_WATCHDOG_PIN.maxCompressedProjectMiB*1048576,HISTORY_WATCHDOG_PIN.maxCheckpoints,HISTORY_WATCHDOG_PIN.maxRestoredProjectMiB*1048576,HISTORY_WATCHDOG_PIN.maxRetainedFileMiB*1048576],[r.store.HISTORY_LIMITS.maxCompressedProjectBytes,r.store.HISTORY_LIMITS.maxCheckpoints,r.store.HISTORY_LIMITS.maxRestoredProjectBytes,r.store.HISTORY_LIMITS.maxRetainedFileBytes],'HISTORY_PROOF_WATCHDOG_PIN_ORACLE: the bound is taken at the declared limits');
+  assert.ok(Object.values(HISTORY_WATCHDOG_MEASURED_SHAPES.restoredMiB).every(rate=>rate<=HISTORY_WATCHDOG_PIN.coldMsPerRestoredMiB)&&Object.values(HISTORY_WATCHDOG_MEASURED_SHAPES.perVersion).every(rate=>rate<=HISTORY_WATCHDOG_PIN.coldMsPerVersion),'HISTORY_PROOF_WATCHDOG_SHAPES_ORACLE: the pinned rates cover every measured shape');
   const exported=r.store.exportPackage('JOB-WATCHDOG',{});await tick();
   const written=r.store.writeProject({job:{JOB_ID:'JOB-WATCHDOG'}});await tick();
   const imported=r.store.importPackage(new Blob(['{}']));await tick();

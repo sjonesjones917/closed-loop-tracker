@@ -5,9 +5,10 @@ import crypto from 'node:crypto';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
 import {projectStoreRuntime,storageBroadcastNetwork} from './test-project-store-runtime.mjs';
 // project-store.js STORAGE_WORKER_HISTORY_TIMEOUT_MS at the declared History
-// limits: 2*(3638*512 + 122*32768 + 129*1024) ms (cold ms per snapshot MiB of a
-// version without projectBytes, per declared restored MiB, per retained-file MiB).
-const HISTORY_WATCHDOG_PIN_MS=11984896;
+// limits: 2*(3638*512 + 103*2048 + 8834*32768 + 129*1024) ms (cold ms per
+// snapshot MiB of a version without projectBytes, per version, per declared
+// restored MiB of the slowest measured shape, per retained-file MiB).
+const HISTORY_WATCHDOG_PIN_MS=583356416;
 const source = fs.readFileSync(process.env.STORE_SOURCE || 'project-store.js','utf8');
 const cases=[];
 const prefixes=process.argv.filter(x=>x.startsWith('--case-prefix=')).map(x=>x.slice(14));

@@ -1994,6 +1994,9 @@ const HISTORY_PROJECT_PARTS='closed-loop-recovery-project-parts/1';
 // A complete version whose record arrays are stored as content-defined
 // segments (encodeHistoryProject); a version without such an array stays /1.
 const HISTORY_PROJECT_PARTS_SEGMENTED='closed-loop-recovery-project-parts/2';
+// The most segments one segments entry holds: the encoder's last segment then
+// holds every remaining item, and a longer list is refused.
+const HISTORY_SEGMENTS_MAX=65536;
 const HISTORY_SOURCE_REFERENCE=globalThis.closedLoopWorkflowSchema.RECOVERY_SOURCE_REFERENCE_CONTRACT.schema;
 const HISTORY_ACTIVATION_FIELDS=globalThis.closedLoopWorkflowSchema.RECOVERY_SOURCE_REFERENCE_CONTRACT.activationFields;
 const HISTORY_LIMITS=Object.freeze({maxCheckpoints:2048,maxCompressedProjectBytes:512*1024*1024,maxRetainedFileBytes:1024*1024*1024,maxRestoredProjectBytes:32*1024*1024*1024});
@@ -2001,45 +2004,66 @@ const HISTORY_LIMITS=Object.freeze({maxCheckpoints:2048,maxCompressedProjectByte
 // worker without History root proofs (after a reload, a lost worker or a new
 // build, and always on another device) verifies every retained version cold:
 // it restores every complete version and runs both digests and the strict
-// static check over it, so the work follows the canonical project bytes it
-// restores, not the compressed snapshot bytes. Segmented roots (/2) shrank
-// the real Stage 30 snapshots from 452,833,709 to 61,018,873 bytes while every
-// root is still restored, so the bound charges each kind of version to the
-// declared limit that bounds its work:
-//   a version written before /2 carries no projectBytes and is bounded by
-//     its compressed snapshot bytes (maxCompressedProjectBytes);
+// static check over it, so the work follows what each version restores, not
+// its compressed snapshot bytes. The bound charges each kind of work to the
+// declared limit that bounds it:
 //   every complete version this build writes declares its canonical
-//     project's UTF-8 length (projectBytes, in its body and descriptor; a
-//     cold decode measures it), and their total is bounded by
-//     maxRestoredProjectBytes, 32 GiB, enforced at commit and import with
-//     HISTORY_LIMIT_REACHED. The real Stage 30 History of hosted run
-//     42374851354 needs 16,046,911,459 bytes (14.94 GiB): 2.14x headroom.
-// Rates measured in Node (this repository's container, 2026-11-11) in a
-// storage-worker realm on the real Stage 30 store (1,570 versions):
-//   coldMsPerSnapshotMiB 3638: the store as stored (/1, 431.86 MiB of
-//     snapshots): a complete cold import took 1,570,846 ms (a cold export
-//     1,006,893 ms), charged wholly to snapshot bytes;
-//   coldMsPerRestoredMiB 122: the same store re-encoded as /2 by this
-//     build's encoder (measurement only; 15,303.53 MiB of declared canonical
-//     bytes): the slower cold operation, an import verifying every root cold,
-//     took 1,860,885 ms (a cold export 1,027,393 ms), charged wholly to the
-//     restored bytes;
+//     project's UTF-8 length, projectBytes, in its body and descriptor (a /2
+//     version without it is refused); a cold decode checks the declared
+//     sizes against it before the restore and measures it in the digest pass,
+//     and the total is bounded by maxRestoredProjectBytes, 32 GiB, enforced at
+//     commit and import with HISTORY_LIMIT_REACHED. The real Stage 30 History
+//     of hosted run 42374851354 needs 16,046,911,459 bytes (14.94 GiB): 2.14x
+//     headroom;
+//   the segment and part references a version restores follow its declared
+//     bytes (a segment holds SEGMENT_MINIMUM bytes or more except an array's
+//     last and one before an item of SEGMENT_TARGET bytes; a value part holds
+//     4096 bytes or more), so they need no term of their own;
+//   the cost of a restored byte follows how many JSON values it holds, the
+//     same in /1 and /2, so it is charged at the slowest shape measured, not
+//     at the real store's rate;
+//   every version has a fixed cost, bounded by maxCheckpoints;
+//   a /1 version written before projectBytes existed declares none: its
+//     inline skeleton is charged by its compressed snapshot bytes at the real
+//     store's measured ratio, and the parts it shares with other versions are
+//     bounded by no declared limit (a gap that predates /2).
+// Rates measured in Node (this repository's container, 2026-11-11 and 12) in
+// a storage-worker realm on the production worker path:
+//   coldMsPerSnapshotMiB 3638: the real Stage 30 store as stored (/1, 431.86
+//     MiB of snapshots): a complete cold import took 1,570,846 ms (a cold
+//     export 1,006,893 ms), charged wholly to snapshot bytes;
+//   coldMsPerVersion 103: 129 complete versions of a blank project: a fully
+//     cold import took 13,289 ms (export 5,499 ms; 128 view references
+//     import in 972 ms), charged wholly to versions;
+//   coldMsPerRestoredMiB 8834: fully cold imports of synthetic /2 Histories,
+//     each charged wholly to its declared restored MiB (cold export in
+//     parentheses): text records 417 (196), long strings 135 (92), 5-byte
+//     integers 1,116 (486) and the same with every item closing a segment by
+//     hash 1,099 (476), small objects 1,646 (676), zeros 3,026 (1,278), empty
+//     arrays 5,770 (2,203), empty objects 8,834 (2,917), the slowest; the real
+//     store re-encoded as /2 took 122 (67). Arrays nested 8 deep are slower
+//     still per byte but exhaust the worker's memory first (in /1 as in /2),
+//     so time does not bound them;
 //   transportMsPerFileMiB 129: per retained-file MiB, export hashing and
 //     classification (3,091 ms / 87.15 MiB) plus base64, gzip and package
 //     digest (55,104 ms per 790.8 MiB of package text, 4/3 text per byte),
 //     from the Stage 30 design's transport-floor export of the same store;
 //   hostedSlowdown 2: the upper end of the 1.5-2x hosted/local factor the
 //     Stage 30 analysis assumes (an assumption, not a measurement).
-// Each rate charges a whole operation to one quantity, so snapshot and file
-// work is counted more than once, and a /2 version's snapshot bytes are
-// charged at the /1 rate as well.
+// Each rate charges a whole operation to one quantity, so work is counted
+// more than once.
 //   bound = slowdown * (coldMsPerSnapshotMiB * maxCompressedProjectBytes/MiB
+//                       + coldMsPerVersion * maxCheckpoints
 //                       + coldMsPerRestoredMiB * maxRestoredProjectBytes/MiB
 //                       + transportMsPerFileMiB * maxRetainedFileBytes/MiB)
-//         = 2 * (3638 * 512 + 122 * 32768 + 129 * 1024)
-//         = 11,984,896 ms (about 199.7 minutes).
-const HISTORY_WATCHDOG_MEASUREMENT=Object.freeze({coldMsPerSnapshotMiB:3638,coldMsPerRestoredMiB:122,transportMsPerFileMiB:129,hostedSlowdown:2});
-const STORAGE_WORKER_HISTORY_TIMEOUT_MS=Math.ceil(HISTORY_WATCHDOG_MEASUREMENT.hostedSlowdown*(HISTORY_WATCHDOG_MEASUREMENT.coldMsPerSnapshotMiB*HISTORY_LIMITS.maxCompressedProjectBytes/1048576+HISTORY_WATCHDOG_MEASUREMENT.coldMsPerRestoredMiB*HISTORY_LIMITS.maxRestoredProjectBytes/1048576+HISTORY_WATCHDOG_MEASUREMENT.transportMsPerFileMiB*HISTORY_LIMITS.maxRetainedFileBytes/1048576));
+//         = 2 * (3638 * 512 + 103 * 2048 + 8834 * 32768 + 129 * 1024)
+//         = 583,356,416 ms (about 6.75 days), below setTimeout's 2^31-1 ms.
+// A History of the real store's shape needs a small fraction of it (its cold
+// import took 31 minutes); only a value-dense History near the limits, or a
+// hung worker, approaches it. A tighter bound needs a declared limit on the
+// JSON values a History restores.
+const HISTORY_WATCHDOG_MEASUREMENT=Object.freeze({coldMsPerSnapshotMiB:3638,coldMsPerVersion:103,coldMsPerRestoredMiB:8834,transportMsPerFileMiB:129,hostedSlowdown:2});
+const STORAGE_WORKER_HISTORY_TIMEOUT_MS=Math.ceil(HISTORY_WATCHDOG_MEASUREMENT.hostedSlowdown*(HISTORY_WATCHDOG_MEASUREMENT.coldMsPerSnapshotMiB*HISTORY_LIMITS.maxCompressedProjectBytes/1048576+HISTORY_WATCHDOG_MEASUREMENT.coldMsPerVersion*HISTORY_LIMITS.maxCheckpoints+HISTORY_WATCHDOG_MEASUREMENT.coldMsPerRestoredMiB*HISTORY_LIMITS.maxRestoredProjectBytes/1048576+HISTORY_WATCHDOG_MEASUREMENT.transportMsPerFileMiB*HISTORY_LIMITS.maxRetainedFileBytes/1048576));
 const historyKey=jobId=>'recovery:'+String(jobId);
 const snapshotKey=(jobId,id)=>historyKey(jobId)+':snapshot:'+id;
 const historyFileKey=(jobId,sha256)=>historyKey(jobId)+':bytes:'+sha256;
@@ -2219,8 +2243,11 @@ function validateRecoveryManifest(state){
   }
   // A complete version written by this build declares its canonical project's
   // UTF-8 length; its snapshot body carries the same value, which a cold
-  // decode measures.
-  for(const entry of state.entries)if(Object.hasOwn(entry,'projectBytes')&&(entry.projectReference||!Number.isSafeInteger(entry.projectBytes)||entry.projectBytes<=0))throw storageError('Recovery storage accounting does not match its retained contents.','HISTORY_VERSION_MISMATCH');
+  // decode measures. Every /2 version carries it (assertHistoryVersionProjectBytes).
+  for(const entry of state.entries){
+    if(Object.hasOwn(entry,'projectBytes')&&(entry.projectReference||!Number.isSafeInteger(entry.projectBytes)||entry.projectBytes<=0))throw storageError('Recovery storage accounting does not match its retained contents.','HISTORY_VERSION_MISMATCH');
+    assertHistoryVersionProjectBytes(entry);
+  }
   // State-form entries name their parts by digest; each per-root use reads the
   // parts from the immutable record and checks them against these files.
   for(const entry of state.entries)if(Object.hasOwn(entry,'projectPartsSha256'))assertHistoryStateFormEntry(entry);
@@ -2258,9 +2285,18 @@ function validateHistoryCompatibility(state){
 }
 function nonactivatableHistoryEntry(state,id){return state.compatibility?.observations.some(row=>row.checkpointId===id)===true;}
 // The decode work a History holds: the canonical project bytes every complete
-// version written by this build declares (projectBytes). A version without it
-// was written before /2 and is bounded by its compressed snapshot bytes.
+// version written by this build declares (projectBytes). Only a /1 version
+// written before projectBytes existed lacks it (a /2 version without it is
+// refused: assertHistoryVersionProjectBytes); the watchdog derivation beside
+// HISTORY_LIMITS says what bounds such a version's decode work.
 function historyRestoredProjectBytes(state){return state.entries.reduce((total,entry)=>total+(Object.hasOwn(entry,'projectBytes')?Number(entry.projectBytes):0),0);}
+// No build writes a /2 version without projectBytes. A descriptor or body
+// whose part list is /2 and that does not declare a positive safe integer is
+// refused, so the decode work of every /2 version counts toward
+// HISTORY_LIMITS.maxRestoredProjectBytes.
+function assertHistoryVersionProjectBytes(descriptor,message='Recovery storage accounting does not match its retained contents.'){
+  if(descriptor?.projectParts?.schema===HISTORY_PROJECT_PARTS_SEGMENTED&&!(Number.isSafeInteger(descriptor.projectBytes)&&descriptor.projectBytes>0))throw storageError(message,'HISTORY_VERSION_MISMATCH');
+}
 function assertHistoryLimits(state){
   if(state.entries.length>HISTORY_LIMITS.maxCheckpoints||state.compressedProjectBytes>HISTORY_LIMITS.maxCompressedProjectBytes||state.retainedFileBytes>HISTORY_LIMITS.maxRetainedFileBytes||historyRestoredProjectBytes(state)>HISTORY_LIMITS.maxRestoredProjectBytes)throw storageError('History storage limit reached. The current project and every retained version are preserved. Export a complete backup before continuing in a new project.','HISTORY_LIMIT_REACHED');
 }
@@ -2951,8 +2987,10 @@ function assertHistoryProjectParts(parts){
 }
 // A /2 list: /1 value entries {path,sha256,byteSize} and segments entries
 // {path,sha256,byteSize,segments:[{sha256,byteSize,count}]}, at least one of
-// them. A segments entry never lies under another entry, and a value entry
-// that descends into a segmented array follows that array's entry.
+// them, with at most HISTORY_SEGMENTS_MAX segments each and byteSize equal to
+// its segments' bytes joined as one array. A segments entry never lies under
+// another entry, and a value entry that descends into a segmented array
+// follows that array's entry.
 function assertSegmentedHistoryProjectParts(parts){
   if(Object.keys(parts).some(key=>!['schema','entries'].includes(key))||!Array.isArray(parts.entries)||!parts.entries.length)throw storageError('Saved project content references are unsupported.','HISTORY_VERSION_MISMATCH');
   const invalid=()=>storageError('Saved project content identity is invalid.','HISTORY_VERSION_MISMATCH'),digest=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value),size=value=>Number.isSafeInteger(value)&&value>0;
@@ -2960,8 +2998,11 @@ function assertSegmentedHistoryProjectParts(parts){
   parts.entries.forEach((part,index)=>{
     const segments=part&&typeof part==='object'&&Object.hasOwn(part,'segments');
     if(!part||typeof part!=='object'||Array.isArray(part)||Object.keys(part).some(key=>!(segments?['path','sha256','byteSize','segments']:['path','sha256','byteSize']).includes(key))||!Array.isArray(part.path)||!part.path.length||part.path.some(key=>typeof key!=='string'&&(!Number.isSafeInteger(key)||key<0))||!digest(part.sha256)||!size(part.byteSize))throw invalid();
-    if(segments&&(!Array.isArray(part.segments)||!part.segments.length||part.segments.length>65536||part.segments.some(segment=>!segment||typeof segment!=='object'||Array.isArray(segment)||Object.keys(segment).length!==3||Object.keys(segment).some(key=>!['sha256','byteSize','count'].includes(key))||!digest(segment.sha256)||!size(segment.byteSize)||!size(segment.count))))throw invalid();
+    if(segments&&(!Array.isArray(part.segments)||!part.segments.length||part.segments.length>HISTORY_SEGMENTS_MAX||part.segments.some(segment=>!segment||typeof segment!=='object'||Array.isArray(segment)||Object.keys(segment).length!==3||Object.keys(segment).some(key=>!['sha256','byteSize','count'].includes(key))||!digest(segment.sha256)||!size(segment.byteSize)||!size(segment.count))))throw invalid();
     const path=JSON.stringify(part.path);if(destinations.has(path))throw storageError('Saved project content has duplicate destinations.','HISTORY_VERSION_MISMATCH');destinations.set(path,index);
+    // The whole array's bytes are its segments' bytes, one bracket pair and
+    // the separating commas: the declared sizes bound what a restore reads.
+    if(segments&&part.segments.reduce((total,segment)=>total+segment.byteSize-1,1)!==part.byteSize)throw storageError('Saved project content sizes conflict.','HISTORY_VERSION_MISMATCH');
     if(segments)segmented.set(path,index);
   });
   if(!segmented.size)throw invalid();
@@ -3037,7 +3078,7 @@ function assertHistoryRecordPartsRetained(state,entry,record){
   if(!parts)throw storageError('Saved project contents do not match their checkpoint.','HISTORY_VERSION_MISMATCH');
   assertHistoryProjectParts(parts);
   if(hash.sha256Value(parts)!==entry.projectPartsSha256)throw storageError('Saved project contents do not match their checkpoint.','HISTORY_VERSION_MISMATCH');
-  assertHistoryPartsRetained(state,parts);
+  assertHistoryPartsRetained(state,parts);assertHistoryVersionProjectBytes(record);
 }
 // Convert inline entries to the state form once, at the first preparation of a
 // write. A corrupted inline or state-form entry is refused, never converted or
@@ -3119,17 +3160,34 @@ async function encodeHistoryProject(project,retainValue){
   // '['+items.join(',')+']', retained by the SHA-256 of those bytes like a
   // part. An item of SEGMENT_TARGET bytes or more is a segment of its own;
   // otherwise a segment closes after an item whose FNV-1a32 over its canonical
-  // UTF-8 bytes, read as a fraction of 2^32, is below itemBytes/SEGMENT_TARGET,
-  // or once it holds 4*SEGMENT_TARGET bytes. A boundary depends only on the
-  // items since the previous boundary: appending items keeps every closed
-  // segment, and an edited item rewrites only the segments up to the next
-  // boundary. The entry's sha256 and byteSize are the canonical identity of
-  // the whole array as its segments hold it (the identity a /1 value part of
-  // that array would have); restore requires the concatenated segments to
-  // reproduce it. No History file is retained under that identity for this
-  // entry (unless the array is one segment without extracted strings, which
-  // is then exactly that file), so a custody check reading only each entry's
-  // sha256/byteSize finds no file and refuses.
+  // UTF-8 bytes, read as a fraction of 2^32, is below itemBytes/SEGMENT_TARGET
+  // once the segment holds SEGMENT_MINIMUM (SEGMENT_TARGET/4) bytes, or once
+  // it holds 4*SEGMENT_TARGET bytes. A boundary depends only on the items since
+  // the previous boundary: appending items keeps every closed segment, and an
+  // edited item rewrites only the segments up to the next boundary. Every
+  // segment but an array's last, and one closed before an item of
+  // SEGMENT_TARGET bytes or more (which is followed by that item's own
+  // segment), holds SEGMENT_MINIMUM bytes or more, so an array of B canonical
+  // bytes has at most B/(SEGMENT_MINIMUM-1)+1 segments: the segment references
+  // a version holds follow its declared projectBytes, whatever its items. An
+  // array that would need more than HISTORY_SEGMENTS_MAX segments (over
+  // 268 MB) keeps every item after the last closed boundary in its final
+  // segment, so the encoder never writes a list the readers refuse.
+  // The entry's sha256 and byteSize are the canonical identity of the whole
+  // array as its segments hold it: every extracted string (below) is null
+  // there and is bound by its own value entry and by the version's
+  // projectSha256. For an array without extracted strings this is the identity
+  // a /1 value part of that array would have; with them it is the identity of
+  // that packed array, not of the array value (a recorded deviation from the
+  // segment format's first amendment, which avoids canonicalizing a long string
+  // again). Restore requires the concatenated segments to reproduce it. No
+  // History file is retained under that identity for a segmented array of two
+  // or more segments or with extracted strings, so a custody check reading
+  // only each entry's sha256/byteSize finds no file and refuses. A one-segment
+  // array without extracted strings is the exception: its one segment is
+  // exactly that file, so such a check would find it and pass with the very
+  // bytes historyPartFiles names; for it the custody-site scan of
+  // test-history-segmented-parts.mjs is the guard.
   // A string of 4096 or more code units inside an item is a value part as in
   // the skeleton: null in the segment and a value entry with its absolute path
   // after the segments entry. A non-array object at depth two or more is a
@@ -3139,7 +3197,7 @@ async function encodeHistoryProject(project,retainValue){
   // array is encoded as /1 by visit() alone, byte for byte; a /2 encode retains
   // its parts and segments after it has finished, in visit order. A string of
   // 4096 or more code units is canonicalized only for its own retained part.
-  const SEGMENT_TARGET=16384,OBJECT_PART_CAP=65536,utf8=new TextEncoder(),OPEN=utf8.encode('['),COMMA=utf8.encode(','),CLOSE=utf8.encode(']');
+  const SEGMENT_TARGET=16384,SEGMENT_MINIMUM=SEGMENT_TARGET/4,OBJECT_PART_CAP=65536,utf8=new TextEncoder(),OPEN=utf8.encode('['),COMMA=utf8.encode(','),CLOSE=utf8.encode(']');
   const chunkBytes=chunk=>typeof chunk==='string'?utf8.encode(chunk):new Uint8Array(chunk.buffer,chunk.byteOffset,chunk.byteLength);
   function canonicalBytes(value){
     const pieces=[];let size=0;for(const chunk of hash.canonicalChunks(value)){const bytes=chunkBytes(chunk);pieces.push(bytes);size+=bytes.length;}
@@ -3208,12 +3266,14 @@ async function encodeHistoryProject(project,retainValue){
         const blob=new Blob(pieces,{type:'application/json'}),sha256=digest.digest();
         result.retained.push([sha256,blob]);segments.push({sha256,byteSize:blob.size,count:open.length});open=[];openBytes=0;
       };
+      // The last of HISTORY_SEGMENTS_MAX segments holds every remaining item.
+      const closable=()=>segments.length<HISTORY_SEGMENTS_MAX-1;
       for(let index=0;index<value.length;index++){
         path.push(index);const bytes=canonicalBytes(pack(value[index],path,local));path.pop();
         if(index){whole.update(COMMA);wholeBytes++;}whole.update(bytes);wholeBytes+=bytes.length;
-        if(bytes.length>=SEGMENT_TARGET){close();open.push(bytes);close();continue;}
+        if(bytes.length>=SEGMENT_TARGET&&closable()){close();if(closable()){open.push(bytes);close();continue;}}
         openBytes+=bytes.length+(open.length?1:0);open.push(bytes);
-        if(fnv1a32(bytes)/4294967296<bytes.length/SEGMENT_TARGET||openBytes+2>=4*SEGMENT_TARGET)close();
+        if(closable()&&(openBytes+2>=SEGMENT_MINIMUM&&fnv1a32(bytes)/4294967296<bytes.length/SEGMENT_TARGET||openBytes+2>=4*SEGMENT_TARGET))close();
       }
       close();whole.update(CLOSE);
       result.segments+=segments.length;result.entries.push({path:[...path],sha256:whole.digest(),byteSize:wholeBytes,segments});
@@ -3367,6 +3427,8 @@ async function encodeCheckpoint(project,artifactRows,{id=crypto.randomUUID(),par
   // all views, drafts, artifact inventories, parents, and identities stay local
   // to their own checkpoint. This is a versioned internal storage encoding.
   const contents=projectReference?null:await encodeHistoryProject(canonical,retainValue);
+  // A write never commits a part list its own readers refuse.
+  if(contents?.projectParts)assertHistoryProjectParts(contents.projectParts);
   // A complete version declares its canonical project's UTF-8 length, the
   // decode work HISTORY_LIMITS.maxRestoredProjectBytes bounds, measured on
   // the encoding before its envelope is assembled.
@@ -3684,7 +3746,7 @@ async function retainedCheckpointReaders(jobId,checkpointId,state=null){
     const entry=await metaGet(snapshotKey(jobId,id));if(!entry)return null;
     const {blob,...record}=entry,descriptor=historyRecordForm(record),expected=historyStateForm(retained);
     if(entry.id!==id||hash.sha256Value(descriptor)!==hash.sha256Value(expected))throw storageError('Stored snapshot identity does not match the selected retained version.','HISTORY_VERSION_MISMATCH');
-    if(Object.hasOwn(retained,'projectPartsSha256'))assertHistoryPartsRetained(manifest,record.projectParts);
+    if(Object.hasOwn(retained,'projectPartsSha256')){assertHistoryPartsRetained(manifest,record.projectParts);assertHistoryVersionProjectBytes(record);}
     return entry;
   };
   return {manifest,readSnapshot};
@@ -3790,6 +3852,7 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
   if(body.schema!==HISTORY_SCHEMA||body.id!==entry.id||body.jobId!==String(jobId)||body.projectSha256!==entry.projectSha256||body.parentId!==entry.parentId||body.label!==entry.label||body.createdAt!==entry.createdAt||Number(body.view?.activeStage)!==Number(entry.stage)||!Array.isArray(body.artifacts))throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
   if(hash.sha256Value(body.projectReference||null)!==hash.sha256Value(entry.projectReference||null))throw storageError('Saved project reference does not match its checkpoint.','HISTORY_VERSION_MISMATCH');
   if(body.projectBytes!==entry.projectBytes||Object.hasOwn(body,'projectBytes')&&(body.projectReference||!Number.isSafeInteger(body.projectBytes)||body.projectBytes<=0))throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
+  assertHistoryVersionProjectBytes(body,'Saved project identity or contents do not match the checkpoint.');
   if(Object.hasOwn(entry,'projectPartsSha256')?Object.hasOwn(entry,'projectParts')||!body.projectParts||hash.sha256Value(body.projectParts)!==entry.projectPartsSha256:hash.sha256Value(body.projectParts||null)!==hash.sha256Value(entry.projectParts||null))throw storageError('Saved project contents do not match their checkpoint.','HISTORY_VERSION_MISMATCH');
   let project=body.project,verifiedProjectSha256,verifiedWorkSha256,proofBasis=null;
   if(body.projectReference){
@@ -3832,6 +3895,10 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
         if(proofValidators&&digests.projectSha256===verifiedProjectSha256&&digests.workSha256===verifiedWorkSha256){assertProjectIntegrity(project,{verifyDerived:false});proofBasis={kind:'root',validators:proofValidators};}
       }catch{/* The root stays unproven; this read's outcome is unchanged. */}
     }else{
+      // The declared length bounds the restore before it runs: the skeleton's
+      // canonical bytes plus each entry's declared bytes in place of its null
+      // (a segments entry's bytes are its segments' bytes) are exactly it.
+      if(Object.hasOwn(body,'projectBytes')&&body.projectParts&&body.project&&typeof body.project==='object'){assertHistoryProjectParts(body.projectParts);if(historyEncodedProjectBytes(body)!==body.projectBytes)throw storageError('Saved canonical project bytes do not match their checkpoint identity.','HISTORY_VERSION_MISMATCH');}
       project=await restoreHistoryProject(body,readFile,verifiedParts,verifiedByteDigests);
       if(projectIdentity(project)!==String(jobId))throw storageError('Saved project belongs to another job.','HISTORY_VERSION_MISMATCH');
       ({projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256}=checkpointPairMatches(measuredPair,project)?measuredPair:historyProjectDigests(project));
@@ -4783,7 +4850,7 @@ async function exportPackage(jobId,{passphrase=null,historyRecovery=false,operat
       // as its immutable record descriptor once that record matches it exactly
       // and its parts are retained files. Legacy entries are exported unchanged.
       const record=(({blob,...descriptor})=>descriptor)(saved),exported=Object.hasOwn(entry,'projectPartsSha256')?record:entry;
-      if(exported!==entry){if(!historyDescriptorMatches(record,entry))throw storageError('Saved project content references differ from their retained manifest.','HISTORY_VERSION_MISMATCH');assertHistoryPartsRetained(recovery,record.projectParts);}
+      if(exported!==entry){if(!historyDescriptorMatches(record,entry))throw storageError('Saved project content references differ from their retained manifest.','HISTORY_VERSION_MISMATCH');assertHistoryPartsRetained(recovery,record.projectParts);assertHistoryVersionProjectBytes(record);}
       exportedEntries.push(exported);
       if(!equivalent(checkpoint.projectParts||null,exported.projectParts||null))throw storageError('Saved project content references differ from their retained manifest.','HISTORY_VERSION_MISMATCH');
       // Every value part and every segment is classified, exported as a
