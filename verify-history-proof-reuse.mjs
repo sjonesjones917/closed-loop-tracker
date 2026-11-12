@@ -609,15 +609,17 @@ async function importSection(context){
 
 // 3. A validator change made after the first proof hit, during the export or
 // import: the operation's end recheck redoes it cold, so its outcome is the
-// cold outcome under the same change.
+// cold outcome under the same change. In the import the change follows its
+// first Tier 2 hit (an import hit): the prior's re-binding also re-binds
+// entries as export does, and a change there precedes the History loop.
 async function midOperationSection(context){
  const {source,emit}=context;
  const b=browser(source),{jobId}=await fixture(b);
  assert.equal((await exportOutcome(b.store,jobId)).ok,true,'HISTORY_PROOF_MID_OPERATION_FIXTURE_ORACLE');
  const backup=await b.store.exportPackage(jobId),ids=(await backupBody(backup)).recovery.entries.map(entry=>entry.id);
- const once=runtime=>{let undo=null;runtime.__onProofHit=()=>{if(!undo)undo=swaps.schemaRefusesEarly(runtime);};return ()=>{delete runtime.__onProofHit;undo?.();};};
+ const once=(runtime,kind)=>{let undo=null;runtime.__onProofHit=hit=>{if(hit===kind&&!undo)undo=swaps.schemaRefusesEarly(runtime);};return ()=>{delete runtime.__onProofHit;undo?.();};};
  {
-  const worker=b.worker().realm.runtime,undo=once(worker);let proof;b.resetCounts();
+  const worker=b.worker().realm.runtime,undo=once(worker,'export');let proof;b.resetCounts();
   try{proof=await exportOutcome(b.store,jobId);}finally{undo();}
   const hits=b.counts().exportHits,cold=coldCopy(b.rows,source),undoCold=swaps.schemaRefusesEarly(cold.runtime);let reference;try{reference=await exportOutcome(cold.store,jobId);}finally{undoCold();}
   assert.ok(hits>0,'HISTORY_PROOF_MID_OPERATION_ORACLE export: the change follows a proof hit');
@@ -626,7 +628,7 @@ async function midOperationSection(context){
   emit('HISTORY-PROOF-MID-EXPORT-VALIDATOR-CHANGE',{exportHits:hits,code:proof.code});
  }
  {
-  const before=copyRows(b.rows,b.page),worker=b.worker().realm.runtime,undo=once(worker);let proof;b.resetCounts();
+  const before=copyRows(b.rows,b.page),worker=b.worker().realm.runtime,undo=once(worker,'import');let proof;b.resetCounts();
   try{proof=await importOutcome(b,backup,jobId,ids);}finally{undo();}
   const hits=b.counts().importHits,fresh=browser(source,before,{onWorker:runtime=>{swaps.schemaRefusesEarly(runtime.runtime);}}),reference=await importOutcome(fresh,backup,jobId,ids);
   assert.ok(hits>0,'HISTORY_PROOF_MID_OPERATION_ORACLE import: the change follows a Tier 2 hit');
