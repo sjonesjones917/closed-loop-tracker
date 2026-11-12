@@ -2303,6 +2303,18 @@ function historyProjectDigestsCold(project){
   write('}');canonicalProjectByteCounts.set(project,projectBytes);
   return {projectSha256:projectDigest.digest(),workSha256:workDigest.digest()};
 }
+// A parsed package project's project and work digests from one canonical
+// pass, only under the initial digest primitives, confirmed in this
+// synchronous turn before and after it: the pass then hashes exactly the
+// canonical bytes projectSha256 and historyWorkSha256 hash. null leaves each
+// digest to its site, whose own refusal then stands. No byte count is kept.
+function packageProjectDigestPair(project){
+  if(!rootDigestPrimitivesUnchanged(initialRootDigestPrimitives))return null;
+  const counted=canonicalProjectByteCounts.has(project);
+  try{const digests=historyProjectDigestsCold(project);return rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?digests:null;}
+  catch{return null;}
+  finally{if(!counted)canonicalProjectByteCounts.delete(project);}
+}
 // One-use retained computations, never a validation-success cache — with one
 // exception: a History root proof (with the pair proof of its project and
 // files). A root proof records that this store worker fully decoded and
@@ -5238,14 +5250,21 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   if(!(projectSourceBlob instanceof Blob))throw storageError('The imported project source bytes are unavailable.','SOURCE_ARCHIVE_INTEGRITY_FAILED');
   const packageSourceSha256=await hash.sha256Bytes(blob),extensionSources=await preparePackageExtensionSources(id,packageMembers,rootMemberCounts,packageSourceSha256,packageSha256);
   const importSourceRows=[],importSource=await retainProjectSource(next,{blob:projectSourceBlob,payload:project,sourceSha256:packageSourceSha256,sourceEncoding:'UTF-8',sourceLocation:{jsonPointer:'/project',containerEncoding:'gzip'},parserIdentity:'closed-loop-project-package-json-reader',parserVersion:'1'},importSourceRows,{recordProject:false});
-  // The package project's digest, computed once for the recovery check and
-  // bindRestoredCandidates in one synchronous span: between them no await
-  // runs and no replaceable code receives project (the view file check reads
-  // the view and files; a view without a pending correction is returned
-  // unchanged). A pending correction is rebased through replaceable code, so
-  // its project is then digested anew. Values and throw positions are the
-  // ones of a digest at each site.
-  let packageProjectSha256=null;const packageProjectDigest=()=>packageProjectSha256??=projectSha256(project);
+  // The package project's digests, computed once for the recovery check,
+  // bindRestoredCandidates and an incoming active version's work comparison
+  // in one synchronous span: between them no await runs and no replaceable
+  // code receives project (the view file check reads the view and files; a
+  // view without a pending correction is returned unchanged; recalculation
+  // and the integrity check receive next, a separate copy). A pending
+  // correction is rebased through replaceable code, so its project and its
+  // work are then digested anew. With an incoming active version one
+  // canonical pass yields both digests (packageProjectDigestPair). Values and
+  // throw positions are the ones of a digest at each site.
+  let packageProjectSha256=null,packageDigests=null;
+  const packageProjectDigest=()=>{
+    if(packageProjectSha256===null&&importedActive&&!importedView?.pendingMutation)packageDigests=packageProjectDigestPair(project);
+    return packageProjectSha256??=packageDigests?.projectSha256??projectSha256(project);
+  };
   if(body.recovery&&body.recovery.activeProjectSha256!==packageProjectDigest())throw storageError('Backup active project does not match its recovery version.','HISTORY_VERSION_MISMATCH');
   assertRecoveryViewFiles(id,importedView,activeArtifacts);
   const viewRebased=Boolean(importedView?.pendingMutation);
@@ -5259,7 +5278,9 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   // (reconcileRecoveryTransfers reads rows of next, a separate copy). After
   // a new version's preparation, an await, it is computed again.
   let prepared,activatedExisting=false;
-  const activeWorkMatches=Boolean(importedActive)&&historyWorkSha256(importedActive.project)===historyWorkSha256(project);
+  // The package project's work digest is the pass's above under the initial
+  // digest primitives, confirmed here; otherwise it is computed here.
+  const activeWorkMatches=Boolean(importedActive)&&historyWorkSha256(importedActive.project)===(packageDigests?.workSha256&&!viewRebased&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?packageDigests.workSha256:historyWorkSha256(project));
   if(activeWorkMatches&&historyArtifactsSha256(importedActive.artifacts)===historyArtifactsSha256(activeArtifacts)){activatedExisting=true;
     // Activating an existing complete version needs no additional retention
     // slot, exactly as Undo and native history restoration do.

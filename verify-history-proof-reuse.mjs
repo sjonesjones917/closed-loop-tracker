@@ -64,7 +64,9 @@ const RETAINED_VERDICT='rootPreparation.verifiedContinuation=rootPreparation.rea
 // is first computed and where it is reused.
 const PACKAGE_DIGEST="if(body.recovery&&body.recovery.activeProjectSha256!==packageProjectDigest())throw storageError('Backup active project does not match its recovery version.','HISTORY_VERSION_MISMATCH');";
 const PACKAGE_DIGEST_REUSE='viewRebased?null:packageProjectDigest());';
-const ACTIVE_WORK='const activeWorkMatches=Boolean(importedActive)&&historyWorkSha256(importedActive.project)===historyWorkSha256(project);';
+// The end of the first work comparison, where the package project's work
+// digest from the pass of its project digest is reused or computed.
+const ACTIVE_WORK='?packageDigests.workSha256:historyWorkSha256(project));';
 const ACTIVE_WORK_REUSE='?activeWorkMatches:historyWorkSha256(importedActive.project)===historyWorkSha256(project))){';
 // The parts-list digests one proof operation holds, and the pair input check
 // a Tier 2 hit shares with its root proof.
@@ -154,6 +156,7 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  'retained-skip-parts-retained':fault(['retained-checkpoint'],'HISTORY_PROOF_RETAINED_EQUIVALENCE_ORACLE',[["      if(Object.hasOwn(item,'projectPartsSha256'))assertHistoryPartsRetained(state,record.projectParts);\n",'']]),
  'retained-skip-manifest':fault(['retained-checkpoint'],'HISTORY_PROOF_RETAINED_EQUIVALENCE_ORACLE',[['    validateRecoveryManifest(state);\n    const byId=new Map(state.entries.map(entry=>[entry.id,entry])),entry=byId.get(checkpointId);','    const byId=new Map(state.entries.map(entry=>[entry.id,entry])),entry=byId.get(checkpointId);']]),
  // Digests reused within one synchronous span (importPackage).
+ 'package-work-unconfirmed-primitives':fault(['digest-spans'],'HISTORY_PROOF_DIGEST_SPAN_REUSE_ORACLE',[['packageDigests?.workSha256&&!viewRebased&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?packageDigests.workSha256:','packageDigests?.workSha256&&!viewRebased?packageDigests.workSha256:']]),
  'digest-work-reused-across-await':fault(['digest-spans'],'HISTORY_PROOF_DIGEST_SPAN_ORACLE',[['if(importedActive&&(activatedExisting?activeWorkMatches:','if(importedActive&&(true?activeWorkMatches:']]),
  'parts-digests-shared-across-operations':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_ORACLE',[['function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),partsDigests:new WeakMap(),','const sharedPartsDigests=new WeakMap();function historyProofOperation(){return HISTORY_ROOT_PROOFS?{validators:new Map(),natives:new Set(),primitives:new Set(),hashedParts:new Map(),partsDigests:sharedPartsDigests,']]),
  'parts-digest-wrong-key':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_ORACLE',[['  let held=digests.get(parts);if(held===undefined){held={digest:hash.sha256Value(parts),inputs};digests.set(parts,held);}','  let held=digests.get(digests);if(held===undefined){held={digest:hash.sha256Value(parts),inputs};digests.set(digests,held);}']]),
@@ -203,9 +206,9 @@ export function observed(source){
  source=replaceOnce(source,RETAINED_COLD_READ,"{globalThis.__onImportReuse?.('retained-rebound');const retained=await readRetainedCheckpoint(jobId,state.activeId,state,rootPreparation?.read);",'retained-cold-read');
  // Each reuse records whether it ran in the span of the computation and
  // whether a fresh computation at the reuse equals the reused value.
- source=replaceOnce(source,PACKAGE_DIGEST,PACKAGE_DIGEST+"if(packageProjectSha256!==null)globalThis.__digestSpan?.open('package-project');",'package-digest');
- source=replaceOnce(source,PACKAGE_DIGEST_REUSE,"viewRebased?null:(packageProjectSha256!==null&&globalThis.__digestSpan?.use('package-project',packageProjectSha256,()=>projectSha256(project)),packageProjectDigest()));",'package-digest-reuse');
- source=replaceOnce(source,ACTIVE_WORK,ACTIVE_WORK+"globalThis.__digestSpan?.open('active-work');",'active-work');
+ source=replaceOnce(source,PACKAGE_DIGEST,PACKAGE_DIGEST+"if(packageProjectSha256!==null)globalThis.__digestSpan?.open('package-project');if(packageDigests?.workSha256)globalThis.__digestSpan?.open('package-work');",'package-digest');
+ source=replaceOnce(source,PACKAGE_DIGEST_REUSE,"viewRebased?null:(packageProjectSha256!==null&&globalThis.__digestSpan?.use('package-project',packageProjectSha256,()=>projectSha256(project)),packageProjectDigest()));\nglobalThis.__digestSpan?.between?.();",'package-digest-reuse');
+ source=replaceOnce(source,ACTIVE_WORK,"?(globalThis.__digestSpan?.use('package-work',packageDigests.workSha256,()=>historyWorkSha256(project)),packageDigests.workSha256):historyWorkSha256(project));globalThis.__digestSpan?.open('active-work');",'active-work');
  source=replaceOnce(source,ACTIVE_WORK_REUSE,"?(globalThis.__digestSpan?.use('active-work',activeWorkMatches,()=>historyWorkSha256(importedActive.project)===historyWorkSha256(project)),activeWorkMatches):historyWorkSha256(importedActive.project)===historyWorkSha256(project))){",'active-work-reuse');
  // Every call with an operation's digests reports that map, the digest it
  // returns and a fresh computation; a shared capture reports its skipped check.
@@ -1072,16 +1075,28 @@ async function retainedCheckpointSection(context){
 }
 
 // 14. Digests importPackage computes once and reuses (P3): the package
-// project's digest (recovery check, then bindRestoredCandidates) and the
+// project's digest (recovery check, then bindRestoredCandidates), its work
+// digest from the same canonical pass (then the work comparison) and the
 // active version's work comparison (activation, then its source reference).
 // Each reuse runs in the synchronous span of its computation, never across an
 // await (a microtask queued at the computation has not run), and equals a
 // fresh computation at the reuse. After a new version's preparation (an
-// await) the work comparison is computed again, not reused.
-function digestSpans(runtime){
+// await) the work comparison is computed again, not reused. With the digest
+// primitives changed between the package digests and the work comparison,
+// the work is digested at its comparison.
+function digestSpans(runtime,between=null){
  const spans=new Map(),uses=[];
- runtime.__digestSpan={open(name){const span={closed:false};queueMicrotask(()=>{span.closed=true;});spans.set(name,span);},use(name,used,fresh){const span=spans.get(name);uses.push({name,sameTurn:Boolean(span)&&!span.closed,equal:Object.is(used,fresh())});}};
- return {uses,undo:()=>{delete runtime.__digestSpan;}};
+ runtime.__digestSpan={open(name){const span={closed:false};queueMicrotask(()=>{span.closed=true;});spans.set(name,span);},use(name,used,fresh){const span=spans.get(name);uses.push({name,sameTurn:Boolean(span)&&!span.closed,equal:Object.is(used,fresh())});},...(between?{between}:{})};
+ return {uses,undo:()=>{delete runtime.__digestSpan;between?.undo();}};
+}
+// A change of the digest primitives made between the package digests and the
+// work comparison, undone after the import: TextEncoder.prototype.encode
+// replaced by a function returning the same bytes.
+function benignEncoderChange(){
+ let original=null;
+ const between=()=>{if(original)return;original=Object.getOwnPropertyDescriptor(TextEncoder.prototype,'encode');const encode=original.value;Object.defineProperty(TextEncoder.prototype,'encode',{...original,value:function(text){return Reflect.apply(encode,this,[text]);}});};
+ between.undo=()=>{if(original){Object.defineProperty(TextEncoder.prototype,'encode',original);original=null;}};
+ return between;
 }
 async function digestSpansSection(context){
  const {source,emit}=context;
@@ -1090,8 +1105,8 @@ async function digestSpansSection(context){
  // P4: each parts-list digest an operation holds, observed with a fresh
  // computation at every call; a hit is a call the operation's digests answered.
  const partsCalls=[],pairInputReuses=[],conflictCalls=[];
- const spanImport=async(label,blob,expected)=>{
-  const ids=(await backupBody(blob)).recovery.entries.map(entry=>entry.id),before=copyRows(b.rows,b.page),worker=b.worker().realm.runtime,spans=digestSpans(worker),calls=[],conflicts=[];let same;
+ const spanImport=async(label,blob,expected,between=null)=>{
+  const ids=(await backupBody(blob)).recovery.entries.map(entry=>entry.id),before=copyRows(b.rows,b.page),worker=b.worker().realm.runtime,spans=digestSpans(worker,between),calls=[],conflicts=[];let same;
   worker.__partsDigest=(digests,parts,value,fresh,hit)=>{calls.push({digests,hit,equal:value===fresh()});};
   // The conflict check: a fresh computation in its own turn, and whether the
   // operation's digest stood in for it.
@@ -1100,7 +1115,8 @@ async function digestSpansSection(context){
   assert.ok(calls.every(call=>call.equal),'HISTORY_PROOF_PARTS_DIGEST_ORACLE '+label+': a parts digest differs from a fresh computation');
   assert.ok(conflicts.every(call=>call.equal)&&conflicts.every(call=>calls.length&&call.digests===calls[0].digests),'HISTORY_PROOF_PARTS_DIGEST_ORACLE '+label+': the conflict check\'s parts digest differs from a fresh computation, or came from another operation');
   partsCalls.push(calls);conflictCalls.push(conflicts);
-  const other=await importOutcome(browser(source,before),blob,jobId,ids);
+  const fresh=browser(source,before);fresh.onWorker=realm=>{if(between)realm.runtime.__digestSpan={open(){},use(){},between};};
+  let other;try{other=await importOutcome(fresh,blob,jobId,ids);}finally{between?.undo();}
   assert.deepEqual(same,other,'HISTORY_PROOF_DIGEST_SPAN_EQUIVALENCE_ORACLE '+label+': the import differs from a fresh cold import');
   assert.equal(same.ok,true,'HISTORY_PROOF_DIGEST_SPAN_FIXTURE_ORACLE '+label);
   for(const use of spans.uses){
@@ -1109,15 +1125,18 @@ async function digestSpansSection(context){
   }
   pairInputReuses.push(...spans.uses.filter(use=>use.name==='pair-inputs'));
   const count=name=>spans.uses.filter(use=>use.name===name).length;
-  assert.deepEqual({packageProject:count('package-project'),activeWork:count('active-work')},expected,'HISTORY_PROOF_DIGEST_SPAN_REUSE_ORACLE '+label+': the digests reused');
-  emit('HISTORY-PROOF-DIGEST-SPAN-'+label,{packageProjectReuses:count('package-project'),activeWorkReuses:count('active-work'),sameTurn:true,equal:true});
+  assert.deepEqual({packageProject:count('package-project'),activeWork:count('active-work'),packageWork:count('package-work')},expected,'HISTORY_PROOF_DIGEST_SPAN_REUSE_ORACLE '+label+': the digests reused');
+  emit('HISTORY-PROOF-DIGEST-SPAN-'+label,{packageProjectReuses:count('package-project'),activeWorkReuses:count('active-work'),packageWorkReuses:count('package-work'),sameTurn:true,equal:true});
  };
  // The backup's active version is the package project: it is activated.
- await spanImport('activated',await b.store.exportPackage(jobId),{packageProject:1,activeWork:1});
+ await spanImport('activated',await b.store.exportPackage(jobId),{packageProject:1,activeWork:1,packageWork:1});
+ // The digest primitives changed between the sites: the work is digested at
+ // its comparison (the import, whose proofs were used, is then redone cold).
+ await spanImport('primitive-changed',await b.store.exportPackage(jobId),{packageProject:2,activeWork:2,packageWork:0},benignEncoderChange());
  // A file stored after the last checkpoint: the package's files differ from
  // its active version's, so the import prepares a new version (an await).
  {let p=await b.store.readProject(jobId);const next=b.store.clone(p);await storeFile(b.page,next,{stage:1,filename:'span.txt',text:'Exact Stage 1 file span.\n',commandId:'HISTORY-PROOF-REUSE-span'});}
- await spanImport('new-version',await b.store.exportPackage(jobId),{packageProject:1,activeWork:0});
+ await spanImport('new-version',await b.store.exportPackage(jobId),{packageProject:1,activeWork:0,packageWork:1});
  // P4: one operation's digests per import, never another's; every digest
  // used equals a fresh computation; each list is digested once and its digest
  // reused by the later checks of the same import.
