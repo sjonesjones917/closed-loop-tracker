@@ -22,7 +22,7 @@ function assertNoNestedCataloguedOwners(sources){
 const repository='test-owner/test-repo',headSha='a'.repeat(40),workflowId=42;
 const run={id:123,run_attempt:1,event:'pull_request',status:'completed',conclusion:'success',repository:{full_name:repository},head_repository:{full_name:repository},head_sha:headSha,workflow_id:workflowId,path:'.github/workflows/pages.yml'};
 const jobs=[{name:'test',status:'completed',conclusion:'success',steps:fullTestSteps.map(name=>({name,status:'completed',conclusion:'success'}))},{name:'deferred-matrix',status:'completed',conclusion:'success',steps:['Execute complete deferred stage matrix','Preserve complete deferred matrix receipt'].map(name=>({name,status:'completed',conclusion:'success'}))}];
-for(const group of ['core','creation','counterpart'])jobs.push({name:'conformance-'+group,status:'completed',conclusion:'success',steps:['Download foundation proof','Validate foundation ingestion receipt','Validate current authority receipts','Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts'].map(name=>({name,status:'completed',conclusion:'success'}))});
+for(const group of ['core','history','creation','counterpart'])jobs.push({name:'conformance-'+group,status:'completed',conclusion:'success',steps:['Download foundation proof','Validate foundation ingestion receipt','Validate current authority receipts','Execute complete conformance group','Preserve complete conformance group report','Preserve conformance execution receipts'].map(name=>({name,status:'completed',conclusion:'success'}))});
 for(const [name,steps]of [['foundation',foundationProofSteps],['workflow-gates',workflowGateProofSteps],['test-checks',testCheckProofSteps],['operator-journey',operatorJourneyProofSteps]])jobs.push({name,status:'completed',conclusion:'success',steps:steps.map(name=>({name,status:'completed',conclusion:'success'}))});
 for(const job of jobs)Object.assign(job,{run_id:run.id,run_attempt:run.run_attempt,head_sha:headSha,run_url:`https://api.github.com/repos/${repository}/actions/runs/${run.id}`});
 const bindings={repository,headSha,workflowId};
@@ -47,7 +47,7 @@ try{
   }
   (await rejects('missing-required-step',()=>assertPassedRun(run,[{...jobs[0],steps:jobs[0].steps.slice(1)},...jobs.slice(1)],bindings),/did not pass/));
   (await rejects('duplicate-test-job',()=>assertPassedRun(run,[...jobs,...jobs],bindings),/Required test job/));
-  for(const group of ['core','creation','counterpart']){
+  for(const group of ['core','history','creation','counterpart']){
     const name='conformance-'+group;
     await rejects('missing-'+name,()=>assertPassedRun(run,jobs.filter(job=>job.name!==name),bindings),/Required conformance group job/);
     for(const conclusion of ['failure','cancelled','skipped']){const altered=clone(jobs);altered.find(job=>job.name===name).conclusion=conclusion;await rejects('unpassed-'+name+'-'+conclusion,()=>assertPassedRun(run,altered,bindings),/Required conformance group job/);}
@@ -76,7 +76,7 @@ try{
       await rejects('unpassed-'+jobName+'-'+stepName+'-'+conclusion,()=>assertPassedRun(run,altered,bindings),/did not pass/);
     }
   }
-  for(const jobName of ['foundation','conformance-core','conformance-creation','conformance-counterpart']){
+  for(const jobName of ['foundation','conformance-core','conformance-history','conformance-creation','conformance-counterpart']){
     for(const [field,value]of [['run_id',999],['run_attempt',2],['head_sha','b'.repeat(40)],['run_url','https://api.github.com/repos/other/repo/actions/runs/123']]){
       const altered=clone(jobs);altered.find(job=>job.name===jobName)[field]=value;
       await rejects('foreign-'+jobName+'-'+field,()=>assertPassedRun(run,altered,bindings),/different run, attempt, repository, or head/);
@@ -263,7 +263,8 @@ try{
   cases.push('all-upload-preloads-isolated-with-producer-preloads-retained');
   const conformanceStart=workflow.indexOf('\n  conformance:\n'),conformanceEnd=workflow.indexOf('\n  test-checks:\n'),conformanceWorkflow=workflow.slice(conformanceStart,conformanceEnd);
   for(const [name,before,after,diagnostic] of [
-    ['missing-group','group: [core, creation, counterpart]','group: [core, creation]',/complete conformance group execution/],
+    ['missing-group','group: [core, history, creation, counterpart]','group: [core, history, creation]',/complete conformance group execution/],
+    ['missing-history-group','group: [core, history, creation, counterpart]','group: [core, creation, counterpart]',/complete conformance group execution/],
     ['missing-execution','node verify-conformance-regressions.mjs --group=${{ matrix.group }} > /tmp/conformance-regressions.json','node missing-conformance.mjs',/complete conformance group execution/],
     ['missing-report','name: Preserve complete conformance group report','name: Missing group report',/complete conformance group execution/],
     ['missing-receipts','name: Preserve conformance execution receipts','name: Missing group receipts',/complete conformance group execution/],

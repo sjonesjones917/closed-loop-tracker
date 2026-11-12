@@ -436,7 +436,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        group: [core, creation, counterpart]
+        group: [core, history, creation, counterpart]
     permissions:
       contents: read
       actions: read

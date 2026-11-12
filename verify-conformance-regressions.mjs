@@ -102,14 +102,54 @@ const suites=[
 Object.freeze(suites);
 const creationSuites=Object.freeze(['verify-product-reservation-persistence.mjs','verify-creation-presentation-faults.mjs']);
 const counterpartSuites=Object.freeze(['verify-operator-counterpart.mjs','verify-counterpart-faults.mjs']);
+// History, backup, recovery and storage owners run as their own group, so the
+// core group keeps headroom inside the unchanged aggregate budget. Population
+// order is kept. verify-recovery-faults also restores the core owner
+// verify-copy-transaction.mjs, as the creation group already does; that equal
+// current receipt is read by no group run.
+const historySuites=Object.freeze([
+ 'verify-history-selection-capture.mjs',
+ 'verify-history-selection-fault.mjs',
+ 'verify-history-view-cost.mjs',
+ 'verify-history-project-references.mjs',
+ 'verify-history-proof-reuse.mjs',
+ 'verify-quarantine-recovery.mjs',
+ 'verify-integrity-recovery-faults.mjs',
+ 'verify-encrypted-backups.mjs',
+ 'verify-encrypted-backup-faults.mjs',
+ 'verify-operational-persistence.mjs',
+ 'verify-operational-faults.mjs',
+ 'verify-recoverable-history.mjs',
+ 'verify-history-contracts.mjs',
+ 'verify-history-sequences.mjs',
+ 'verify-history-navigation.mjs',
+ 'verify-history-project-lifecycle.mjs',
+ 'verify-history-retention.mjs',
+ 'verify-io-boundary-faults.mjs',
+ 'verify-history-project-sharing.mjs',
+ 'verify-history-canonical-sharing.mjs',
+ 'verify-history-project-sharing-faults.mjs',
+ 'verify-recovery-faults.mjs'
+]);
+// [catalogued positive owner, dependent owner]: the dependent reads the owner's
+// current receipt or re-executes it, so both run in one group, owner first.
+const conformanceColocations=Object.freeze([
+ ['verify-quarantine-recovery.mjs','verify-integrity-recovery-faults.mjs'],
+ ['verify-encrypted-backups.mjs','verify-encrypted-backup-faults.mjs'],
+ ['verify-operational-persistence.mjs','verify-operational-faults.mjs'],
+ ['verify-recoverable-history.mjs','verify-io-boundary-faults.mjs'],
+ ['verify-recoverable-history.mjs','verify-recovery-faults.mjs'],
+ ['verify-history-project-lifecycle.mjs','verify-recovery-faults.mjs']
+].map(Object.freeze));
 export const conformanceGroups=Object.freeze({
- core:Object.freeze(suites.filter(suite=>!creationSuites.includes(suite)&&!counterpartSuites.includes(suite))),
+ core:Object.freeze(suites.filter(suite=>!historySuites.includes(suite)&&!creationSuites.includes(suite)&&!counterpartSuites.includes(suite))),
+ history:historySuites,
  creation:creationSuites,
  counterpart:counterpartSuites
 });
 export function selectConformanceGroup(args=[]){
  if(args.length===0)return {group:'all',suites};
- assert.ok(args.length===1&&/^--group=(core|creation|counterpart)$/.test(args[0]),'CONFORMANCE_GROUP_ARGUMENT_ORACLE: expected one --group=core|creation|counterpart option');
+ assert.ok(args.length===1&&/^--group=(core|history|creation|counterpart)$/.test(args[0]),'CONFORMANCE_GROUP_ARGUMENT_ORACLE: expected one --group=core|history|creation|counterpart option');
  const group=args[0].slice('--group='.length);
  return {group,suites:conformanceGroups[group]};
 }
@@ -476,11 +516,13 @@ async function verifyCounterpartRestoredBudget(directory){
 function verifyConformanceGroups(){
  const groups=Object.values(conformanceGroups),population=groups.flat();
  assert.equal(suites.length,89,'CONFORMANCE_FULL_POPULATION_ORACLE');
- assert.deepEqual(Object.keys(conformanceGroups),['core','creation','counterpart'],'CONFORMANCE_GROUP_POPULATION_ORACLE');
- assert.deepEqual(groups.map(group=>group.length),[85,2,2],'CONFORMANCE_GROUP_POPULATION_ORACLE');
+ assert.deepEqual(Object.keys(conformanceGroups),['core','history','creation','counterpart'],'CONFORMANCE_GROUP_POPULATION_ORACLE');
+ assert.deepEqual(groups.map(group=>group.length),[63,22,2,2],'CONFORMANCE_GROUP_POPULATION_ORACLE');
  assert.equal(new Set(population).size,population.length,'CONFORMANCE_GROUP_DISJOINT_ORACLE');
  assert.deepEqual([...population].sort(),[...suites].sort(),'CONFORMANCE_GROUP_UNION_ORACLE');
  assert.ok(Object.isFrozen(suites)&&Object.isFrozen(conformanceGroups)&&groups.every(Object.isFrozen),'CONFORMANCE_GROUP_IMMUTABLE_ORACLE');
+ for(const [owner,dependent]of conformanceColocations){const group=groups.find(group=>group.includes(dependent));assert.ok(group?.includes(owner)&&group.indexOf(owner)<group.indexOf(dependent),'CONFORMANCE_GROUP_COLOCATION_ORACLE: '+dependent);}
+ for(const group of groups)assert.deepEqual(group,suites.filter(suite=>group.includes(suite)),'CONFORMANCE_GROUP_ORDER_ORACLE');
  assert.equal(selectConformanceGroup().suites,suites,'CONFORMANCE_DEFAULT_POPULATION_ORACLE');
  for(const group of Object.keys(conformanceGroups))assert.equal(selectConformanceGroup(['--group='+group]).suites,conformanceGroups[group],'CONFORMANCE_GROUP_SELECTION_ORACLE');
  for(const args of [['--group=unknown'],['--group=all'],['--group=core','--group=creation'],['--group','core'],['--skip']])assert.throws(()=>selectConformanceGroup(args),/CONFORMANCE_GROUP_ARGUMENT_ORACLE/);
@@ -772,6 +814,8 @@ async function verifyRunnerFaults(){
   ['omit-current-counterpart-oracle','const oracles=Object.fromEntries(COUNTERPART_FAULT_CASES.map(','const oracles=Object.fromEntries(COUNTERPART_FAULT_CASES.slice(1).map(','COUNTERPART_RESTORED_BUDGET_ORACLE'],
   ['shorten-restored-counterpart-budget','fs.writeFileSync(matrix,source);',"fs.writeFileSync(matrix,source.replace(\"const restored=(await runVerifier(process.execPath,['verify-operator-counterpart.mjs'],{encoding:'utf8',timeout:FULL_JOURNEY_TIMEOUT_MS\",\"const restored=(await runVerifier(process.execPath,['verify-operator-counterpart.mjs'],{encoding:'utf8',timeout:300000\"));",'COUNTERPART_RESTORED_BUDGET_ORACLE'],
   ['drop-conformance-group-suite','creation:creationSuites,','creation:Object.freeze(creationSuites.slice(1)),','CONFORMANCE_GROUP_POPULATION_ORACLE'],
+  ['drop-history-group-suite','history:historySuites,','history:Object.freeze(historySuites.slice(1)),','CONFORMANCE_GROUP_POPULATION_ORACLE'],
+  ['split-history-fault-owner'," 'verify-operational-faults.mjs',\n"," 'verify-recovery-control-fault.mjs',\n",'CONFORMANCE_GROUP_COLOCATION_ORACLE'],
   ['shorten-historical-owner-budget',"if(suite==='verify-executed-evidence.mjs')return EXECUTED_EVIDENCE_TIMEOUT_MS;","if(suite==='verify-executed-evidence.mjs')return CHILD_TIMEOUT_MS;",'CONFORMANCE_SUITE_BUDGET_ORACLE'],
   ['extend-historical-producer-budget',"if(suite==='verify-executed-evidence.mjs')return EXECUTED_EVIDENCE_TIMEOUT_MS;","if(suite==='verify-ingestion.mjs')return EXECUTED_EVIDENCE_TIMEOUT_MS; if(suite==='verify-executed-evidence.mjs')return EXECUTED_EVIDENCE_TIMEOUT_MS;",'HISTORICAL_PRODUCER_BUDGET_ORACLE'],
   ['shorten-product-suite-budget',"'verify-product-reservation-persistence.mjs','verify-operator-counterpart.mjs','verify-stage28-artifact-delivery-intent.mjs'","'verify-operator-counterpart.mjs','verify-stage28-artifact-delivery-intent.mjs'",'CONFORMANCE_SUITE_BUDGET_ORACLE'],
