@@ -237,6 +237,34 @@ function observedHistoryCustody(project,artifacts,validators){
   return observedRecoveryCustody(project,projectCustodySelection(project),artifacts);
  }catch{return null;/* The overlay outcome stands. */}
 }
+// The imported revision's projection (importPackage). It runs after the
+// overlay steps, which are unchanged and first: the package project passed or
+// was tolerated by the full-overlay recovery check (activeCompat), and the new
+// revision was derived under the overlay of every package artifact and
+// returned without refusing. A receipt derived under the application's
+// observation of the value records a stored artifact outside that
+// observation's selection, such as a superseded file, UNKNOWN; the overlay
+// reads it TRUE, so the overlay's revision contradicts the page's own
+// observation (projectCustodySelection) and the first read rewrites it as
+// 'Readiness refreshed'. When the overlay contradicts the receipt's recorded
+// custody answers and the overlay restricted to the selection of the imported
+// value reproduces every one of them (observedRecoveryCustody, the commit
+// path's chooser, returned and never registered), that value is derived again
+// under the restricted overlay: the complete recalculation and
+// assertProjectIntegrity, unchanged, in this one synchronous turn, from plain
+// data (the value, its selection and the package artifacts the overlay
+// holds); nothing is carried. Its TRUE answers are a subset of the overlay's.
+// It is kept only when it leaves the saved projection exactly as imported
+// (recalculateChangedProjection returns its input). Null (no such custody, a
+// changed projection, or any error, refusal included) keeps the overlay's
+// revision, exactly as before.
+function importObservedProjection(next,artifacts,sourceProjectSha256){
+ try{
+  const custody=observedRecoveryCustody(next,projectCustodySelection(next),artifacts);
+  if(!custody)return null;
+  return custody(()=>{const value=recalculateChangedProjection(next,{sourceProjectSha256});if(value!==next)return null;assertProjectIntegrity(value);return value;});
+ }catch{return null;/* The overlay path decides. */}
+}
 // The pair's verdict from one more derived check under that custody, with the
 // static receipt the overlay check started from; strictlyCompatibleRoots and
 // the static receipt are left as the overlay check left them.
@@ -5628,7 +5656,14 @@ async function importPackage(blob,{operationId=null,passphrase=null,pendingBacku
   const viewRebased=Boolean(importedView?.pendingMutation);
   importedView=rebaseHistoryView(project,importedView);
   bindRestoredCandidates(next,project,importedActive?body.recovery?.activeId||null:null,importedView,viewRebased?null:packageProjectDigest());
+  // The new revision is derived under the overlay of the package's verified
+  // artifacts, as before. After that returned without refusing, the same
+  // imported value is derived again under the application's observation of
+  // it when that reproduces its receipt (importObservedProjection), and that
+  // derivation is kept when it leaves the projection unchanged.
+  const importedValue=next;
   withVerifiedRecoveryCustody(activeArtifacts,()=>{next=recalculateChangedProjection(next,{sourceProjectSha256:manifest.projectSha256});assertProjectIntegrity(next);});
+  next=importObservedProjection(importedValue,activeArtifacts,manifest.projectSha256)||next;
   importedView=rebaseHistoryView(next,importedView);
   // The work comparison of the active version, computed once: the source
   // reference below reuses it only after activating that existing version,

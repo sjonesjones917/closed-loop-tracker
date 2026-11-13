@@ -126,6 +126,12 @@ const COMPAT_CHECK='function assertRecoveryCompatibility(project){';
 const OBSERVED_DERIVATION='const at=Date.now();if(staticReceipt)recoveryBodyStaticIntegrity.set(value,staticReceipt);';
 const OBSERVATION_SELECTION='const artifactIds=projectCustodySelection(project,engine);';
 const HISTORY_SELECTION='  return observedRecoveryCustody(project,projectCustodySelection(project),artifacts);';
+// The import's step deriving its new revision: the overlay line, unchanged and
+// first, then the imported value derived again under the application's
+// observation of it (importObservedProjection); and that step with the overlay
+// line alone.
+const IMPORT_OVERLAY_STEP='  withVerifiedRecoveryCustody(activeArtifacts,()=>{next=recalculateChangedProjection(next,{sourceProjectSha256:manifest.projectSha256});assertProjectIntegrity(next);});\n';
+const IMPORT_OBSERVED_STEP='  const importedValue=next;\n'+IMPORT_OVERLAY_STEP+'  next=importObservedProjection(importedValue,activeArtifacts,manifest.projectSha256)||next;\n';
 // The in-session pair sites (fault edits): the first use's carry under the
 // restricted custody and its derived check, the 'Previous project' pair, its
 // verdict, the append decode's and the no-op read's options, the read's
@@ -333,7 +339,12 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  'observed-restricted-refusal-decides-read':fault(['observed-custody'],'HISTORY_PROOF_OBSERVED_RESTRICTED_REFUSAL_ORACLE',[[RESTRICTED_CHECK,'observedCustody(()=>assertRecoveryCompatibility(value));']]),
  // The first use's strict pair minted under validators captured after its
  // decode, whose custody and source-binding checks ran under earlier ones.
- 'observed-first-use-validators-after-decode':fault(['observed-custody'],'HISTORY_PROOF_OBSERVED_GUARD_ORACLE',[[FIRST_USE_VALIDATORS,'  const validators=inputs&&captureRootValidators(inputs.primitive);if(!validators)return;\n  if(rootValidatorsUnchanged(root.validators))recoveryBodyStaticIntegrity.set(saved.project,']])
+ 'observed-first-use-validators-after-decode':fault(['observed-custody'],'HISTORY_PROOF_OBSERVED_GUARD_ORACLE',[[FIRST_USE_VALIDATORS,'  const validators=inputs&&captureRootValidators(inputs.primitive);if(!validators)return;\n  if(rootValidatorsUnchanged(root.validators))recoveryBodyStaticIntegrity.set(saved.project,']]),
+ // The imported revision derived under the overlay only (the import's
+ // observed derivation of its value reverted): it records the superseded file
+ // TRUE, contradicting the page's observation, and the page's activation
+ // rewrites it as 'Readiness refreshed'.
+ 'observed-import-receipt-overlay':fault(['observed-custody'],'HISTORY_PROOF_OBSERVED_IMPORT_PROJECTION_ORACLE',[[IMPORT_OBSERVED_STEP,IMPORT_OVERLAY_STEP]]),
 });
 
 // Test-only observation (never a production export): the worker ledger, counts
@@ -2158,9 +2169,14 @@ const observedView=(r,n)=>r.copy({activeStage:1,activeView:'Workflow',drafts:{'#
 // one restricted derivation (+1). Each is one derived check of the version's
 // project: about 4.3 s for the 61.5 MB Stage 30 project locally (about 3.5 s
 // hosted), at most +3 per write, all within the unchanged 180 s action wait.
-// The same-session import runs only its active version's checks
-// (OBSERVED_IMPORT_CHECKS) and no restricted derivation.
-const OBSERVED_IMPORT_CHECKS=Object.freeze({derived:2,compat:1});
+// The same-session import runs only its active version's checks and no
+// restricted derivation of a pair (OBSERVED_IMPORT_CHECKS). Its new revision,
+// derived under the overlay of the package's artifacts, contradicts the
+// receipt the backup's version recorded under the observation (the superseded
+// file), so the import derives that value once more under the observation
+// that reproduces it (importObservedProjection): one more derived check of the
+// project, +1 over the overlay path's two.
+const OBSERVED_IMPORT_CHECKS=Object.freeze({derived:3,compat:1});
 const OBSERVED_CUSTODY_COUNTS=Object.freeze([['create project',1,0,0],['write storing the Stage 1 file',3,2,0],['save no-op on a consistent write certificate',1,1,0],['save changed view',0,0,0],['write superseded without a checkpoint (consistent)',1,0,0],['write superseding the Stage 1 file',1,0,0],['save changed view',0,0,0],['save no-op on a Saved view',0,0,0],['write superseded without a checkpoint',1,0,0],['write first-using a contradicting root',2,1,0],['save no-op on a write certificate',1,1,0],['write after a no-op',1,0,0],['save changed view',0,0,0],['store a file outside a write',0,0,0],['write appending Previous project',5,4,2],['save changed view',0,0,0],['write',1,0,0],['save no-op on a write certificate',1,1,0],['operational write',1,0,0],['write first-using an operational root',2,1,0],['write reserving a Stage 1 prompt',2,1,0],['operational write capturing a response',6,5,2],['operational write with a returned file',6,5,2],['write first-using a returned-file root',2,1,0],['save changed view',0,0,0],['store a file outside a write',0,0,0],['save same view with changed files',2,2,1],['save no-op on an own-row reference',2,2,1],['save changed view sharing its rows',0,0,0],['write',1,0,0],['save changed view',0,0,0],['save no-op on a Saved view',0,0,0]]);
 // One session's actions in the page realm of b, each with the worker's checks
 // it ran. A write or save is the same action in any runtime r (the page of a
@@ -2479,8 +2495,10 @@ async function observedFirstUseValidators(context){
 // refusal of the value armed in every worker from the project's creation,
 // that check refuses inside the import and mints nothing, and the import
 // refuses exactly as the fresh import (inSessionChecks: the session worker's
-// refusals in its import beyond the fresh import's, the first use's own).
-const OBSERVED_IMPORT_FIRST_USE_CHECKS=Object.freeze({derived:3,compat:2});
+// refusals in its import beyond the fresh import's, the first use's own). As
+// for OBSERVED_IMPORT_CHECKS, the import's observed derivation of its new
+// revision adds one derived check.
+const OBSERVED_IMPORT_FIRST_USE_CHECKS=Object.freeze({derived:4,compat:2});
 async function observedImportFirstUse(context){
  const {source}=context,MARK='Exact observed import first-use root',rows={};
  for(const armed of [false,true]){
@@ -2557,12 +2575,23 @@ async function observedCustodySection(context){
  };
  const happy=await importBoth('same-session');
  assert.equal(happy.same.ok,true,'HISTORY_PROOF_OBSERVED_TIER2_ORACLE: the same-session import succeeds');
+ // The imported revision keeps the backup's projection (its receipt derived
+ // under the observation, the superseded file UNKNOWN, its observation
+ // instant and every gate checkedAt), so the page's activation of it
+ // (refreshProjectProjection in the page realm) validates and writes nothing:
+ // no 'Readiness refreshed' version.
+ const exportedProject=(await backupBody(backup)).project,imported=await b.store.readProject(jobId),gateTimes=project=>Object.values(project.stages||{}).map(stage=>stage?.gate?.checkedAt??null);
+ const receiptPreserved=isDeepStrictEqual(plain(imported.projectData.applicationProjection),plain(exportedProject.projectData.applicationProjection))&&isDeepStrictEqual(gateTimes(plain(imported)),gateTimes(exportedProject));
+ assert.ok(receiptPreserved,'HISTORY_PROOF_OBSERVED_IMPORT_PROJECTION_ORACLE: the imported revision keeps the backup\'s projection, its observation instant and every gate checkedAt');
+ const activated=await b.store.refreshProjectProjection(jobId,{expectedProjectRevision:imported.revision,expectedStateSha256:imported.projectSha256});
+ const activationWrote=activated.revision!==imported.revision||activated.projectSha256!==imported.projectSha256,readinessRefreshed=historyOf(b.rows,jobId).entries.filter(entry=>entry.label==='Readiness refreshed').length;
+ assert.ok(!activationWrote&&readinessRefreshed===0,'HISTORY_PROOF_OBSERVED_IMPORT_PROJECTION_ORACLE: the page\'s activation of the imported revision writes nothing ('+JSON.stringify({activationWrote,readinessRefreshed})+')');
  const activeRoot=recovery.entries.find(entry=>entry.id===recovery.activeId)?.projectReference?.checkpointId||recovery.activeId;
  assert.ok(happy.counts.importHits===recovery.entries.length-1&&!happy.counts.importHitIds.includes(recovery.activeId),'HISTORY_PROOF_OBSERVED_TIER2_ORACLE: every version but the active one is served at Tier 2 ('+happy.counts.importHits+' of '+recovery.entries.length+')');
  assert.ok(happy.counts.restoredRoots===1&&happy.counts.restoredRootIds[0]===activeRoot&&happy.counts.decodes<=2,'HISTORY_PROOF_OBSERVED_TIER2_ORACLE: only the active version\'s root is restored, and at most two snapshots are decoded');
  assert.ok(happy.counts.importHitIds.includes(shared.id),'HISTORY_PROOF_OBSERVED_TIER2_ORACLE: the Saved view sharing its rows is served through the shared pair');
  assert.ok(happy.counts.derived===OBSERVED_IMPORT_CHECKS.derived&&happy.counts.compat===OBSERVED_IMPORT_CHECKS.compat,'HISTORY_PROOF_OBSERVED_COUNT_ORACLE: the same-session import runs only its active version\'s checks');
- rows.set('HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT',{entries:recovery.entries.length,importHits:happy.counts.importHits,restoredRoots:happy.counts.restoredRoots,decodes:happy.counts.decodes,derived:happy.counts.derived,compat:happy.counts.compat,observedDerivations:0,historySelections:0,retainedHits:happy.counts.retainedHits,sharedViewServed:true,identical:true});
+ rows.set('HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT',{entries:recovery.entries.length,importHits:happy.counts.importHits,restoredRoots:happy.counts.restoredRoots,decodes:happy.counts.decodes,derived:happy.counts.derived,compat:happy.counts.compat,observedDerivations:0,historySelections:0,retainedHits:happy.counts.retainedHits,sharedViewServed:true,receiptPreserved,activationWrote,readinessRefreshed,identical:true});
  // The import's fallback read of its prior: the active file row damaged (its
  // byte reference names other bytes), so the prior's preparation fails and
  // the retained version is read cold, still deriving no pair under the

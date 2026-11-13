@@ -419,6 +419,9 @@ export async function verifyProjectProjectionStoreContract({sourceOverrides={}}=
   assert.equal(sourceOverrides['workflow-engine.js'].split(anchor).length,2,'DERIVATION_SOURCE_FAULT_ANCHOR');const faulty=projectStoreRuntime({sourceOverrides:{...sourceOverrides,'workflow-engine.js':sourceOverrides['workflow-engine.js'].replace(anchor,replacement)}});assert.throws(()=>verifyApplicationDerivationSourceContract(faulty,original),oracle,'DERIVATION_SOURCE_FAULT_ORACLE: '+fault);sourceBindingFaults.push({fault,detected:true,oracle:oracle.source});
  }
 
+ // The imported revision's projection under the application's observation
+ // (importObservedProjection): its seven cases and nine intended faults.
+ const importObservedProjection=await verifyImportObservedProjectionContract({sourceOverrides});cases.push(...importObservedProjection.cases);const {importObservedProjectionFaults}=importObservedProjection;
  const historySourceFallbackContract=await verifyHistorySourceFallbackContract({sourceOverrides});
  const mixedHistoryRecoveryContract=await verifyMixedHistoryRecoveryContract({sourceOverrides});
  const mixedHistoryInspectionContract=await verifyMixedHistoryInspectionContract({sourceOverrides});
@@ -427,7 +430,7 @@ export async function verifyProjectProjectionStoreContract({sourceOverrides={}}=
  const propositionEvidenceStateContract=await verifyPropositionEvidenceStateContract({sourceOverrides});
  const projectionVersion3ActivationContract=await verifyProjectionVersion3ActivationContract({sourceOverrides});
  const projectionVersion16ClarificationActivation=await verifyProjectionVersion16ClarificationActivation({sourceOverrides});
- return {projectionVersion16ClarificationActivation,historySourceFallbackContract,mixedHistoryRecoveryContract,mixedHistoryInspectionContract,legacyProjection3ActivationContract,disposableProjectionComparisonContract,projectionVersion3ActivationContract,propositionEvidenceStateContract,projectProjectionStoreContract:'PASS',synthetic:true,actualBrowser:false,sourceBindingContract,sourceBindingFaults,canonicalProofProjectionContract,sourceSha256,boundary:'Production create/write/read/export/import/checkpoint/migration and transaction-fault paths via isolated storage adapter. Canonical corruption probes deliberately recompute only outer checksum to exercise inner receipt checks; no real browser or completed stage claim.',cases};
+ return {projectionVersion16ClarificationActivation,historySourceFallbackContract,mixedHistoryRecoveryContract,mixedHistoryInspectionContract,legacyProjection3ActivationContract,disposableProjectionComparisonContract,projectionVersion3ActivationContract,propositionEvidenceStateContract,projectProjectionStoreContract:'PASS',synthetic:true,actualBrowser:false,sourceBindingContract,sourceBindingFaults,importObservedProjectionFaults,importObservedProjectionObservations:importObservedProjection.observations,canonicalProofProjectionContract,sourceSha256,boundary:'Production create/write/read/export/import/checkpoint/migration and transaction-fault paths via isolated storage adapter. Canonical corruption probes deliberately recompute only outer checksum to exercise inner receipt checks; no real browser or completed stage claim.',cases};
 }
 
 // Section34.3 distinguishes the registered algorithm from a value's own
@@ -746,4 +749,142 @@ export async function verifyProjectionVersion16ClarificationActivation({sourceOv
  for(const mode of ['wrong-version','forged-output','forged-receipt-digest','changed-source']){const bad=await make(),row=bad.rows.get('projects').get(fixture.jobId);if(mode==='wrong-version')row.project.projectData.applicationProjection.receipt.derivationVersion=16;else if(mode==='forged-output')row.project.stages[2].gate.complete=true;else if(mode==='forged-receipt-digest')row.project.projectData.applicationProjection.receipt.outputSha256='f'.repeat(64);else row.project.job.JOB_TITLE+=' changed after receipt';row.projectSha256=bad.store.projectSha256(row.project);assert.equal(bad.engine.validateLegacyApplicationProjection(row.project).valid,false);const before=await identity(row);await assert.rejects(()=>bad.store.readProject(fixture.jobId),error=>error.code==='PROJECT_INTEGRITY_FAILED','PROJECTION16_CORRUPT15_REJECTED: '+mode);const q=(await bad.store.listQuarantinedProjects()).find(item=>item.jobId===fixture.jobId);assert(q?.completeSnapshot);assert.deepEqual(await identity((await bad.store.metaGet(q.key)).row),before);await retained(bad);cases.push(mode+'-rejected-exact-source-preserved');}
  for(const phase of ['before-project-transaction','before-transaction-commit']){const failed=await make(),before=await identity([...failed.rows].map(([name,rows])=>[name,[...rows]]));failed.runtime.__closedLoopStorageFault=phase;await assert.rejects(()=>failed.store.readProject(fixture.jobId),error=>error.code==='INJECTED_STORAGE_FAILURE');assert.deepEqual(await identity([...failed.rows].map(([name,rows])=>[name,[...rows]])),before,'PROJECTION16_ATOMIC_ROLLBACK: '+phase);delete failed.runtime.__closedLoopStorageFault;const retried=await failed.store.readProject(fixture.jobId);assert.equal(retried.projectData.applicationProjection.receipt.derivationId,'closed-loop-derivation/project-current-projection/17');assert.equal(retried.stages[2].gate.complete,true);await retained(failed);cases.push(phase+'-preserves15-and-retries16');}
  return {projectionVersion16ClarificationActivation:'PASS',cases,fixtureSha256:sha(bytes),fixtureByteSize:bytes.length,producerCommit:fixture.baseCommit,originalSourceSha256:fixture.sourceSha256,sourceProjectSha256:fixture.projectSha256,synthetic:true,actualBrowser:false,transactionAdapter:true,boundary:'Exact base-2d9 production /15 persisted Stage03 clarification capture and original snapshots; current registered /16 read/checkpoint activation, cold idempotence, corruption quarantine and atomic abort/retry. Accepted Stage02 author, review and evidence remain exact. No receipt restamping, historical equivalence, native IndexedDB or browser claim.'};
+}
+
+// importPackage derives the imported revision under the overlay of the
+// package's byte-verified artifacts, unchanged and first, and then
+// (importObservedProjection) derives the same imported value again under the
+// application's observation of it when the overlay contradicts the receipt's
+// recorded custody answers and that observation reproduces them; the second
+// derivation is kept only when it leaves the projection unchanged. The
+// fixture's Stage 1 file is superseded by a corrected objective, so it stays
+// stored and in the package but outside the observation's selection: the
+// receipt records it UNKNOWN while the overlay reads it TRUE. The control is
+// the import step with the overlay line alone (the helper's call reverted).
+// Test-only hooks, the same in every runtime here: a derived refusal and a
+// recovery-compatibility refusal of the values a predicate selects, raised
+// where those checks run, and a count of derived checks.
+const IMPORT_OBSERVED_PROJECTION_STEP="  const importedValue=next;\n  withVerifiedRecoveryCustody(activeArtifacts,()=>{next=recalculateChangedProjection(next,{sourceProjectSha256:manifest.projectSha256});assertProjectIntegrity(next);});\n  next=importObservedProjection(importedValue,activeArtifacts,manifest.projectSha256)||next;\n";
+const IMPORT_OVERLAY_PROJECTION_STEP="  withVerifiedRecoveryCustody(activeArtifacts,()=>{next=recalculateChangedProjection(next,{sourceProjectSha256:manifest.projectSha256});assertProjectIntegrity(next);});\n";
+const IMPORT_OBSERVED_CUSTODY="  const custody=observedRecoveryCustody(next,projectCustodySelection(next),artifacts);\n";
+const IMPORT_OBSERVED_BODY="  return custody(()=>{const value=recalculateChangedProjection(next,{sourceProjectSha256});if(value!==next)return null;assertProjectIntegrity(value);return value;});\n";
+const IMPORT_OBSERVED_TRY=" try{\n"+IMPORT_OBSERVED_CUSTODY+"  if(!custody)return null;\n"+IMPORT_OBSERVED_BODY+" }catch{return null;/* The overlay path decides. */}\n";
+const IMPORT_ACTIVE_COMPAT='try{withVerifiedRecoveryCustody(verifiedArtifacts,()=>assertRecoveryCompatibility(project));assertPackageArtifactCustody(project,verifiedArtifacts);}';
+const importOnce=(source,anchor,replacement,label)=>{assert.equal(source.split(anchor).length,2,'PROJECTION_IMPORT_ANCHOR_ORACLE: '+label);return source.replace(anchor,()=>replacement);};
+// Each intended fault: the source change and the cases whose named oracle must
+// detect it.
+const IMPORT_OBSERVED_PROJECTION_FAULTS=Object.freeze({
+ 'import-overlay-only':{oracle:'PROJECTION_IMPORT_OBSERVED_RECEIPT_ORACLE',cases:['superseded-input-import-keeps-observed-receipt'],apply:s=>importOnce(s,IMPORT_OBSERVED_PROJECTION_STEP,IMPORT_OVERLAY_PROJECTION_STEP,'step')},
+ 'import-observed-refusal-escapes':{oracle:'PROJECTION_IMPORT_FALLBACK_ORACLE',cases:['superseded-input-import-observation-refusal-takes-overlay'],apply:s=>importOnce(s,IMPORT_OBSERVED_TRY,IMPORT_OBSERVED_CUSTODY+"  if(!custody)return null;\n"+IMPORT_OBSERVED_BODY,'try')},
+ 'import-observed-skips-overlay':{oracle:'PROJECTION_IMPORT_REFUSAL_ORDER_ORACLE',cases:['superseded-input-import-overlay-refusal-unchanged'],apply:s=>importOnce(s,IMPORT_OBSERVED_PROJECTION_STEP,"  const observedProjection=importObservedProjection(next,activeArtifacts,manifest.projectSha256);\n  if(observedProjection)next=observedProjection;\n  else"+IMPORT_OVERLAY_PROJECTION_STEP.slice(1),'step')},
+ 'import-observed-without-unchanged-guard':{oracle:'PROJECTION_IMPORT_FALLBACK_ORACLE',cases:['superseded-input-import-changed-readiness-takes-overlay'],apply:s=>importOnce(s,IMPORT_OBSERVED_BODY,IMPORT_OBSERVED_BODY.replace('if(value!==next)return null;',''),'body')},
+ 'import-active-compat-restricted':{oracle:'PROJECTION_IMPORT_REFUSAL_ORDER_ORACLE',cases:['superseded-input-import-full-overlay-refusal-unchanged'],apply:s=>importOnce(s,IMPORT_ACTIVE_COMPAT,'try{(observedRecoveryCustody(project,projectCustodySelection(project),verifiedArtifacts)||(action=>withVerifiedRecoveryCustody(verifiedArtifacts,action)))(()=>assertRecoveryCompatibility(project));assertPackageArtifactCustody(project,verifiedArtifacts);}','compat')},
+ 'import-observed-without-reproduction-check':{oracle:'PROJECTION_IMPORT_FALLBACK_ORACLE',cases:['consistent-receipt-import-unchanged'],apply:s=>importOnce(s,IMPORT_OBSERVED_CUSTODY,"  const custody=(()=>{const selected=new Set(projectCustodySelection(next).map(String)),jobId=projectIdentity(next);return action=>withObservedRecoveryCustody(jobId,selected,artifacts,action);})();\n",'custody')},
+ 'import-observed-without-integrity-check':{oracle:'PROJECTION_IMPORT_FALLBACK_ORACLE',cases:['superseded-input-import-observation-refusal-takes-overlay'],apply:s=>importOnce(s,IMPORT_OBSERVED_BODY,IMPORT_OBSERVED_BODY.replace('assertProjectIntegrity(value);',''),'body')},
+ 'import-observed-copies-backup-projection':{oracle:'PROJECTION_IMPORT_FALLBACK_ORACLE',cases:['superseded-input-import-observation-refusal-takes-overlay','superseded-input-import-changed-readiness-takes-overlay'],apply:s=>importOnce(s,IMPORT_OBSERVED_BODY,'  return next;\n','body')},
+ 'import-observed-on-overlay-value':{oracle:'PROJECTION_IMPORT_OBSERVED_RECEIPT_ORACLE',cases:['superseded-input-import-keeps-observed-receipt'],apply:s=>importOnce(s,'  next=importObservedProjection(importedValue,activeArtifacts,manifest.projectSha256)||next;\n','  next=importObservedProjection(next,activeArtifacts,manifest.projectSha256)||next;\n','argument')}
+});
+const IMPORT_OBSERVED_PROJECTION_CASES=Object.freeze(['superseded-input-import-keeps-observed-receipt','superseded-input-import-activation-no-refresh-write','superseded-input-import-full-overlay-refusal-unchanged','superseded-input-import-observation-refusal-takes-overlay','superseded-input-import-overlay-refusal-unchanged','superseded-input-import-changed-readiness-takes-overlay','consistent-receipt-import-unchanged']);
+function importObservedHooks(source){
+ source=importOnce(source,'    if(currentDefinition&&unchangedVerifiedProject(staticIntegrity,project,staticIntegrity?.digest)){',"    if(globalThis.__importRecoveryRefusal?.(project))throw Object.assign(storageError('Canonical project integrity validation failed: Injected recovery-compatibility refusal.','PROJECT_INTEGRITY_FAILED'),{issues:['Injected recovery-compatibility refusal.']});\n    if(currentDefinition&&unchangedVerifiedProject(staticIntegrity,project,staticIntegrity?.digest)){",'recovery-refusal');
+ const derived='function derivedProjectIntegrityIssues(project,{verifyCachedProjection=true,projectionObservedAt=null,verifyProjection=true}={}){\n  const issues=[],engine=globalThis.closedLoopWorkflowEngine,schemaApi=globalThis.closedLoopWorkflowSchema;\n';
+ return importOnce(source,derived,derived+"  globalThis.__importDerivedChecks=(globalThis.__importDerivedChecks||0)+1;if(globalThis.__importDerivedRefusal?.(project))issues.push('Injected derived refusal.');\n",'derived-refusal');
+}
+export async function verifyImportObservedProjectionContract({sourceOverrides={},only=null,faults=true}={}){
+ const files=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'];sourceOverrides=Object.fromEntries(files.map(file=>[file,sourceOverrides[file]??fs.readFileSync(file,'utf8')]));
+ const production=sourceOverrides['project-store.js'],control=importObservedHooks(importOnce(production,IMPORT_OBSERVED_PROJECTION_STEP,IMPORT_OVERLAY_PROJECTION_STEP,'control-step'));
+ const plain=value=>JSON.parse(JSON.stringify(value)),cases=[],observations={};
+ const capabilityAnchor='function applicationTestCapabilities(){';assert.equal(sourceOverrides['workflow-engine.js'].split(capabilityAnchor).length,2,'PROJECTION_IMPORT_CAPABILITY_ANCHOR_ORACLE');
+ const runtime=(store,{priorCapabilities=false}={})=>projectStoreRuntime({sourceOverrides:{...sourceOverrides,'project-store.js':store,...(priorCapabilities?{'workflow-engine.js':sourceOverrides['workflow-engine.js'].replace(capabilityAnchor,capabilityAnchor+'return Object.freeze([]);')}:{})}});
+ const receiving=(session,store)=>{const r=runtime(store);for(const[name,rows]of session.rows)r.rows.set(name,new Map([...rows].map(([key,value])=>[key,r.copy(value)])));return r;};
+ const availability=(project,artifactId)=>project?.projectData?.applicationProjection?.inputObservations?.artifactCustody?.find(row=>row.artifactId===artifactId)?.availability??null;
+ const checkedAt=project=>Array.from({length:30},(_,i)=>project.stages[i+1].gate.checkedAt);
+ const work=project=>Object.fromEntries(Object.entries(plain(project)).filter(([key])=>!['projectSha256','projectHash','revision','historyActivationId','restoredCandidates','activeView','activeStage'].includes(key)));
+ // The same work at another derivation instant: the observation instant, the
+ // receipt digests over it and every gate checkedAt set aside.
+ const timeless=project=>{const value=work(project),projection=value.projectData?.applicationProjection;if(projection){delete projection.observedAt;if(projection.receipt){delete projection.receipt.canonicalInputSha256;delete projection.receipt.outputSha256;}}for(const stage of Object.values(value.stages||{}))if(stage?.gate)delete stage.gate.checkedAt;return value;};
+ const labels=(r,id)=>(r.rows.get('meta').get('recovery:'+id)?.value?.entries||[]).map(entry=>entry.label);
+ const outcome=async action=>{try{return {accepted:await action()};}catch(error){return {refused:{code:error?.code??null,message:String(error?.message??error),issues:Array.isArray(error?.issues)?[...error.issues].map(String):null,existingProjectsUnchanged:error?.existingProjectsUnchanged??null}};}};
+ const rowsOf=r=>[...r.rows].map(([name,rows])=>[name,[...rows].map(([key,value])=>[key,JSON.stringify(value,(k,v)=>v instanceof Blob?{blobSize:v.size}:v)])]);
+ async function session(store,{superseded=true,priorCapabilities=false,label}){
+  const w=runtime(store,{priorCapabilities});let p=await w.store.createProject({commandId:'SYNTHETIC-IMPORT-OBSERVED-'+label});const id=p.job.JOB_ID;await w.store.beginHistorySession('SYNTHETIC-IMPORT-OBSERVED-SESSION-'+label);
+  const view=n=>w.copy({activeStage:1,activeView:'Workflow',drafts:{},scrollX:0,scrollY:n});
+  const next=w.copy(p),artifactId=artifactFixtureId(w.engine,next,'IMPORT-OBSERVED-INSTRUCTION'),filename='production-instruction.txt',blob=new Blob(['Synthetic Stage 1 production instruction bytes.\n']),stored=await w.store.putArtifact({artifactId,jobId:id,blob,filename,mediaType:'text/plain'});
+  w.engine.registerArtifactBytes(next,{stage:1,artifactId,filename,mediaType:'text/plain',byteSize:blob.size,sha256:stored.sha256});p=await w.store.writeProject(next,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,historyLabel:'Saved stage 1',historyView:view(1)});
+  assert.equal(availability(p,artifactId),'TRUE','PROJECTION_IMPORT_FIXTURE_ORACLE: the Stage 1 file is observed');
+  if(superseded){const corrected=w.copy(p);corrected.job.EXACT_USER_OBJECTIVE_VERBATIM='Synthetic corrected objective for the superseded Stage 1 file.';w.engine.recordHumanInputVersion(corrected,w.copy(['EXACT_USER_OBJECTIVE_VERBATIM']),'HUMAN_OPERATOR');p=await w.store.writeProject(corrected,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,historyLabel:'Saved stage 1 objective',historyView:view(2)});}
+  await w.store.saveCheckpoint(id,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:view(3),label:'Saved view'});
+  const exported=await w.store.readProject(id),backup=await w.store.exportPackage(id);
+  assert.equal(availability(exported,artifactId),superseded?'UNKNOWN':'TRUE','PROJECTION_IMPORT_FIXTURE_ORACLE: the receipt records the superseded file UNKNOWN');assert(w.rows.get('artifacts').has(artifactId),'PROJECTION_IMPORT_FIXTURE_ORACLE: the superseded file stays stored');
+  // The rows as exported: every destination but the writer's own runtime starts from them.
+  const rows=new Map([...w.rows].map(([name,data])=>[name,new Map([...data].map(([key,value])=>[key,w.copy(value)]))]));
+  return {w,rows,id,artifactId,identity:{jobId:id,artifactId,filename,byteSize:blob.size,sha256:stored.sha256},exported,backup,revision:exported.revision};
+ }
+ const sessions=new Map(),fixture=async(store,options)=>{const key=store+'\u0000'+JSON.stringify(options);if(!sessions.has(key))sessions.set(key,await session(store,options));return sessions.get(key);};
+ const CASES={
+  'superseded-input-import-keeps-observed-receipt':async(store)=>{
+   const s=await fixture(store,{label:'MAIN'}),imported=await s.w.store.importPackage(s.backup),fresh=await runtime(store).store.importPackage(s.backup),cold=await receiving(s,store).store.importPackage(s.backup);
+   const oracle='PROJECTION_IMPORT_OBSERVED_RECEIPT_ORACLE';
+   for(const [name,value] of [['same-runtime',imported],['fresh',fresh],['cold',cold]]){assert.equal(availability(value,s.artifactId),'UNKNOWN',oracle+': '+name+' records the superseded file UNKNOWN');assert.deepEqual(plain(value.projectData.applicationProjection),plain(s.exported.projectData.applicationProjection),oracle+': '+name+' keeps the exported projection');assert.deepEqual(checkedAt(value),checkedAt(s.exported),oracle+': '+name+' keeps every gate checkedAt');}
+   assert.deepEqual(work(fresh),work(imported),oracle+': a fresh runtime imports the same value');assert.deepEqual(work(cold),work(imported),oracle+': a cold runtime over the same rows imports the same value');
+   const head=await receiving(s,control).store.importPackage(s.backup);assert.equal(availability(head,s.artifactId),'TRUE','PROJECTION_IMPORT_FIXTURE_ORACLE: the overlay alone reads the superseded file TRUE');
+   observations.importedAvailability=availability(imported,s.artifactId);observations.controlAvailability=availability(head,s.artifactId);
+  },
+  'superseded-input-import-activation-no-refresh-write':async(store)=>{
+   const s=await fixture(store,{label:'ACTIVATION'}),oracle='PROJECTION_IMPORT_ACTIVATION_ORACLE';
+   const activate=async(r,imported,name)=>{const before=rowsOf(r),entries=labels(r,s.id);const refreshed=await r.store.refreshProjectProjection(s.id,{expectedProjectRevision:imported.revision,expectedStateSha256:imported.projectSha256});
+    assert.equal(refreshed.revision,imported.revision,oracle+': '+name+' activation writes no revision');assert.equal(refreshed.projectSha256,imported.projectSha256,oracle+': '+name);assert.deepEqual(rowsOf(r),before,oracle+': '+name+' rows unchanged');assert.deepEqual(labels(r,s.id),entries,oracle+': '+name+' History unchanged');assert(!labels(r,s.id).includes('Readiness refreshed'),oracle+': '+name+' no Readiness refreshed');
+    const reread=await r.store.readProject(s.id),checked=r.store.validateProjectIntegrity(reread);assert.deepEqual({valid:checked.valid,issues:[...checked.issues]},{valid:true,issues:[]},oracle+': '+name+' the page check is valid');};
+   const i1=await s.w.store.importPackage(s.backup);await activate(s.w,i1,'same-runtime');
+   const r2=runtime(store),i2=await r2.store.importPackage(s.backup);await activate(r2,i2,'fresh');
+   const rh=receiving(s,control),ih=await rh.store.importPackage(s.backup),rewritten=await rh.store.refreshProjectProjection(s.id,{expectedProjectRevision:ih.revision,expectedStateSha256:ih.projectSha256});
+   assert(rewritten.revision>ih.revision&&labels(rh,s.id).at(-1)==='Readiness refreshed','PROJECTION_IMPORT_FIXTURE_ORACLE: the overlay alone is rewritten by its activation');
+   observations.controlRefreshLabel=labels(rh,s.id).at(-1);
+  },
+  // The package value's recovery check (activeCompat) is the import's first
+  // recovery-compatibility check of the job: only it is examined.
+  'superseded-input-import-full-overlay-refusal-unchanged':async(store)=>refusalCase(store,{name:'full-overlay',arm:(r,s)=>{let first=true;r.runtime.__importRecoveryRefusal=project=>{if(!first||project?.job?.JOB_ID!==s.id)return false;first=false;return r.store.artifactCustodyState(s.identity)==='TRUE';};},expectCode:'HISTORY_VERSION_INCOMPATIBLE'}),
+  'superseded-input-import-observation-refusal-takes-overlay':async(store)=>{
+   const s=await fixture(store,{label:'MAIN'}),oracle='PROJECTION_IMPORT_FALLBACK_ORACLE';
+   const arm=r=>{r.runtime.__importDerivedRefusal=project=>project?.job?.JOB_ID===s.id&&Number(project.revision)===s.revision+1&&r.store.artifactCustodyState(s.identity)==='UNKNOWN';};
+   const run=async source=>{const r=receiving(s,source);arm(r);const result=await outcome(()=>r.store.importPackage(s.backup));delete r.runtime.__importDerivedRefusal;if(result.refused)return {refused:result.refused};const imported=result.accepted,refreshed=await r.store.refreshProjectProjection(s.id,{expectedProjectRevision:imported.revision,expectedStateSha256:imported.projectSha256});return {imported,availability:availability(imported,s.artifactId),wrote:refreshed.revision>imported.revision,label:labels(r,s.id).at(-1)};};
+   const c1=await run(store),head=await run(control);
+   assert(!c1.refused,oracle+': the import is accepted ('+JSON.stringify(c1.refused)+')');assert(!head.refused,'PROJECTION_IMPORT_FIXTURE_ORACLE: the control accepts');
+   assert.equal(c1.availability,'TRUE',oracle+': the overlay revision is kept');assert.deepEqual(timeless(c1.imported),timeless(head.imported),oracle+': the imported value is the overlay one');
+   assert.equal(c1.wrote,head.wrote,oracle+': the activation writes as the overlay one does');assert.equal(c1.label,head.label,oracle);assert.equal(head.label,'Readiness refreshed','PROJECTION_IMPORT_FIXTURE_ORACLE');
+  },
+  'superseded-input-import-overlay-refusal-unchanged':async(store)=>refusalCase(store,{name:'overlay-new-revision',arm:(r,s)=>{r.runtime.__importDerivedRefusal=project=>project?.job?.JOB_ID===s.id&&Number(project.revision)===s.revision+1&&r.store.artifactCustodyState(s.identity)==='TRUE';},expectCode:'PROJECT_INTEGRITY_FAILED'}),
+  'superseded-input-import-changed-readiness-takes-overlay':async(store)=>{
+   const s=await fixture(store,{label:'PRIOR-CAPABILITIES',priorCapabilities:true}),oracle='PROJECTION_IMPORT_FALLBACK_ORACLE';
+   assert.equal(s.exported.projectData.applicationProjection.inputObservations.applicationCapabilities.length,0,'PROJECTION_IMPORT_FIXTURE_ORACLE: prior capabilities');
+   const c1=await receiving(s,store).store.importPackage(s.backup),head=await receiving(s,control).store.importPackage(s.backup);
+   assert.equal(availability(c1,s.artifactId),'TRUE',oracle+': the overlay revision is kept');assert.deepEqual(timeless(c1),timeless(head),oracle+': the overlay result is stored');
+   assert.deepEqual([...c1.projectData.applicationProjection.inputObservations.applicationCapabilities],[...head.projectData.applicationProjection.inputObservations.applicationCapabilities],oracle+': current capabilities');
+  },
+  'consistent-receipt-import-unchanged':async(store)=>{
+   const s=await fixture(store,{label:'CONSISTENT',superseded:false}),oracle='PROJECTION_IMPORT_FALLBACK_ORACLE';
+   const run=async source=>{const r=receiving(s,source);r.runtime.__importDerivedChecks=0;const imported=await r.store.importPackage(s.backup);return {imported,derived:r.runtime.__importDerivedChecks};};
+   const c1=await run(store),head=await run(control);
+   assert.deepEqual(work(c1.imported),work(head.imported),oracle+': the stored value equals the overlay one');assert.equal(availability(c1.imported,s.artifactId),'TRUE',oracle);
+   assert.equal(c1.derived,head.derived,oracle+': the derived checks equal the overlay path\'s exactly');observations.consistentDerivedChecks=c1.derived;
+  }
+ };
+ async function refusalCase(store,{name,arm,expectCode=null}){
+  const s=await fixture(store,{label:'MAIN'}),oracle='PROJECTION_IMPORT_REFUSAL_ORDER_ORACLE';
+  const run=async(r,armed=true)=>{const before=rowsOf(r);if(armed)arm(r,s);const result=await outcome(()=>r.store.importPackage(s.backup));delete r.runtime.__importRecoveryRefusal;delete r.runtime.__importDerivedRefusal;return {...result,rowsUnchanged:JSON.stringify(rowsOf(r))===JSON.stringify(before)};};
+  const c1=await run(receiving(s,store)),head=await run(receiving(s,control)),c1Fresh=await run(runtime(store)),headFresh=await run(runtime(control));
+  assert(head.refused&&headFresh.refused,'PROJECTION_IMPORT_FIXTURE_ORACLE: the control refuses '+name);if(expectCode)assert.equal(head.refused.code,expectCode,'PROJECTION_IMPORT_FIXTURE_ORACLE');
+  assert.deepEqual(c1.refused,head.refused,oracle+': '+name+' refused exactly as the overlay path');assert.equal(c1.rowsUnchanged,true,oracle+': rows unchanged');assert.equal(head.rowsUnchanged,true,'PROJECTION_IMPORT_FIXTURE_ORACLE');
+  assert.deepEqual(c1Fresh.refused,headFresh.refused,oracle+': '+name+' a fresh destination refuses identically');assert.equal(c1Fresh.rowsUnchanged,true,oracle);
+  observations['refusal:'+name]={code:c1.refused.code,issues:c1.refused.issues};
+ }
+ for(const name of only||IMPORT_OBSERVED_PROJECTION_CASES){await CASES[name](importObservedHooks(production));cases.push(name);}
+ const importObservedProjectionFaults=[];
+ if(faults)for(const [fault,{oracle,cases:detecting,apply}] of Object.entries(IMPORT_OBSERVED_PROJECTION_FAULTS)){
+  const faulty=importObservedHooks(apply(production));sessions.clear();
+  const detections=[];
+  for(const name of detecting){let detection=null;await assert.rejects(CASES[name](faulty),error=>{detection=String(error?.message);return error?.code==='ERR_ASSERTION'&&detection.startsWith(oracle+':');},'PROJECTION_IMPORT_FAULT_ORACLE: '+fault+' undetected by '+name);detections.push({case:name,assertion:detection});}
+  importObservedProjectionFaults.push({fault,detected:true,oracle,detections});
+ }
+ return {importObservedProjectionContract:'PASS',cases,observations,importObservedProjectionFaults};
 }
