@@ -26,6 +26,8 @@ for(const [suite,fault,oracle] of [
  ['verify-history-canonical-sharing.mjs','measured-skeleton-unchecked-use','HISTORY_MEASURED_SKELETON_USE_GUARD_ORACLE'],
  ['verify-history-canonical-sharing.mjs','measured-skeleton-unchecked-start','HISTORY_MEASURED_SKELETON_START_GUARD_ORACLE'],
  ['verify-history-canonical-sharing.mjs','measured-skeleton-unchecked-end','HISTORY_MEASURED_SKELETON_END_GUARD_ORACLE'],
+ ['verify-history-canonical-sharing.mjs','measured-skeleton-start-check-at-digest-entry','HISTORY_MEASURED_SKELETON_START_GUARD_ORACLE digest-stream'],
+ ['verify-history-canonical-sharing.mjs','measured-skeleton-end-check-at-digest-exit','HISTORY_MEASURED_SKELETON_END_GUARD_ORACLE digest-stream'],
  ['verify-history-canonical-sharing.mjs','measured-skeleton-any-skeleton','HISTORY_MEASURED_SKELETON_IDENTITY_ORACLE'],
  ['verify-history-canonical-sharing.mjs','measured-skeleton-continuation-read','HISTORY_MEASURED_SKELETON_CONTINUATION_ORACLE'],
  ['verify-history-canonical-sharing.mjs','measured-skeleton-pair-read','HISTORY_MEASURED_SKELETON_PAIR_ORACLE'],

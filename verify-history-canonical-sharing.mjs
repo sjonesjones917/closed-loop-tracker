@@ -45,6 +45,18 @@ const faults={
   {before:'try{if(counting&&packageDigestNativesUnchanged(baseline)){',after:'try{baseline=hash.createCanonicalDigestScope(null);if(counting&&packageDigestNativesUnchanged(baseline)){'}
  ]},
  'measured-skeleton-unchecked-end':{measuredSkeleton:true,before:'try{if(counting&&packageDigestNativesUnchanged(baseline)){measure.skeleton=value;',after:'try{if(counting){measure.skeleton=value;'},
+ // Each confirmation moved off the walk's own step of the digest's stream
+ // to the digest's first or last step, across the digest's awaits.
+ 'measured-skeleton-start-check-at-digest-entry':{measuredSkeleton:true,changes:[
+  {before:"async function* packageJsonChunks(value,fileContents,measure=null){\n",after:"async function* packageJsonChunks(value,fileContents,measure=null){\n  let measureStart=null;if(measure)try{const baseline=hash.createCanonicalDigestScope(null);measureStart={baseline,ok:packageDigestNativesUnchanged(baseline)};}catch{measureStart={baseline:null,ok:false};}\n"},
+  {before:"else if(measure&&key==='project')yield* measuredCanonicalChunks(value[key],measure);",after:"else if(measure&&key==='project')yield* measuredCanonicalChunks(value[key],measure,measureStart);"},
+  {before:"function* measuredCanonicalChunks(value,measure){",after:"function* measuredCanonicalChunks(value,measure,start=null){"},
+  {before:"try{baseline=hash.createCanonicalDigestScope(null);counting=packageDigestNativesUnchanged(baseline);if(counting)encoder=new TextEncoder();}catch{counting=false;}",after:"try{if(start){baseline=start.baseline;counting=start.ok;}else{baseline=hash.createCanonicalDigestScope(null);counting=packageDigestNativesUnchanged(baseline);}if(counting)encoder=new TextEncoder();}catch{counting=false;}"}
+ ]},
+ 'measured-skeleton-end-check-at-digest-exit':{measuredSkeleton:true,changes:[
+  {before:"try{if(counting&&packageDigestNativesUnchanged(baseline)){measure.skeleton=value;measure.bytes=bytes;measure.baseline=baseline;}}catch{/* The skeleton is walked at its check. */}",after:"try{if(counting)measure.pending={skeleton:value,bytes,baseline};}catch{/* The skeleton is walked at its check. */}"},
+  {before:"    else yield* hash.canonicalChunks(value[key]);\n  }\n  yield '}';\n}\nasync function compressPackage(",after:"    else yield* hash.canonicalChunks(value[key]);\n  }\n  yield '}';\n  try{if(measure?.pending&&packageDigestNativesUnchanged(measure.pending.baseline)){measure.skeleton=measure.pending.skeleton;measure.bytes=measure.pending.bytes;measure.baseline=measure.pending.baseline;}}catch{}\n}\nasync function compressPackage("}
+ ]},
  'measured-skeleton-any-skeleton':{measuredSkeleton:true,before:'try{return measure&&measure.skeleton===body.project&&typeof measure.bytes',after:'try{return measure&&typeof measure.bytes'},
  'measured-skeleton-continuation-read':{measuredSkeleton:true,before:"const hashedSkeleton=!rootContinuation&&!measuredPair&&Object.hasOwn(body,'projectBytes')",after:"const hashedSkeleton=!measuredPair&&Object.hasOwn(body,'projectBytes')"},
  'measured-skeleton-pair-read':{measuredSkeleton:true,before:"const hashedSkeleton=!rootContinuation&&!measuredPair&&Object.hasOwn(body,'projectBytes')",after:"const hashedSkeleton=!rootContinuation&&Object.hasOwn(body,'projectBytes')"},

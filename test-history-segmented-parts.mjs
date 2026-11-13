@@ -431,11 +431,12 @@ async function storeCases(source){
 // (measuredCanonicalChunks, hashedSkeletonBytes) rather than walking the
 // skeleton again. Each guard of that reuse has its own oracle here and its own
 // intended fault (verify-history-canonical-sharing.mjs): the natives confirmed
-// immediately before the walk's first step, after its last step and at the
-// check; the read's own skeleton object; nothing carried from one read to the
-// next; and no measurement on a read with a write continuation or a measured
-// pair. The store's internals and two observation points are reached only in
-// this disposable realm; neither changes a value or an outcome.
+// immediately before the walk's first step and after its last step, each in
+// that step's own turn of the digest's stream, and at the check; the read's
+// own skeleton object; nothing carried from one read to the next; and no
+// measurement on a read with a write continuation or a measured pair. The
+// store's internals and two observation points are reached only in this
+// disposable realm; neither changes a value or an outcome.
 const MEASURE_EXPOSE='globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS',MEASURE_READ='return bindCheckpointBody(body,false,credential,hashedSkeleton);',MEASURE_USE='function hashedSkeletonBytes(measure,body){';
 function measuredSkeletonSource(source){
  for(const anchor of [MEASURE_EXPOSE,MEASURE_READ,MEASURE_USE])assert.equal(source.split(anchor).length,2,'HISTORY_MEASURED_SKELETON_ANCHOR '+anchor);
@@ -509,6 +510,24 @@ export async function verifyHistoryMeasuredSkeleton({source=fs.readFileSync(new 
  // Steps the measured walk by hand; at(event) runs before its first step,
  // after its first step and after its last (done) step.
  const walk=(value,measure,at)=>{const chunks=api.measuredCanonicalChunks(value,measure);let count=0;at('before');for(let step=chunks.next();!step.done;step=chunks.next())if(++count===1)at('first');at('end');return count;};
+ // Steps the digest's own stream by hand (packageJsonChunks with a measure,
+ // as the read's preimage digest consumes it), whose steps are separate
+ // turns; at(index) runs once the chunk at index has been received. In the
+ // root's stream, the project member's ':' is the chunk at beforeWalk, the
+ // step after it runs the walk's first step, the walk's last chunk is at
+ // lastChunk and the step after it ends the walk.
+ const digestSteps=async(body,fileContents,measure,at)=>{const chunks=api.packageJsonChunks(body,fileContents,measure);let index=0;for(let step=await chunks.next();!step.done;step=await chunks.next())at(index++);return index;};
+ let beforeWalk=-1,lastChunk=-1;
+ {const {body,fileContents}=await decode(root),plain=await collect(api.packageJsonChunks(body,fileContents)),skeleton=[...runtime.closedLoopHash.canonicalChunks(body.project)];
+  const member=plain.flatMap((chunk,index)=>chunk==='"project"'&&plain[index+1]===':'&&skeleton.every((value,offset)=>plain[index+2+offset]===value)?[index+1]:[]);
+  assert.equal(member.length,1,'HISTORY_MEASURED_SKELETON_FIXTURE: the project member in the digest stream');
+  beforeWalk=member[0];lastChunk=beforeWalk+skeleton.length;
+  assert.ok(skeleton.length>=2&&lastChunk+1<plain.length,'HISTORY_MEASURED_SKELETON_FIXTURE: the step that ends the walk');
+  // The same stepping with no change measures, and the count is used.
+  const measure={};assert.equal(await digestSteps(body,fileContents,measure,()=>{}),plain.length,'HISTORY_MEASURED_SKELETON_FIXTURE: stepped digest stream');
+  assert.equal(measure.skeleton,body.project,'HISTORY_MEASURED_SKELETON_FIXTURE: a stepped digest measured');
+  assert.equal(api.hashedSkeletonBytes(measure,body),bytesOf(canonical(body.project)),'HISTORY_MEASURED_SKELETON_FIXTURE: a stepped digest\'s count is used');
+  cases.push({name:'measured-skeleton:digest-stream-control',chunks:plain.length,beforeWalk,lastChunk});}
  for(const [name,change] of Object.entries(changes)){
   // Changed before the walk and kept through the check.
   {const {body,fileContents}=await decode(root),measure={},restore=change();try{await collect(api.packageJsonChunks(body,fileContents,measure));assert.equal(measure.skeleton,undefined,'HISTORY_MEASURED_SKELETON_BEFORE_WALK_ORACLE '+name+': a walk under changed natives was measured');assert.equal(api.hashedSkeletonBytes(measure,body),undefined,'HISTORY_MEASURED_SKELETON_BEFORE_WALK_ORACLE '+name);}finally{restore();}}
@@ -520,6 +539,19 @@ export async function verifyHistoryMeasuredSkeleton({source=fs.readFileSync(new 
   // check after that step sees it.
   {const {body}=await decode(root),measure={};let restore=null;walk(body.project,measure,event=>{if(event==='first')restore=change();else if(event==='end'&&restore){restore();restore=null;}});if(restore)restore();
    assert.equal(measure.skeleton,undefined,'HISTORY_MEASURED_SKELETON_END_GUARD_ORACLE '+name+': a change spanning the last step was not seen');}
+  // The same two windows on the digest's stream: changed after the step
+  // before the walk's first step and restored after that step, or changed
+  // after the walk's last chunk and restored after the step that ends the
+  // walk. Each is seen, so neither confirmation can move to another step of
+  // the digest, across its awaits (to its first or its last step, say).
+  {const {body,fileContents}=await decode(root),measure={};let restore=null;
+   try{await digestSteps(body,fileContents,measure,index=>{if(index===beforeWalk)restore=change();else if(index===beforeWalk+1&&restore){restore();restore=null;}});}finally{if(restore)restore();}
+   assert.equal(measure.skeleton,undefined,'HISTORY_MEASURED_SKELETON_START_GUARD_ORACLE digest-stream '+name+': a change spanning the digest step that runs the walk\'s first step was not seen');
+   assert.equal(api.hashedSkeletonBytes(measure,body),undefined,'HISTORY_MEASURED_SKELETON_START_GUARD_ORACLE digest-stream '+name);}
+  {const {body,fileContents}=await decode(root),measure={};let restore=null;
+   try{await digestSteps(body,fileContents,measure,index=>{if(index===lastChunk)restore=change();else if(index===lastChunk+1&&restore){restore();restore=null;}});}finally{if(restore)restore();}
+   assert.equal(measure.skeleton,undefined,'HISTORY_MEASURED_SKELETON_END_GUARD_ORACLE digest-stream '+name+': a change spanning the digest step that ends the walk was not seen');
+   assert.equal(api.hashedSkeletonBytes(measure,body),undefined,'HISTORY_MEASURED_SKELETON_END_GUARD_ORACLE digest-stream '+name);}
   // Changed after a measured walk, before the check uses its count.
   {const {body,fileContents}=await decode(root),measure={};await collect(api.packageJsonChunks(body,fileContents,measure));assert.equal(measure.skeleton,body.project,'HISTORY_MEASURED_SKELETON_FIXTURE: measured');
    const restore=change();try{assert.equal(api.hashedSkeletonBytes(measure,body),undefined,'HISTORY_MEASURED_SKELETON_USE_GUARD_ORACLE '+name+': a count was used under changed natives');}finally{restore();}
