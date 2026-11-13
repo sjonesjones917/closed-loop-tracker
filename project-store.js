@@ -75,6 +75,17 @@ async function observeProjectArtifactCustody(project){
  // compatible scope; refreshing current custody must not erase that evidence.
  // Legacy run contexts use their exact saved reader below. Unrelated history
  // files remain verified only when their owning operation requests them.
+ const artifactIds=projectCustodySelection(project,engine);
+ for(const artifactId of artifactIds){try{await getArtifact(artifactId);}catch(error){if(!['ARTIFACT_BYTE_REFERENCE_INVALID','ARTIFACT_BYTES_UNAVAILABLE','ARTIFACT_LEGACY_BYTES_INVALID'].includes(error.code))throw error;/* Canonical metadata remains usable; missing/corrupt bytes confer no custody. Explicit reads and recovery diagnostics retain the precise failure. */}}
+ observedCustodyArtifacts.set(project,[...artifactIds]);
+ await hydrateLegacyRunPromptContexts(project);
+}
+// The artifact ids an observation of this project value rereads, in order and
+// distinct. Synchronous: it reads only the value (its records, scopes and
+// record digests, and the deferred states with requireBytes:false), never
+// custody, bytes or the clock, and dispatches only through the root validator
+// exports.
+function projectCustodySelection(project,engine=globalThis.closedLoopWorkflowEngine){
  const artifactIds=new Set(engine.recordsForCurrentScope(project,'artifacts').map(record=>engine.recordId(record,'artifacts')));
  // Explicitly retained supplied input is still a current authorized input after
  // an objective correction. Reuse the intake owner rather than requiring its
@@ -108,9 +119,7 @@ async function observeProjectArtifactCustody(project){
   const raw=(project.projectData.rawResponses||[]).find(row=>row.rawResponseId===subject.rawResponseId),prompt=raw&&(project.projectData.generatedPrompts||[]).find(row=>(row.instructionId||row.promptId)===raw.promptInstructionId);
   for(const entry of prompt?.contextManifest?.deferredDefinitionCorrectionInputs?.records||[])if(entry.family==='artifacts'&&engine.deferredDefinitionCorrectionInputState(project,prompt,'artifacts',entry.recordId,{subject,requireBytes:false}).allowed)artifactIds.add(entry.recordId);
  }
- for(const artifactId of artifactIds){try{await getArtifact(artifactId);}catch(error){if(!['ARTIFACT_BYTE_REFERENCE_INVALID','ARTIFACT_BYTES_UNAVAILABLE','ARTIFACT_LEGACY_BYTES_INVALID'].includes(error.code))throw error;/* Canonical metadata remains usable; missing/corrupt bytes confer no custody. Explicit reads and recovery diagnostics retain the precise failure. */}}
- observedCustodyArtifacts.set(project,[...artifactIds]);
- await hydrateLegacyRunPromptContexts(project);
+ return [...artifactIds];
 }
 // The artifacts each project value's custody observation reread, in order.
 const observedCustodyArtifacts=new WeakMap(),CUSTODY_UNAVAILABLE_CODES=Object.freeze(['ARTIFACT_BYTE_REFERENCE_INVALID','ARTIFACT_BYTES_UNAVAILABLE','ARTIFACT_LEGACY_BYTES_INVALID']);
@@ -154,11 +163,13 @@ function writeDerivationArtifactsRetained(derivation,artifacts){
 }
 // The custody a checkpoint derives a root under (live custody overlaid with the
 // root's own byte-verified artifacts, or the commit's observation of the root
-// chosen by recoveryDerivationCustody) answers every recorded query
-// identically, and every TRUE answer comes from one of those artifacts.
-function writeDerivationReproduced(derivation,rootArtifacts){
+// chosen by recoveryDerivationCustody; for in-session History, observed, the
+// same choice computed in the caller's turn by observedHistoryCustody) answers
+// every recorded query identically, and every TRUE answer comes from one of
+// those artifacts.
+function writeDerivationReproduced(derivation,rootArtifacts,observed=null){
  if(!derivation||!writeDerivationArtifactsRetained(derivation,rootArtifacts))return false;
- const custody=recoveryDerivationCustodies.get(rootArtifacts)||(action=>withVerifiedRecoveryCustody(rootArtifacts,action));
+ const custody=observed||recoveryDerivationCustodies.get(rootArtifacts)||(action=>withVerifiedRecoveryCustody(rootArtifacts,action));
  return custody(()=>derivation.answers.every(answer=>artifactCustodyState(Object.fromEntries(CUSTODY_IDENTITY_FIELDS.map(key=>[key,answer[key]])))===answer.state));
 }
 function withVerifiedRecoveryCustody(artifacts,action){
@@ -195,11 +206,58 @@ function recordedCustodyAnswerReproduced(entry){
  return artifactCustodyState(identity)===entry.availability;
 }
 function recoveryDerivationCustody(project,observed,artifacts){
- const selection=observedCustodyArtifacts.get(observed),recorded=project?.projectData?.applicationProjection?.inputObservations?.artifactCustody,jobId=projectIdentity(project);
+ const custody=observedRecoveryCustody(project,observedCustodyArtifacts.get(observed),artifacts);
+ if(custody)recoveryDerivationCustodies.set(artifacts,custody);return custody;
+}
+// The same choice for a given selection, returned and never registered: its
+// caller uses it in its own synchronous turn.
+function observedRecoveryCustody(project,selection,artifacts){
+ const recorded=project?.projectData?.applicationProjection?.inputObservations?.artifactCustody,jobId=projectIdentity(project);
  if(!Array.isArray(selection)||!Array.isArray(recorded)||!jobId||!Array.isArray(artifacts))return null;
  const selected=new Set(selection.map(String)),reproduced=()=>recorded.every(recordedCustodyAnswerReproduced);
  if(withVerifiedRecoveryCustody(artifacts,reproduced)||!withObservedRecoveryCustody(jobId,selected,artifacts,reproduced))return null;
- const custody=action=>withObservedRecoveryCustody(jobId,selected,artifacts,action);recoveryDerivationCustodies.set(artifacts,custody);return custody;
+ return action=>withObservedRecoveryCustody(jobId,selected,artifacts,action);
+}
+// In-session History pairs (the store worker's own writes and checkpoints,
+// never an import). A History read decides with the overlay of every
+// byte-verified artifact, exactly as before. A version whose receipt was
+// derived under the application's observation of its value is then not strict
+// under that overlay, so its pair would never serve an import. After that
+// overlay check of the same value returned without refusing, in the same
+// operation and synchronous turn, the pair alone may be derived again under
+// the custody the version's first checkpoint commit derives it under: the
+// overlay restricted to projectCustodySelection of the value, when that
+// reproduces every recorded answer of the receipt (observedRecoveryCustody).
+// Only a verdict {at} leaves these helpers; the mint re-checks the proof
+// inputs and validators. Null here (validators changed, no such custody, any
+// error) leaves the overlay's outcome.
+function observedHistoryCustody(project,artifacts,validators){
+ try{
+  if(!(validators&&rootValidatorsUnchanged(validators)))return null;
+  return observedRecoveryCustody(project,projectCustodySelection(project),artifacts);
+ }catch{return null;/* The overlay outcome stands. */}
+}
+// The pair's verdict from one more derived check under that custody, with the
+// static receipt the overlay check started from; strictlyCompatibleRoots and
+// the static receipt are left as the overlay check left them.
+function observedPairDerivation(value,artifacts,validators,staticReceipt){
+ const observedCustody=observedHistoryCustody(value,artifacts,validators);if(!observedCustody)return null;
+ const at=Date.now();if(staticReceipt)recoveryBodyStaticIntegrity.set(value,staticReceipt);
+ try{observedCustody(()=>assertRecoveryCompatibility(value));}catch{/* The overlay outcome stands; nothing is minted strict. */}
+ recoveryBodyStaticIntegrity.delete(value);
+ return strictlyCompatibleRoots.delete(value)&&rootValidatorsUnchanged(validators)?{at}:null;
+}
+// The pair's verdict from a write's own strict derivation of the value, under
+// the validators it ran under, carried as the root's first checkpoint commit
+// would carry it: every recorded custody answer reproduced under that custody,
+// every TRUE answer naming one of these byte-verified artifacts. No derived
+// check runs.
+function observedWriteDerivation(project,artifacts,validators,derivation){
+ try{
+  if(!derivation||derivation.validators!==validators||project?.projectData?.applicationProjection?.receipt?.derivationId!==globalThis.closedLoopWorkflowSchema.PROJECT_PROJECTION_DERIVATION_CONTRACT.id)return null;
+  const observedCustody=observedHistoryCustody(project,artifacts,validators);
+  return observedCustody&&writeDerivationReproduced(derivation,artifacts,observedCustody)&&rootValidatorsUnchanged(validators)?{at:derivation.at}:null;
+ }catch{return null;/* The overlay outcome stands. */}
 }
 try{const changes=new BroadcastChannel('closed-loop-reliability');changes.addEventListener('message',event=>{if(event.data?.jobId&&event.data.contextId!==STORE_CONTEXT_ID)forgetArtifactCustody(event.data.jobId);});changes.unref?.();}catch{}
 
@@ -1332,7 +1390,7 @@ async function writeOperationalProject(project,options={}){
   // A bound pair encodes its own snapshot, so only an unbound candidate needs
   // a receipt of its own.
   const historyCandidate=pair?pair.snapshot:integrity.snapshot,historyIntegrity=pair?null:verifiedProjectIntegrity(historyCandidate,digest);
-  const prepared=await prepareHistoryCommit(historyCandidate,prior,{label:options.historyLabel||'Response work saved',view:options.historyView,artifactRows:pendingArtifacts.length?[...byId.values()]:null,verifiedDigests:[[prior,prior.projectSha256],[historyCandidate,digest,pair?.workSha256]],verifiedIntegrity:[verifiedRead,...(historyIntegrity?[historyIntegrity]:[])],verifiedDigestPair:pair});
+  const prepared=await prepareHistoryCommit(historyCandidate,prior,{label:options.historyLabel||'Response work saved',view:options.historyView,artifactRows:pendingArtifacts.length?[...byId.values()]:null,verifiedDigests:[[prior,prior.projectSha256],[historyCandidate,digest,pair?.workSha256]],verifiedIntegrity:[verifiedRead,...(historyIntegrity?[historyIntegrity]:[])],verifiedDigestPair:pair,[IN_SESSION_HISTORY_PAIRS]:true});
   assertOperationalCandidate();fault('before-project-transaction');const tx=await openTransaction(pendingArtifacts.length?[PROJECTS,ARTIFACTS,META]:[PROJECTS,META],'readwrite');
   try{
     const meta=tx.objectStore(META),sources={},current=await projectRowWithOperations(tx,id,verifiedRead,null,sources),baseSource=sources.rowSource,base=baseSource.logical;
@@ -2443,6 +2501,11 @@ const COLD_HISTORY_VERIFICATION=Symbol('private cold History verification');
 // The private option by which importPackage, and only importPackage, hands
 // its proof operation to the preparation of its prior project.
 const IMPORT_HISTORY_PROOFS=Symbol('private import History proofs');
+// The private option by which the store worker's own writes and checkpoints,
+// never an import, ask their History reads for in-session pairs
+// (observedHistoryCustody). Structured clone drops symbol keys, so no command
+// argument can carry it.
+const IN_SESSION_HISTORY_PAIRS=Symbol('private in-session History pairs');
 const HISTORY_PROOF_JOBS=16;
 const historyRootProofs=new Map(),historyPairProofs=new Map();
 function retainHistoryProof(ledger,jobId,key,record){
@@ -2832,12 +2895,31 @@ async function firstUsePendingWriteRoot(){
     // The write's own strict derivation, reproduced by the root's byte-verified
     // artifacts, is what its first checkpoint commit would carry.
     const derivation=writeDerivations.get(root);
-    if(saved.project===root.project&&derivation&&derivation.validators===root.validators&&root.project?.projectData?.applicationProjection?.receipt?.derivationId===globalThis.closedLoopWorkflowSchema.PROJECT_PROJECTION_DERIVATION_CONTRACT.id&&writeDerivationReproduced(derivation,saved.artifacts))mintHistoryPairProof(jobId,root.projectSha256,saved.artifacts,{derived:'STRICT',derivedAt:derivation.at,validators:root.validators,inputs});
+    const carried=saved.project===root.project&&derivation&&derivation.validators===root.validators&&root.project?.projectData?.applicationProjection?.receipt?.derivationId===globalThis.closedLoopWorkflowSchema.PROJECT_PROJECTION_DERIVATION_CONTRACT.id;
+    if(carried&&writeDerivationReproduced(derivation,saved.artifacts))mintHistoryPairProof(jobId,root.projectSha256,saved.artifacts,{derived:'STRICT',derivedAt:derivation.at,validators:root.validators,inputs});
+    else if(carried)firstUseDerivedPair(jobId,root,saved,derivation,inputs);
   }catch{/* The stored root stays unproven. */}
+}
+// A first use whose write derivation that overlay does not reproduce (its
+// receipt was derived under the application's observation of the value): the
+// derived check a cold read of the root makes, under the overlay of its
+// byte-verified artifacts, from the static validation the certificate carries
+// (as readRetainedCheckpoint carries it). A refusal throws to the caller and
+// mints nothing, so an import restores the root and refuses as cold. A strict
+// pass mints as a cold read's pair check does; otherwise the write's own
+// derivation is carried under the observation-restricted custody.
+function firstUseDerivedPair(jobId,root,saved,derivation,inputs){
+  const validators=inputs&&captureRootValidators(inputs.primitive);if(!validators)return;
+  if(rootValidatorsUnchanged(root.validators))recoveryBodyStaticIntegrity.set(saved.project,{kind:VERIFIED_PROJECT_INTEGRITY,project:root.project,digest:root.projectSha256,snapshot:root.snapshot});
+  const checkedAt=Date.now();strictlyCompatibleRoots.delete(saved.project);
+  withVerifiedRecoveryCustody(saved.artifacts,()=>assertRecoveryCompatibility(saved.project));
+  if(strictlyCompatibleRoots.delete(saved.project)){mintHistoryPairProof(jobId,root.projectSha256,saved.artifacts,{derived:'STRICT',derivedAt:checkedAt,validators,inputs});return;}
+  const observed=observedWriteDerivation(saved.project,saved.artifacts,root.validators,derivation);
+  if(observed)mintHistoryPairProof(jobId,root.projectSha256,saved.artifacts,{derived:'STRICT',derivedAt:observed.at,validators:root.validators,inputs});
 }
 // A 'Previous project' reference pairs a retained root with the current
 // files, a pair the normal flow never validates. Validate it once here.
-async function proveHistoryPair(jobId,decoded,files){
+async function proveHistoryPair(jobId,decoded,files,observedPairs=false){
   if(!HISTORY_ROOT_PROOFS)return;
   try{
     // The descriptor rows the reference snapshot stores (encodeCheckpoint).
@@ -2849,8 +2931,12 @@ async function proveHistoryPair(jobId,decoded,files){
     const inputs=captureHistoryProofInputs(),validators=inputs&&captureRootValidators(inputs.primitive);if(!validators)return;
     assertPackageArtifactCustody(decoded.project,artifacts);await verifyOriginalSourceBindings(decoded.project,artifacts);
     const checkedAt=Date.now();strictlyCompatibleRoots.delete(decoded.project);
+    const staticReceipt=observedPairs?recoveryBodyStaticIntegrity.get(decoded.project):undefined;
     withVerifiedRecoveryCustody(artifacts,()=>assertRecoveryCompatibility(decoded.project));
-    mintHistoryPairProof(jobId,decoded.projectSha256,artifacts,{derived:strictlyCompatibleRoots.has(decoded.project)?'STRICT':'NOT_STRICT',derivedAt:checkedAt,validators,inputs});
+    // In-session History only: after that overlay check returned non-strict,
+    // the pair's verdict may come from the observation-restricted custody.
+    const strict=strictlyCompatibleRoots.has(decoded.project),observed=observedPairs&&!strict?observedPairDerivation(decoded.project,artifacts,validators,staticReceipt):null;
+    mintHistoryPairProof(jobId,decoded.projectSha256,artifacts,observed?{derived:'STRICT',derivedAt:observed.at,validators,inputs}:{derived:strict?'STRICT':'NOT_STRICT',derivedAt:checkedAt,validators,inputs});
   }catch{/* The pair stays unproven; export and import check it cold. */}
 }
 // Private computation only: this never certifies static/current compatibility.
@@ -3746,7 +3832,8 @@ async function provenRetainedCheckpoint(jobId,state,checkpointId,operation){
     return true;
   }catch{return false;}
 }
-async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveActiveView=false,sessionId=null,baseState=null,artifactRows=null,retainedFiles=[],verifiedRead=null,verifiedDigests=null,verifiedIntegrity=[],checkpointRootRead=false,verifiedDigestPair=null,privateEncodeSources=null,[IMPORT_HISTORY_PROOFS]:importProofs=null}={}){
+async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveActiveView=false,sessionId=null,baseState=null,artifactRows=null,retainedFiles=[],verifiedRead=null,verifiedDigests=null,verifiedIntegrity=[],checkpointRootRead=false,verifiedDigestPair=null,privateEncodeSources=null,[IMPORT_HISTORY_PROOFS]:importProofs=null,[IN_SESSION_HISTORY_PAIRS]:sessionPairs=false}={}){
+  const observedPairs=HISTORY_ROOT_PROOFS&&sessionPairs===true&&!importProofs;
   // saveCheckpoint hands over its private read in the same synchronous turn in
   // which readProjectForTransaction compared the complete values; the append
   // and the commit gates compare them again after every await.
@@ -3821,7 +3908,7 @@ async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveAct
       // failure throws before any fallback). Non-root preparations check here.
       if(descriptor.projectParts){assertHistoryProjectParts(descriptor.projectParts);for(const part of historyPartFiles(descriptor.projectParts)){if(state.files[part.sha256]?.byteSize!==part.byteSize)throw storageError('A retained project content dependency is unavailable.','HISTORY_VERSION_MISMATCH');if(!rootPreparation)await retainValue(part.sha256,null);}}
       const measuredPair=rootPreparation&&checkpointPairMatches(verifiedRead.checkpointDigestPair,project)?verifiedRead.checkpointDigestPair:null;
-      const decoded=await decodeCheckpoint(jobId,{...descriptor,blob},sha=>newFiles.find(file=>file.sha256===sha)||retainedFiles.find(file=>file.sha256===sha)||metaGet(historyFileKey(jobId,sha)),async id=>snapshots.find(entry=>entry.id===id)||metaGet(snapshotKey(jobId,id)),new Map(),new Map(),null,null,null,reuse,measuredPair,rootBytes);
+      const decoded=await decodeCheckpoint(jobId,{...descriptor,blob},sha=>newFiles.find(file=>file.sha256===sha)||retainedFiles.find(file=>file.sha256===sha)||metaGet(historyFileKey(jobId,sha)),async id=>snapshots.find(entry=>entry.id===id)||metaGet(snapshotKey(jobId,id)),new Map(),new Map(),null,null,null,reuse,measuredPair,rootBytes,null,observedPairs&&!rootPreparation);
       if(measuredPair&&(!checkpointPairMatches(measuredPair,project)||!checkpointPairMatches(measuredPair,decoded.project)))throw storageError('Checkpoint digest input changed during verification.','HISTORY_VERSION_MISMATCH');
       // The current source is compared once here, after the decode await; the
       // same synchronous turn encodes it, and the commit transaction gates it
@@ -3838,7 +3925,7 @@ async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveAct
         if(inherited&&writeDerivations.has(reuse))writeDerivations.set(rootPreparation.candidate,writeDerivations.get(reuse));
       }
       reusableWork=decoded.workSha256||historyWorkSha256(decoded.project);
-      if(entryLabel==='Previous project')await proveHistoryPair(jobId,decoded,files);
+      if(entryLabel==='Previous project')await proveHistoryPair(jobId,decoded,files,observedPairs);
       projectReference={schema:HISTORY_PROJECT_REFERENCE,checkpointId:usableBase.id,snapshotSha256:usableBase.sha256};
     }
     const boundPair=assertDigestPair(project),privateSource=boundPair?null:privateEncodeSources?.get(project)||null,checkpointProject=boundPair?boundPair.snapshot:privateSource||project;
@@ -3855,7 +3942,7 @@ async function prepareHistoryCommit(next,prior,{label=null,view=null,preserveAct
   // reads nothing more; any miss reads it cold.
   const currentEntry=state.entries.find(entry=>entry.id===state.activeId),unchangedView=!view||hash.sha256Value(view)===(state.activeViewOverride?hash.sha256Value(state.activeViewOverride):currentEntry?.viewSha256);
   if(state.activeId&&!snapshots.length&&((sessionId&&!state.sessions[sessionId])||(viewOnly&&unchangedView))){
-    try{if(!importProofs||rootPreparation||!await provenRetainedCheckpoint(jobId,state,state.activeId,importProofs)){const retained=await readRetainedCheckpoint(jobId,state.activeId,state,rootPreparation?.read);if(rootPreparation?.read.retainedRoot&&verifiedRetainedContinuations.get(retained)===rootPreparation.read.retainedRoot)rootPreparation.verifiedContinuation=rootPreparation.read.retainedRoot;}}catch(error){
+    try{if(!importProofs||rootPreparation||!await provenRetainedCheckpoint(jobId,state,state.activeId,importProofs)){const retained=await readRetainedCheckpoint(jobId,state.activeId,state,rootPreparation?.read,observedPairs&&unchangedView);if(rootPreparation?.read.retainedRoot&&verifiedRetainedContinuations.get(retained)===rootPreparation.read.retainedRoot)rootPreparation.verifiedContinuation=rootPreparation.read.retainedRoot;}}catch(error){
       if(error.code!=='HISTORY_VERSION_MISMATCH'||error.message!=='Saved work identity does not match its complete project.')throw error;
       // Only the coherent stale-work defect is recoverable here. The full
       // inspection still checks all other bytes, identities, views and derived
@@ -3930,7 +4017,7 @@ async function saveCheckpoint(jobId,{expectedProjectRevision,expectedStateSha256
     const appended=prepared.state;
     prepared.state={...state,entries:appended.entries,files:appended.files,compressedProjectBytes:appended.compressedProjectBytes,retainedFileBytes:appended.retainedFileBytes,generation:appended.generation};
   }else{
-    prepared=await prepareHistoryCommit(project,project,{label,view,sessionId,verifiedRead,verifiedIntegrity:[verifiedRead],checkpointRootRead:true});
+    prepared=await prepareHistoryCommit(project,project,{label,view,sessionId,verifiedRead,verifiedIntegrity:[verifiedRead],checkpointRootRead:true,[IN_SESSION_HISTORY_PAIRS]:true});
     checkpointId=prepared.state.activeId;
   }
   if(prepared.retainedRoot&&checkpointProject===project)return commitRootCheckpoint(jobId,project,verifiedRead,prepared,operationId,checkpointId);
@@ -4024,7 +4111,7 @@ async function retainedCheckpointReaders(jobId,checkpointId,state=null){
   };
   return {manifest,readSnapshot};
 }
-async function readRetainedCheckpoint(jobId,checkpointId,state=null,rootRead=null){
+async function readRetainedCheckpoint(jobId,checkpointId,state=null,rootRead=null,observedPairs=false){
   const {manifest,readSnapshot}=await retainedCheckpointReaders(jobId,checkpointId,state);
   const entry=await readSnapshot(checkpointId),descriptor=entry?.projectReference?manifest.entries.find(row=>row.id===entry.projectReference.checkpointId):manifest.entries.find(row=>row.id===checkpointId);
   const proof=rootRead?.retainedRoot,reuse=descriptor&&rootRead&&usableRootContinuation(proof,rootRead,descriptor);
@@ -4040,11 +4127,11 @@ async function readRetainedCheckpoint(jobId,checkpointId,state=null,rootRead=nul
         descriptor?.projectSha256===pair.projectSha256&&descriptor?.workSha256===pair.workSha256&&
         rootRead.digest===pair.projectSha256&&unchangedVerifiedProject(rootRead,rootRead.project,rootRead.digest)&&checkpointPairMatches(pair,rootRead.project))measuredPair=pair;
     }catch{} // Ineligible computation keeps the original decoder/error order.
-    if(!measuredPair)return decodeCheckpoint(jobId,entry,undefined,readSnapshot);
+    if(!measuredPair)return decodeCheckpoint(jobId,entry,undefined,readSnapshot,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,undefined,observedPairs);
     // The decoder still reads/authenticates every byte and compares this pair
     // with the actual parsed root before using either digest. All static,
     // current compatibility, artifact, view and source checks remain in place.
-    const saved=await decodeCheckpoint(jobId,entry,undefined,readSnapshot,new Map(),new Map(),null,null,null,null,measuredPair);
+    const saved=await decodeCheckpoint(jobId,entry,undefined,readSnapshot,new Map(),new Map(),null,null,null,null,measuredPair,null,null,observedPairs);
     // Match append's existing post-await boundary: no exposed current value or
     // changed primitive can retain a borrowed digest after full validation.
     if(!checkpointPairMatches(measuredPair,rootRead.project)||!checkpointPairMatches(measuredPair,saved.project))throw storageError('Checkpoint digest input changed during verification.','HISTORY_VERSION_MISMATCH');
@@ -4075,7 +4162,10 @@ async function readRetainedCheckpoint(jobId,checkpointId,state=null,rootRead=nul
   // continuation and validators are re-proven afterwards.
   const staticCarried=body.project===proof.project&&Boolean(proof.validators)&&rootValidatorsUnchanged(proof.validators),certified=staticCarried&&proof.derivedVerified===true&&Date.now()>=proof.derivedAt&&body.artifactManifestSha256===proof.descriptor.artifactManifestSha256;
   if(staticCarried&&!certified)recoveryBodyStaticIntegrity.set(proof.project,{kind:VERIFIED_PROJECT_INTEGRITY,project:proof.project,digest:proof.projectSha256,snapshot:proof.snapshot});
-  const saved=await validateCheckpointArtifacts(jobId,body,sha=>metaGet(historyFileKey(jobId,sha)),null,null,null,certified);
+  // In-session pairs: a write certificate's own version carries the write's
+  // derivation (no derived check); any other version is derived once more.
+  const pairs=!observedPairs||certified?false:!writeDerivations.has(proof)||(staticCarried&&body.artifactManifestSha256===proof.descriptor.artifactManifestSha256&&writeDerivations.get(proof));
+  const saved=await validateCheckpointArtifacts(jobId,body,sha=>metaGet(historyFileKey(jobId,sha)),null,null,null,certified,pairs);
   if(!usableRootContinuation(proof,rootRead,descriptor))throw storageError('Retained checkpoint computation changed during verification.','HISTORY_VERSION_MISMATCH');
   // Validators replaced during this read: validate under the current ones now.
   if(staticCarried&&!rootValidatorsUnchanged(proof.validators)){recoveryBodyStaticIntegrity.delete(saved.project);await hydrateLegacyRunPromptContexts(saved.project,saved.artifacts);withVerifiedRecoveryCustody(saved.artifacts,()=>assertRecoveryCompatibility(saved.project));if(!usableRootContinuation(proof,rootRead,descriptor))throw storageError('Retained checkpoint computation changed during verification.','HISTORY_VERSION_MISMATCH');}
@@ -4257,7 +4347,7 @@ function certifiedRootEnvelope(entry,validatedRoots,inspection,proof){
   // descriptors only. The certified project replaces the inline project.
   return {...carried,project:undefined,artifacts:carried.artifacts.map(({blob,...descriptor})=>descriptor)};
 }
-async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey(jobId,sha)),readSnapshot=id=>metaGet(snapshotKey(jobId,id)),validatedRoots=new Map(),verifiedParts=new Map(),verifiedByteDigests=null,validatedProjections=null,verifiedSources=null,rootContinuation=null,measuredPair=null,rootBytes=null,importProofs=null){
+async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey(jobId,sha)),readSnapshot=id=>metaGet(snapshotKey(jobId,id)),validatedRoots=new Map(),verifiedParts=new Map(),verifiedByteDigests=null,validatedProjections=null,verifiedSources=null,rootContinuation=null,measuredPair=null,rootBytes=null,importProofs=null,observedPairs=false){
   // Reuse pure digest computation only during this fresh parser-owned decode.
   // Existing import scopes and retained-root continuations keep their owners;
   // no validation, byte-custody, or activation result is borrowed or retained.
@@ -4267,14 +4357,16 @@ async function decodeCheckpoint(jobId,entry,readFile=sha=>metaGet(historyFileKey
   if(holder)importDigestHolders.set(verifiedParts,holder);
   try{
     const body=await readCheckpointBody(jobId,entry,readSnapshot,validatedRoots,false,readFile,verifiedParts,verifiedByteDigests,null,rootContinuation,measuredPair,rootBytes,importProofs);
-    try{return await validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests,validatedProjections,verifiedSources,rootContinuation&&body.project===rootContinuation.project);}
+    try{return await validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests,validatedProjections,verifiedSources,rootContinuation&&body.project===rootContinuation.project,observedPairs);}
     catch(error){withdrawHistoryProofs(jobId,entry,body);throw error;}
   }finally{
     if(holder){if(holder.scope)hash.disposeCanonicalDigestScope(holder.scope);importDigestHolders.delete(verifiedParts);}
   }
 }
-async function validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests=null,validatedProjections=null,verifiedSources=null,deferCompatibility=false){
+async function validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests=null,validatedProjections=null,verifiedSources=null,deferCompatibility=false,observedPairs=false){
   // In the store worker, a completed derived check mints this project/file pair's proof.
+  // observedPairs (in-session History only): true, or the write derivation of
+  // the certificate whose own version this is (observedHistoryCustody).
   const pairInputs=HISTORY_ROOT_PROOFS&&!deferCompatibility&&!inspectedHistoryBodies.has(body)?captureHistoryProofInputs():null;let pairCheck=null;
   const artifacts=[],ids=new Set();
   for(const descriptor of body.artifacts){
@@ -4291,8 +4383,10 @@ async function validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDiges
   if(!deferCompatibility&&!validatedProjections?.has(projectionKey)){
     await hydrateLegacyRunPromptContexts(body.project,artifacts);
     if(pairInputs){pairCheck={validators:captureRootValidators(pairInputs.primitive),at:Date.now()};strictlyCompatibleRoots.delete(body.project);}
+    const pairStaticReceipt=pairCheck&&observedPairs===true?recoveryBodyStaticIntegrity.get(body.project):undefined;
     withVerifiedRecoveryCustody(artifacts,()=>assertRecoveryCompatibility(body.project));
     if(pairCheck)pairCheck.strict=strictlyCompatibleRoots.has(body.project);
+    if(pairCheck?.validators&&observedPairs&&!pairCheck.strict){const observed=observedPairs===true?observedPairDerivation(body.project,artifacts,pairCheck.validators,pairStaticReceipt):observedWriteDerivation(body.project,artifacts,pairCheck.validators,observedPairs);if(observed){pairCheck.strict=true;pairCheck.at=observed.at;}}
     validatedProjections?.add(projectionKey);
   }
   assertPackageArtifactCustody(body.project,artifacts);await verifyOriginalSourceBindings(body.project,artifacts,verifiedSources);assertRecoveryViewFiles(jobId,body.view,artifacts);if(body.view?.pendingMutation&&body.view.pendingMutation.baseProjectSha256!==body.projectSha256)throw storageError('Saved draft correction belongs to another version.','HISTORY_VERSION_MISMATCH');
@@ -4604,7 +4698,7 @@ async function prepareProjectWrite(project,options={}){
     if(!verifiedValuesEqual(canonicalProject(candidateProof.snapshot),canonicalProject(next)))throw storageError('The prepared project changed before commit. Prepare the current candidate again.','STALE_PROJECT_REVISION');
     const integrity=verifiedProjectIntegrity(next,candidateDigest);await persistProjectPromptFiles(next);
     if(!unchangedVerifiedProject(integrity,next,candidateDigest))throw storageError('The prepared project changed before commit. Prepare the current candidate again.','STALE_PROJECT_REVISION');
-    const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView,verifiedRead,verifiedDigests:[[next,candidateDigest]],verifiedIntegrity:[verifiedRead,integrity]});
+    const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView,verifiedRead,verifiedDigests:[[next,candidateDigest]],verifiedIntegrity:[verifiedRead,integrity],[IN_SESSION_HISTORY_PAIRS]:true});
     return {project:next,options:{...options,expectedProjectRevision:revision,expectedStateSha256:prior.projectSha256,preparedHistory,[VERIFIED_CANONICAL_WRITE]:{read:verifiedRead,integrity,digest:candidateDigest}}};
   }
   for(const source of prior?.projectData?.migrationArchives||[])if(source?.kind===ORIGINAL_SOURCE_KIND&&source.schema===ORIGINAL_SOURCE_SCHEMA&&!next.projectData?.migrationArchives?.some(row=>equivalent(row,source)))throw storageError('An existing original-source archive cannot be changed or removed by a canonical save.','SOURCE_ARCHIVE_MUTATED');
@@ -4635,7 +4729,7 @@ async function prepareProjectWrite(project,options={}){
   const primitive=rootDigestPrimitivesUnchanged(initialRootDigestPrimitives)?initialRootDigestPrimitives:null,measured=primitive?historyProjectDigests(next):null,pair=measured&&rootDigestPrimitivesUnchanged(primitive)?measured:null;
   const digest=pair?pair.projectSha256:projectSha256(next),integrity=verifiedProjectIntegrity(next,digest);
   await persistProjectPromptFiles(next,commitDerives?()=>{const found=derivedProjectIntegrityIssues(next);if(found.length)throw Object.assign(storageError('Canonical project integrity validation failed: '+found.join(' | '),'PROJECT_INTEGRITY_FAILED'),{issues:found});}:null);
-  const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView,artifactRows:options.creation?.artifacts||null,verifiedRead,verifiedDigests:[[next,digest,pair?.workSha256]],verifiedIntegrity:[...(verifiedRead?[verifiedRead]:[]),integrity],privateEncodeSources:new Map([[next,integrity.snapshot]])});
+  const preparedHistory=await prepareHistoryCommit(next,prior,{label:options.historyLabel,view:options.historyView,artifactRows:options.creation?.artifacts||null,verifiedRead,verifiedDigests:[[next,digest,pair?.workSha256]],verifiedIntegrity:[...(verifiedRead?[verifiedRead]:[]),integrity],privateEncodeSources:new Map([[next,integrity.snapshot]]),[IN_SESSION_HISTORY_PAIRS]:true});
   if(options.creation)preparedHistory.state.commandReceipts={...(preparedHistory.state.commandReceipts||{}),[options.creation.receiptKey]:clone(options.creation.receipt)};
   return {project:next,options:{...options,expectedProjectRevision:revision,expectedStateSha256:prior?.projectSha256||null,preparedHistory,[VERIFIED_CANONICAL_WRITE]:{read:verifiedRead,integrity,digest,primitive:pair?primitive:null,validators:pair?writeValidators:null}}};
 }
