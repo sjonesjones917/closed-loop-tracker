@@ -2540,11 +2540,16 @@ function historyProofInputsCurrent(inputs){return Boolean(inputs)&&rootDigestPri
 // value as decoded, plain JSON data no replaceable code has received a part
 // of, under that baseline and the digest primitives confirmed in this
 // synchronous turn immediately before and after it; null otherwise, and a
-// snapshot whose classification is null mints no proof.
+// snapshot whose classification is null mints no proof. It never throws: it
+// runs before the read's own checks, in the store worker only, so a value the
+// recursive scan cannot classify (nested deeper than its stack allows) is null,
+// and the read's own checks decide its outcome as in a realm without proofs.
 function decodedCredentialFact(payload){
-  if(!packageDigestNativesUnchanged(nullRootDigestScope))return null;
-  const credential=containsCredentialSecret(payload);
-  return packageDigestNativesUnchanged(nullRootDigestScope)?credential:null;
+  try{
+    if(!packageDigestNativesUnchanged(nullRootDigestScope))return null;
+    const credential=containsCredentialSecret(payload);
+    return packageDigestNativesUnchanged(nullRootDigestScope)?credential:null;
+  }catch{return null;}
 }
 // Mint (readCheckpointBody, after its last check): the facts the cold path
 // checks of one snapshot whose stored bytes this worker decoded and verified.

@@ -111,6 +111,10 @@ const RETAINED_FILES='    for(let index=0;index<proof.artifactBytes.length;index
 const MINT_RECORD_BEFORE='    if(!packageDigestNativesUnchanged(nullRootDigestScope))return;\n    const record=';
 const MINT_RECORD_AFTER='    if(!packageDigestNativesUnchanged(nullRootDigestScope)||!historyProofInputsCurrent(inputs))return;';
 const MINT_CREDENTIAL='artifactsSha256:body.artifactManifestSha256,descriptorsSha256:historyDescriptorRowsSha256(body.artifacts),credential,viewChecked,';
+// The decode's credential classification, which never throws, and the same
+// classification allowed to throw.
+const DECODED_CREDENTIAL_GUARDED='  try{\n    if(!packageDigestNativesUnchanged(nullRootDigestScope))return null;\n    const credential=containsCredentialSecret(payload);\n    return packageDigestNativesUnchanged(nullRootDigestScope)?credential:null;\n  }catch{return null;}\n';
+const DECODED_CREDENTIAL_THROWING='  if(!packageDigestNativesUnchanged(nullRootDigestScope))return null;\n  const credential=containsCredentialSecret(payload);\n  return packageDigestNativesUnchanged(nullRootDigestScope)?credential:null;\n';
 const EXPORT_ROUTE="  if(useStoreWorker())return requestStoreWorker('EXPORT_PACKAGE',[jobId,{passphrase,historyRecovery}]);\n";
 // The measured watchdog (project-store.js HISTORY_WATCHDOG_MEASUREMENT),
 // re-derived here from its stated arithmetic at the declared History limits.
@@ -239,6 +243,10 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  // cold page-realm store's refusal detects it.
  'restored-root-skip-pair-check':fault(['restored-roots'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[['    try{return await validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests,validatedProjections,verifiedSources,rootContinuation&&body.project===rootContinuation.project);}','    try{return await validateCheckpointArtifacts(jobId,body,readFile,verifiedByteDigests,validatedProjections,verifiedSources,Boolean(importProofs)||rootContinuation&&body.project===rootContinuation.project);}']]),
  'restored-root-skip-last-inputs':fault(['restored-roots'],'HISTORY_PROOF_TIER15_INPUTS_ORACLE',[['      const provenInputs=Boolean(provenRoot)&&historyProofInputsCurrent(provenRoot)&&rootValidatorsUnchanged(provenRoot.validators);','      const provenInputs=Boolean(provenRoot);']]),
+ // The decode's credential classification allowed to throw: a fresh worker
+ // refuses a saved view nested deeper than the recursive scan reaches with the
+ // scan's own error, before the read's own checks (DEEP_VIEW_CASES).
+ 'decoded-credential-uncaught':fault(['restored-roots'],'HISTORY_PROOF_TIER15_EQUIVALENCE_ORACLE',[[DECODED_CREDENTIAL_GUARDED,DECODED_CREDENTIAL_THROWING]]),
  // The restored value taken for the proven one without its digests (the
  // digest pass runs, its digests are not compared), and natives confirmed only
  // after the digest pass.
@@ -1551,6 +1559,18 @@ async function digestSpansSection(context){
 // a refused version holds no pair or proof afterwards in either worker. (A
 // pair a check mints in the import may serve a later version of it, Tier 2.)
 export const RESTORED_FAULT_CASES=Object.freeze({'retired-file-removed':'HISTORY_FILE_INTEGRITY_FAILED','manifest-label':'HISTORY_VERSION_MISMATCH','recovery-refusal':'HISTORY_VERSION_INCOMPATIBLE','segment-member-relabeled':'HISTORY_VERSION_MISMATCH','segment-count':'HISTORY_VERSION_MISMATCH','project-bytes':'HISTORY_VERSION_MISMATCH'});
+// A saved view nested DEEP_VIEW_DEPTH deep, added to an archived view
+// reference's snapshot: deeper than the store's recursive credential scan
+// reaches where it runs unoptimized (about 2300 levels), as in a fresh worker,
+// which runs it at the snapshot's decode (decodedCredentialFact), before the
+// read's own checks (a page-realm store never runs it there), and within what
+// JSON.parse, the canonical digest and this verifier's encoder handle. With
+// the entry's view digest unchanged (mismatch), recomputed (valid, which then
+// conflicts with the retained version) and recomputed into a store holding no
+// rows (valid-new-store), every realm refuses with the cold code, or accepts
+// (null), exactly as a cold page-realm store.
+export const DEEP_VIEW_DEPTH=5000;
+export const DEEP_VIEW_CASES=Object.freeze({'mismatch':'HISTORY_VERSION_MISMATCH','valid':'IMMUTABLE_HISTORY_CONFLICT','valid-new-store':null});
 export const RESTORED_REALM_CASES=Object.freeze(['text-encoder','hash-sha256-bytes','json-parse','decompression-stream','blob-array-buffer','engine-property','schema-definition']);
 export const ACTIVE_FAULT_CASES=Object.freeze(['active-snapshot-member','active-part-member','active-manifest-label','active-segment-member','active-segment-count']);
 // A restored value bound to its proof only by natives seen unchanged around
@@ -1687,6 +1707,27 @@ async function restoredRootsSection(context){
    assert.ok(!result.sameProofs.has(marked.id)&&!result.freshProofs.has(marked.id),'HISTORY_PROOF_TIER15_MINT_ORACLE: the refused root keeps a proof');
   }
   emit('HISTORY-PROOF-TIER15-FAULT-'+label,{refused:!result.same.ok,code:result.same.code??null,restoredRoots:result.sameCounts.restoredRoots,neverMinted:true});
+ }
+ // A saved view nested deeper than the decode's credential scan reaches
+ // (DEEP_VIEW_CASES): a classification the scan cannot complete is no fact,
+ // and the read's own checks decide, exactly as cold.
+ {
+  const target=recovery.entries.find(entry=>entry.projectReference&&entry.id!==recovery.activeId);
+  assert.ok(target,'HISTORY_PROOF_TIER15_FIXTURE_ORACLE: an archived view reference');
+  const deepBackup=valid=>edited(async copy=>{
+   const {member,snapshot}=await snapshotMember(copy,target.id);let nested=1;for(let level=0;level<DEEP_VIEW_DEPTH;level++)nested={a:nested};snapshot.view={...snapshot.view,nested};
+   const bytes=Buffer.from(await (await encodeBackup(b.worker().realm,snapshot)).arrayBuffer()),entry=copy.recovery.entries.find(row=>row.id===target.id);
+   copy.recovery.compressedProjectBytes+=bytes.length-entry.byteSize;entry.sha256=await setMemberBytes(b.worker().realm,copy,member,bytes);entry.byteSize=bytes.length;
+   if(valid)entry.viewSha256=b.worker().realm.runtime.closedLoopHash.sha256Value(b.worker().realm.copy(snapshot.view));
+  });
+  const validBlob=await deepBackup(true),noRows={rows:new Map([...holding.rows].map(([name])=>[name,new Map()])),ledger:holding.ledger};
+  const deep={'mismatch':{blob:await deepBackup(false)},'valid':{blob:validBlob},'valid-new-store':{blob:validBlob,held:noRows}};
+  assert.deepEqual(Object.keys(deep),Object.keys(DEEP_VIEW_CASES));
+  for(const [label,{blob,held=holding}] of Object.entries(deep)){
+   const result=await compare('deep-view-'+label,blob,{held}),expected=DEEP_VIEW_CASES[label];
+   assert.ok(result.same.ok===(expected===null)&&(result.same.code??null)===expected,'HISTORY_PROOF_TIER15_DEEP_VIEW_ORACLE '+label+': the outcome of the cold checks ('+(expected||'accepted')+')');
+   emit('HISTORY-PROOF-TIER15-DEEP-VIEW-'+label,{refused:!result.same.ok,code:result.same.code??null,depth:DEEP_VIEW_DEPTH,identical:true});
+  }
  }
  // A pair derived in the future (the worker's clock reads earlier): Tier 2
  // carries nothing and each root is restored under its proof.
