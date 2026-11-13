@@ -2907,10 +2907,14 @@ async function firstUsePendingWriteRoot(){
 // (as readRetainedCheckpoint carries it). A refusal throws to the caller and
 // mints nothing, so an import restores the root and refuses as cold. A strict
 // pass mints as a cold read's pair check does; otherwise the write's own
-// derivation is carried under the observation-restricted custody.
+// derivation is carried under the observation-restricted custody. Either pair
+// is minted only under the certificate's validators, captured before this
+// first use's decode (whose custody and source-binding checks the pair
+// attests ran across its awaits) and confirmed unchanged in this turn before
+// the check; the mint confirms them again. Changed validators mint nothing.
 function firstUseDerivedPair(jobId,root,saved,derivation,inputs){
-  const validators=inputs&&captureRootValidators(inputs.primitive);if(!validators)return;
-  if(rootValidatorsUnchanged(root.validators))recoveryBodyStaticIntegrity.set(saved.project,{kind:VERIFIED_PROJECT_INTEGRITY,project:root.project,digest:root.projectSha256,snapshot:root.snapshot});
+  const validators=root.validators;if(!inputs||!validators||!rootValidatorsUnchanged(validators))return;
+  recoveryBodyStaticIntegrity.set(saved.project,{kind:VERIFIED_PROJECT_INTEGRITY,project:root.project,digest:root.projectSha256,snapshot:root.snapshot});
   const checkedAt=Date.now();strictlyCompatibleRoots.delete(saved.project);
   withVerifiedRecoveryCustody(saved.artifacts,()=>assertRecoveryCompatibility(saved.project));
   if(strictlyCompatibleRoots.delete(saved.project)){mintHistoryPairProof(jobId,root.projectSha256,saved.artifacts,{derived:'STRICT',derivedAt:checkedAt,validators,inputs});return;}

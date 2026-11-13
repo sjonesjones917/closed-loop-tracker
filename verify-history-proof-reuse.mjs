@@ -136,6 +136,15 @@ const PAIR_VERDICT='    const pairStaticReceipt=pairCheck&&observedPairs===true?
 const OBSERVED_PAIRS_GATE='  const observedPairs=HISTORY_ROOT_PROOFS&&sessionPairs===true&&!importProofs;';
 const SELECTION_GUARD='  if(!(validators&&rootValidatorsUnchanged(validators)))return null;\n';
 const SELECTION_CATCH='\n }catch{return null;/* The overlay outcome stands. */}\n}\n';
+// The first use's validators (the certificate's, captured before its decode)
+// and the restricted derivation's own refusal, kept from the read.
+const FIRST_USE_VALIDATORS='  const validators=root.validators;if(!inputs||!validators||!rootValidatorsUnchanged(validators))return;\n  recoveryBodyStaticIntegrity.set(saved.project,';
+const RESTRICTED_CHECK='try{observedCustody(()=>assertRecoveryCompatibility(value));}catch{/* The overlay outcome stands; nothing is minted strict. */}';
+// Test hooks (observed()): the first use's overlay carry, and a checkpoint
+// read's custody and source-binding checks.
+const FIRST_USE_OVERLAY_CARRY='    if(carried&&writeDerivationReproduced(derivation,saved.artifacts))mintHistoryPairProof(';
+const SOURCE_BINDINGS_CHECKED='assertPackageArtifactCustody(body.project,artifacts);await verifyOriginalSourceBindings(body.project,artifacts,verifiedSources);';
+const PAIR_SOURCE_BINDINGS_CHECKED='assertPackageArtifactCustody(decoded.project,artifacts);await verifyOriginalSourceBindings(decoded.project,artifacts);';
 // The measured watchdog (project-store.js HISTORY_WATCHDOG_MEASUREMENT),
 // re-derived here from its stated arithmetic at the declared History limits.
 export const HISTORY_WATCHDOG_PIN=Object.freeze({coldMsPerSnapshotMiB:3638,coldMsPerVersion:103,coldMsPerRestoredMiB:8834,transportMsPerFileMiB:129,hostedSlowdown:2,maxCompressedProjectMiB:512,maxCheckpoints:2048,maxRestoredProjectMiB:32768,maxRetainedFileMiB:1024});
@@ -310,7 +319,13 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  // The History selection made without confirming the validators first, or
  // its error escaping to the read.
  'observed-selection-unguarded':fault(['observed-custody'],'HISTORY_PROOF_OBSERVED_GUARD_ORACLE',[[SELECTION_GUARD,'  if(!validators)return null;\n']]),
- 'observed-selection-error-escapes':fault(['observed-custody'],'HISTORY_PROOF_OBSERVED_REFUSAL_ORACLE',[[' try{\n'+SELECTION_GUARD,' {\n'+SELECTION_GUARD],[HISTORY_SELECTION+SELECTION_CATCH,HISTORY_SELECTION+'\n }\n}\n']])
+ 'observed-selection-error-escapes':fault(['observed-custody'],'HISTORY_PROOF_OBSERVED_REFUSAL_ORACLE',[[' try{\n'+SELECTION_GUARD,' {\n'+SELECTION_GUARD],[HISTORY_SELECTION+SELECTION_CATCH,HISTORY_SELECTION+'\n }\n}\n']]),
+ // A refusal only the restricted custody raises refuses the read (the
+ // restricted derivation decides it), where a cold runtime accepts.
+ 'observed-restricted-refusal-decides-read':fault(['observed-custody'],'HISTORY_PROOF_OBSERVED_RESTRICTED_REFUSAL_ORACLE',[[RESTRICTED_CHECK,'observedCustody(()=>assertRecoveryCompatibility(value));']]),
+ // The first use's strict pair minted under validators captured after its
+ // decode, whose custody and source-binding checks ran under earlier ones.
+ 'observed-first-use-validators-after-decode':fault(['observed-custody'],'HISTORY_PROOF_OBSERVED_GUARD_ORACLE',[[FIRST_USE_VALIDATORS,'  const validators=inputs&&captureRootValidators(inputs.primitive);if(!validators)return;\n  if(rootValidatorsUnchanged(root.validators))recoveryBodyStaticIntegrity.set(saved.project,']])
 });
 
 // Test-only observation (never a production export): the worker ledger, counts
@@ -383,6 +398,14 @@ export function observed(source){
  source=replaceOnce(source,OBSERVED_DERIVATION,'if(globalThis.__historyCounts)globalThis.__historyCounts.observedDerivations++;'+OBSERVED_DERIVATION,'observed-derivation');
  source=replaceOnce(source,OBSERVATION_SELECTION,'if(globalThis.__historyCounts)globalThis.__historyCounts.observationSelections++;'+OBSERVATION_SELECTION,'observation-selection');
  source=replaceOnce(source,HISTORY_SELECTION,"  if(globalThis.__historyCounts)globalThis.__historyCounts.historySelections++;if(globalThis.__selectionFault?.(project))throw new TypeError('Injected History selection fault.');\n"+HISTORY_SELECTION,'history-selection');
+ // Test-only: the first use's overlay carry skipped (__skipFirstUseCarry), so
+ // its derived check runs for a root the overlay derives strictly; and a hook
+ // right after a checkpoint read's custody and source-binding checks, with
+ // whether the read deferred its derived check (as the first use's decode),
+ // and one after a 'Previous project' pair's (proveHistoryPair).
+ source=replaceOnce(source,FIRST_USE_OVERLAY_CARRY,FIRST_USE_OVERLAY_CARRY.replace('carried&&','carried&&!globalThis.__skipFirstUseCarry&&'),'first-use-carry');
+ source=replaceOnce(source,SOURCE_BINDINGS_CHECKED,SOURCE_BINDINGS_CHECKED+'globalThis.__afterSourceBindings?.(body.project,deferCompatibility);','source-bindings');
+ source=replaceOnce(source,PAIR_SOURCE_BINDINGS_CHECKED,PAIR_SOURCE_BINDINGS_CHECKED+'globalThis.__afterPairSourceBindings?.(decoded.project);','pair-source-bindings');
  return source;
 }
 // Within one observed function (its header up to the closing brace of its
@@ -2052,9 +2075,26 @@ async function inputChecksSection(context){
 // 'Previous project' read and a no-op save exactly as a cold single-realm
 // runtime, and refuses the same-session import of a first-used root and of a
 // 'Previous project' reference (whose own checks decide no read) exactly as a
-// fresh cold import. Changed validators make no History selection, a
+// fresh cold import; a refusal only the restricted custody raises refuses no
+// read (a write's 'Previous project' read and a no-op on an own-row
+// reference accept exactly as a cold runtime) and mints no strict pair.
+// Changed validators make no History selection (a first use's pair is minted
+// only under the certificate's validators, captured before its decode; a
+// 'Previous project' pair's validators replaced after their capture), a
 // selection error mints nothing and refuses nothing, and no import path
-// derives under that custody.
+// derives a pair under that custody. The one in-session path an import takes
+// is its own leading first use of a local version no checkpoint consumed (a
+// write after the export): its overlay check runs inside the import, its carry
+// under the restricted custody serves only that import's preparation of its
+// prior, and the import equals a fresh import (refuses as it, under an
+// overlay-only refusal). An overlay-only refusal here is a property of the
+// value in every worker from the project's creation: Tier 2 never re-derives
+// at an import, so a refusal first raised there is seen by no strict pair
+// (17fc4abb's included), and a root the commit path or a reproduced write
+// derivation made strict without an overlay check is served at Tier 2 under
+// such a refusal at 17fc4abb and here alike. These cases cover the pairs this
+// section adds: first use, the 'Previous project' append and reference, and
+// no-op saves.
 const OBSERVED_FILE='production-instruction.txt';
 const observedRecords=n=>({records:Array.from({length:800+60*n},(_,i)=>({id:'HISTORY-PROOF-OBSERVED-RECORD-'+i,text:'Exact retained record '+i+' '+'.'.repeat(i%41)}))});
 const observedView=(r,n)=>r.copy({activeStage:1,activeView:'Workflow',drafts:{'#exact':{value:'Exact draft '+n}},scrollX:0,scrollY:n});
@@ -2266,12 +2306,23 @@ async function observedGuards(context){
  const guardSelections=b.counts().historySelections-selections,guardMinted=ledger().pairList().some(pair=>pair.projectSha256===changedSha256);
  assert.ok(guardSelections===0&&!guardMinted,'HISTORY_PROOF_OBSERVED_GUARD_ORACLE: a first use under changed validators makes no History selection and mints no pair');
  await s.save('save changed view',10);
+ // Validators replaced while a write's 'Previous project' pair awaits its
+ // source-binding check, after the pair captured them: its restricted
+ // derivation makes no History selection under the replaced ones.
+ await s.outside('store a file outside a write','selection.json');
+ const worker=b.worker().realm.runtime;let pairUndo=null,swapSelections=null;
+ worker.__afterPairSourceBindings=()=>{if(!pairUndo){pairUndo=swaps.engineProperty(worker);swapSelections=b.counts().historySelections;}};
+ try{await s.write('write appending Previous project under changed validators','Saved stage 6',{view:11});}finally{delete worker.__afterPairSourceBindings;pairUndo?.();}
+ const pairSelections=swapSelections===null?null:b.counts().historySelections-swapSelections;
+ assert.ok(swapSelections!==null,'HISTORY_PROOF_OBSERVED_FIXTURE_ORACLE: the validators were replaced inside the Previous project pair\'s source-binding check');
+ assert.equal(pairSelections,0,'HISTORY_PROOF_OBSERVED_GUARD_ORACLE: a Previous project pair whose validators changed after their capture makes no History selection');
+ await s.save('save changed view',12);
  const backup=await b.store.exportPackage(jobId),exportedIds=(await backupBody(backup)).recovery.entries.map(entry=>entry.id),before=copyRows(b.rows,b.page);
  b.resetCounts();const same=await observedImportOutcome(b,jobId,exportedIds,()=>b.store.importPackage(backup)),sameCounts={...b.counts()};
  const fresh=browser(source,copyRows(before,b.page)),other=await observedImportOutcome(fresh,jobId,exportedIds,()=>fresh.store.importPackage(backup));
  assert.deepEqual(same,other,'HISTORY_PROOF_OBSERVED_GUARD_ORACLE: the import after changed validators equals a fresh import');
  assert.ok(same.ok&&sameCounts.restoredRootIds.includes(changedRoot)&&sameCounts.observedDerivations===0,'HISTORY_PROOF_OBSERVED_GUARD_ORACLE: the root first-used under changed validators is restored (Tier 1.5) and the import derives nothing under the observed custody');
- return {refusal:overlayRefusal,selection,validators:{selections:guardSelections,minted:false,restoredAtImport:true,observedDerivations:0,sameAsFresh:true}};
+ return {refusal:overlayRefusal,selection,validators:{selections:guardSelections,pairSelections,minted:false,restoredAtImport:true,observedDerivations:0,sameAsFresh:true}};
 }
 // An overlay-only refusal of one in-session version, a property of its value
 // in every worker from the project's creation: a first-used root (first-use)
@@ -2307,6 +2358,119 @@ async function observedImportRefusal(context,kind){
  assert.ok(inSession>0,'HISTORY_PROOF_OBSERVED_IMPORT_REFUSAL_ORACLE '+kind+': the in-session overlay check of the value ran (and decided no read)');
  return {code:same.code,message:same.message,issues:same.issues,sameAsFresh:true,inSessionChecks:inSession,writesAccepted:true};
 }
+// A refusal only the observation-restricted custody raises (the superseded
+// file UNKNOWN), armed for one action at a time in the worker and in a cold
+// single-realm runtime over a copy of the rows: a write's 'Previous project'
+// read of a root a checkpoint consumed (its append decode and its pair, each
+// derived once more under that custody) and a no-op save on an own-row
+// 'Previous project' reference (derived once more) accept exactly as the cold
+// runtime, whose reads never derive under that custody. The restricted
+// derivations raised it (OBSERVED_RESTRICTED_REFUSALS), and no strict pair of
+// the refused value is minted.
+const OBSERVED_RESTRICTED_REFUSALS=Object.freeze({write:2,noop:1});
+async function observedRestrictedRefusal(context){
+ const {source}=context,b=browser(source),s=observedSession(b);
+ await s.create('HISTORY-PROOF-OBSERVED-RESTRICTED-REFUSAL');
+ const instruction=await s.write('write storing the Stage 1 file','Saved stage 1',{file:OBSERVED_FILE,view:1});
+ await s.save('save changed view',2);
+ await s.write('write superseding the Stage 1 file','Saved stage 2',{objective:true,view:3});
+ await s.save('save changed view',4);
+ const jobId=s.p.job.JOB_ID,identity={jobId,artifactId:instruction.artifactId,filename:instruction.filename,byteSize:instruction.byteSize,sha256:instruction.sha256};
+ const ROOT='Exact observed restricted refusal root',REFERENCE='Exact observed restricted refusal reference',worker=()=>b.worker().realm.runtime,fired={worker:0,cold:0};
+ const refusal=title=>runtime=>{const where=runtime===worker()?'worker':'cold';runtime.__recoveryRefusal=project=>{const hit=project?.job?.JOB_TITLE===title&&runtime.closedLoopProjectStore.artifactCustodyState(identity)==='UNKNOWN';if(hit)fired[where]++;return hit;};return ()=>{delete runtime.__recoveryRefusal;};};
+ // The descriptor digests of the value's strict pairs.
+ const strictPairs=projectSha256=>ownLedger(worker()).pairList().filter(pair=>pair.projectSha256===projectSha256&&pair.derivedAt!==null).map(pair=>pair.descriptorsSha256);
+ const compared=async(name,title,project,action,outcome=null)=>{
+  const before={...fired},strict=strictPairs(project.projectSha256),result=await observedAsCold(b,source,{project,arm:refusal(title),action,outcome});
+  assert.equal(result.same.ok,true,'HISTORY_PROOF_OBSERVED_RESTRICTED_REFUSAL_ORACLE '+name+': a refusal only the restricted custody raises must not refuse the read: '+JSON.stringify(result.same));
+  assert.deepEqual(result.same,result.other,'HISTORY_PROOF_OBSERVED_RESTRICTED_REFUSAL_ORACLE '+name+': the read accepts exactly as a cold single-realm runtime');
+  // The read's own overlay pair stands (NOT_STRICT, replacing a strict one the
+  // commit made for the same rows): no strict pair of the value is added.
+  assert.ok(strictPairs(project.projectSha256).every(key=>strict.includes(key)),'HISTORY_PROOF_OBSERVED_RESTRICTED_REFUSAL_ORACLE '+name+': a refusal under the restricted custody mints no strict pair');
+  const restricted=fired.worker-before.worker;
+  assert.ok(restricted>0&&fired.cold===0,'HISTORY_PROOF_OBSERVED_FIXTURE_ORACLE '+name+': the restricted derivations raised the refusal, which the cold runtime never derives');
+  return {result,restricted};
+ };
+ await s.write('write','Saved stage 3',{title:ROOT,view:5});
+ await s.save('save changed view',6);
+ await s.outside('store a file outside a write','response.json');
+ // (a) The write appending 'Previous project' for the root's value.
+ const append=await compared('previous-project-write',ROOT,s.p,(r,p)=>observedWrite(r,p,{label:'Saved stage 4',n:s.n+1,title:REFERENCE,view:7}),async(r,value)=>({revision:value.project.revision,...await historyLabelsOf(r,jobId)}));
+ s.p=append.result.value.project;s.n++;
+ // (b) A no-op on the own-row 'Previous project' reference a same-view save
+ // with changed files leaves active for the new root's value.
+ await s.save('save changed view',8);
+ await s.outside('store a file outside a write','selection.json');
+ await s.save('save same view with changed files',8);
+ const noop=await compared('own-row-noop',REFERENCE,s.p,(r,p)=>observedSave(r,p,8));
+ assert.deepEqual({write:append.restricted,noop:noop.restricted},{...OBSERVED_RESTRICTED_REFUSALS},'HISTORY_PROOF_OBSERVED_FIXTURE_ORACLE: the restricted derivations of the write and of the no-op');
+ return {writeSameAsCold:true,noopSameAsCold:true,writeRestricted:append.restricted,noopRestricted:noop.restricted,coldRestricted:fired.cold,strictMinted:false};
+}
+// The first use's strict branch (its overlay carry skipped by a test hook, so
+// the overlay check runs for a root the overlay derives strictly): the pair is
+// minted only under the certificate's validators, captured before the decode
+// whose custody and source-binding checks it attests. Unchanged, a strict pair
+// is minted; replaced right after that decode's source-binding check (the
+// change a retained read re-validates for), none is.
+async function observedFirstUseValidators(context){
+ const {source}=context,minted={};let replaced=0;
+ for(const kind of ['unchanged','replaced']){
+  const b=browser(source),s=observedSession(b);
+  await s.create('HISTORY-PROOF-OBSERVED-FIRST-USE-VALIDATORS-'+kind);
+  await s.write('write storing the Stage 1 file','Saved stage 1',{file:OBSERVED_FILE,view:1});
+  const root=s.p,worker=b.worker().realm.runtime;let undo=null;
+  worker.__skipFirstUseCarry=true;
+  if(kind==='replaced')worker.__afterSourceBindings=(project,deferred)=>{if(!undo&&deferred&&project?.job?.JOB_TITLE===root.job.JOB_TITLE){undo=swaps.engineProperty(worker);replaced++;}};
+  try{await s.write('write first-using it','Saved stage 2',{view:2});}finally{delete worker.__skipFirstUseCarry;delete worker.__afterSourceBindings;undo?.();}
+  minted[kind]=ownLedger(worker).pairList().filter(pair=>pair.projectSha256===root.projectSha256&&pair.derivedAt!==null).length;
+ }
+ assert.ok(minted.unchanged===1&&replaced===1,'HISTORY_PROOF_OBSERVED_FIXTURE_ORACLE: the first use\'s strict branch mints under unchanged validators, and the validators were replaced inside its decode');
+ assert.equal(minted.replaced,0,'HISTORY_PROOF_OBSERVED_GUARD_ORACLE: a first use whose validators changed after its decode\'s custody and source-binding checks mints no pair');
+ return {mintedUnchanged:true,mintedReplaced:false,replacedInDecode:true};
+}
+// A local write after the export, its root first used by importPackage
+// itself (no checkpoint consumed it): the one in-session History path an
+// import takes. The import's leading first use runs the overlay check of that
+// root and, as it returns non-strict, carries the write's derivation under the
+// restricted custody (one History selection, no restricted derivation); the
+// import's preparation of its prior then re-binds that local version. The
+// import equals a fresh page and worker's import. With an overlay-only
+// refusal of the value armed in every worker from the project's creation,
+// that check refuses inside the import and mints nothing, and the import
+// refuses exactly as the fresh import (inSessionChecks: the session worker's
+// refusals in its import beyond the fresh import's, the first use's own).
+const OBSERVED_IMPORT_FIRST_USE_CHECKS=Object.freeze({derived:3,compat:2});
+async function observedImportFirstUse(context){
+ const {source}=context,MARK='Exact observed import first-use root',rows={};
+ for(const armed of [false,true]){
+  const marks={identity:null},fires={session:0,fresh:0},label=armed?'refused':'accepted';
+  const arm=(runtime,where)=>{if(armed)runtime.__recoveryRefusal=project=>{const hit=project?.job?.JOB_TITLE===MARK&&Boolean(marks.identity)&&runtime.closedLoopProjectStore.artifactCustodyState(marks.identity)==='TRUE';if(hit)fires[where]++;return hit;};};
+  const b=browser(source,null,{onWorker:realm=>arm(realm.runtime,'session')}),s=observedSession(b);
+  await s.create('HISTORY-PROOF-OBSERVED-IMPORT-FIRST-USE-'+label);
+  const instruction=await s.write('write storing the Stage 1 file','Saved stage 1',{file:OBSERVED_FILE,view:1}),jobId=s.p.job.JOB_ID;
+  await s.save('save changed view',2);
+  await s.write('write superseding the Stage 1 file','Saved stage 2',{objective:true,view:3});
+  await s.save('save changed view',4);
+  const backup=await b.store.exportPackage(jobId),exportedIds=(await backupBody(backup)).recovery.entries.map(entry=>entry.id);
+  marks.identity={jobId,artifactId:instruction.artifactId,filename:instruction.filename,byteSize:instruction.byteSize,sha256:instruction.sha256};
+  await s.write('write after the export','Response work saved',{title:MARK,view:5});
+  const inSession=fires.session,before=copyRows(b.rows,b.page);
+  b.resetCounts();const same=await observedImportOutcome(b,jobId,exportedIds,()=>b.store.importPackage(backup)),counts={...b.counts()},sessionImport=fires.session-inSession;
+  const fresh=browser(source,copyRows(before,b.page),{onWorker:realm=>arm(realm.runtime,'fresh')}),other=await observedImportOutcome(fresh,jobId,exportedIds,()=>fresh.store.importPackage(backup));
+  assert.deepEqual(same,other,'HISTORY_PROOF_OBSERVED_IMPORT_REFUSAL_ORACLE import-first-use '+label+': the same-session import whose own first use takes the in-session path must equal a fresh import');
+  if(!armed){
+   assert.equal(same.ok,true,'HISTORY_PROOF_OBSERVED_TIER2_ORACLE import-first-use: the import succeeds');
+   assert.ok(counts.historySelections===1&&counts.observedDerivations===0&&counts.retainedHits===1,'HISTORY_PROOF_OBSERVED_COUNT_ORACLE import-first-use: the import\'s first use selects once and derives nothing under the restricted custody, and its prior is re-bound ('+JSON.stringify({historySelections:counts.historySelections,observedDerivations:counts.observedDerivations,retainedHits:counts.retainedHits})+')');
+   assert.deepEqual({derived:counts.derived,compat:counts.compat},{...OBSERVED_IMPORT_FIRST_USE_CHECKS},'HISTORY_PROOF_OBSERVED_COUNT_ORACLE import-first-use: the import\'s checks (its first use\'s overlay check added)');
+   rows.accepted={ok:true,retainedHits:counts.retainedHits,historySelections:counts.historySelections,observedDerivations:counts.observedDerivations,derived:counts.derived,compat:counts.compat,identical:true};
+  }else{
+   assert.equal(same.ok,false,'HISTORY_PROOF_OBSERVED_IMPORT_REFUSAL_ORACLE import-first-use: the fresh import refuses');
+   assert.ok(inSession===0&&sessionImport-fires.fresh===1,'HISTORY_PROOF_OBSERVED_IMPORT_REFUSAL_ORACLE import-first-use: the import\'s own first use ran the overlay check of the value and minted nothing ('+JSON.stringify({inSession,sessionImport,fresh:fires.fresh})+')');
+   rows.refused={code:same.code,message:same.message,issues:same.issues,sameAsFresh:true,inSessionChecks:sessionImport-fires.fresh,writesAccepted:true};
+  }
+ }
+ return rows;
+}
 async function observedCustodySection(context){
  const {source,emit}=context,rows=new Map();
  // The guards and the import refusals first: a read decided by the restricted
@@ -2315,6 +2479,7 @@ async function observedCustodySection(context){
  const guards=await observedGuards(context);
  rows.set('HISTORY-PROOF-OBSERVED-CUSTODY-OVERLAY-REFUSAL',guards.refusal);
  for(const kind of ['first-use','previous-reference'])rows.set('HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT-REFUSAL-'+kind,await observedImportRefusal(context,kind));
+ rows.set('HISTORY-PROOF-OBSERVED-CUSTODY-FIRST-USE-VALIDATORS',await observedFirstUseValidators(context));
  rows.set('HISTORY-PROOF-OBSERVED-CUSTODY-VALIDATORS-CHANGED',guards.validators);
  rows.set('HISTORY-PROOF-OBSERVED-CUSTODY-SELECTION-ERROR',guards.selection);
  const b=browser(source),{s,jobId,state,instruction}=await observedCustodyFixture(b);
@@ -2344,6 +2509,9 @@ async function observedCustodySection(context){
   const fresh=browser(source,before),other=await observedImportOutcome(fresh,jobId,exportedIds,()=>fresh.store.importPackage(backup,options));
   assert.deepEqual(same,other,'HISTORY_PROOF_OBSERVED_TIER2_ORACLE '+label+': the same-session import must equal a fresh page and worker\'s import');
   assert.equal(counts.observedDerivations,0,'HISTORY_PROOF_OBSERVED_COUNT_ORACLE '+label+': an import derives no pair under the observed custody');
+  // Every version of this import a checkpoint consumed: no History selection
+  // (no pair derived or carried under the restricted custody) in the import.
+  assert.equal(counts.historySelections,0,'HISTORY_PROOF_OBSERVED_COUNT_ORACLE '+label+': an import of consumed versions makes no History selection');
   return {same,counts};
  };
  const happy=await importBoth('same-session');
@@ -2353,7 +2521,7 @@ async function observedCustodySection(context){
  assert.ok(happy.counts.restoredRoots===1&&happy.counts.restoredRootIds[0]===activeRoot&&happy.counts.decodes<=2,'HISTORY_PROOF_OBSERVED_TIER2_ORACLE: only the active version\'s root is restored, and at most two snapshots are decoded');
  assert.ok(happy.counts.importHitIds.includes(shared.id),'HISTORY_PROOF_OBSERVED_TIER2_ORACLE: the Saved view sharing its rows is served through the shared pair');
  assert.ok(happy.counts.derived===OBSERVED_IMPORT_CHECKS.derived&&happy.counts.compat===OBSERVED_IMPORT_CHECKS.compat,'HISTORY_PROOF_OBSERVED_COUNT_ORACLE: the same-session import runs only its active version\'s checks');
- rows.set('HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT',{entries:recovery.entries.length,importHits:happy.counts.importHits,restoredRoots:happy.counts.restoredRoots,decodes:happy.counts.decodes,derived:happy.counts.derived,compat:happy.counts.compat,observedDerivations:0,retainedHits:happy.counts.retainedHits,sharedViewServed:true,identical:true});
+ rows.set('HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT',{entries:recovery.entries.length,importHits:happy.counts.importHits,restoredRoots:happy.counts.restoredRoots,decodes:happy.counts.decodes,derived:happy.counts.derived,compat:happy.counts.compat,observedDerivations:0,historySelections:0,retainedHits:happy.counts.retainedHits,sharedViewServed:true,identical:true});
  // The import's fallback read of its prior: the active file row damaged (its
  // byte reference names other bytes), so the prior's preparation fails and
  // the retained version is read cold, still deriving no pair under the
@@ -2361,10 +2529,18 @@ async function observedCustodySection(context){
  reset();
  const damaged=b.rows.get('artifacts').get(instruction.artifactId);b.rows.get('artifacts').set(instruction.artifactId,b.page.copy({...damaged,byteReference:{...damaged.byteReference,sha256:'f'.repeat(64)}}));
  const fallback=await importBoth('fallback');
- rows.set('HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT-FALLBACK',{ok:fallback.same.ok,code:fallback.same.code??null,retainedHits:fallback.counts.retainedHits,observedDerivations:0,identical:true});
+ rows.set('HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT-FALLBACK',{ok:fallback.same.ok,code:fallback.same.code??null,retainedHits:fallback.counts.retainedHits,observedDerivations:0,historySelections:0,identical:true});
+ // After the pairs and counts above (whose oracles detect a pair site
+ // derived under the overlay only first): a refusal only the restricted
+ // custody raises, and the import's own first use of a local version no
+ // checkpoint consumed.
+ rows.set('HISTORY-PROOF-OBSERVED-CUSTODY-RESTRICTED-REFUSAL',await observedRestrictedRefusal(context));
+ const firstUse=await observedImportFirstUse(context);
+ rows.set('HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT-FIRST-USE',firstUse.accepted);
+ rows.set('HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT-REFUSAL-import-first-use',firstUse.refused);
  for(const caseId of OBSERVED_CUSTODY_CASES)emit(caseId,rows.get(caseId));
 }
-export const OBSERVED_CUSTODY_CASES=Object.freeze(['HISTORY-PROOF-OBSERVED-CUSTODY-SESSION-PAIRS','HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT','HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT-FALLBACK','HISTORY-PROOF-OBSERVED-CUSTODY-OVERLAY-REFUSAL','HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT-REFUSAL-first-use','HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT-REFUSAL-previous-reference','HISTORY-PROOF-OBSERVED-CUSTODY-VALIDATORS-CHANGED','HISTORY-PROOF-OBSERVED-CUSTODY-SELECTION-ERROR']);
+export const OBSERVED_CUSTODY_CASES=Object.freeze(['HISTORY-PROOF-OBSERVED-CUSTODY-SESSION-PAIRS','HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT','HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT-FALLBACK','HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT-FIRST-USE','HISTORY-PROOF-OBSERVED-CUSTODY-OVERLAY-REFUSAL','HISTORY-PROOF-OBSERVED-CUSTODY-RESTRICTED-REFUSAL','HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT-REFUSAL-first-use','HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT-REFUSAL-previous-reference','HISTORY-PROOF-OBSERVED-CUSTODY-IMPORT-REFUSAL-import-first-use','HISTORY-PROOF-OBSERVED-CUSTODY-VALIDATORS-CHANGED','HISTORY-PROOF-OBSERVED-CUSTODY-FIRST-USE-VALIDATORS','HISTORY-PROOF-OBSERVED-CUSTODY-SELECTION-ERROR']);
 
 const SECTION_RUNNERS=Object.freeze({'export':exportSection,'import':importSection,'mid-operation':midOperationSection,'nested':nestedSection,'permissive-writer':permissiveWriterSection,'credential':credentialSection,'watchdog':watchdogSection,'pair-descriptors':pairDescriptorSection,'minting':mintingSection,'realms':realmsSection,'unconfirmed-export':unconfirmedExportSection,'input-capture':inputCaptureSection,'observed-custody':observedCustodySection,'retained-checkpoint':retainedCheckpointSection,'digest-spans':digestSpansSection,'input-checks':inputChecksSection,'restored-roots':restoredRootsSection,'active-roots':activeRootsSection,'restored-conflicts':restoredConflictsSection,'restored-unbound':restoredUnboundSection});
 assert.deepEqual(Object.keys(SECTION_RUNNERS),[...HISTORY_PROOF_SECTIONS]);
