@@ -1,5 +1,5 @@
 import {verifyHistorySmallPartAllocation} from './test-history-small-part-allocation.mjs';
-import {verifyHistorySegmentedParts} from './test-history-segmented-parts.mjs';
+import {verifyHistorySegmentedParts,verifyHistoryMeasuredSkeleton} from './test-history-segmented-parts.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -34,8 +34,21 @@ const faults={
   // bytes are its segments' bytes, and the version's projectBytes is the
   // skeleton plus each entry's bytes.
   {before:"    if(segments&&part.segments.reduce((total,segment)=>total+segment.byteSize-1,1)!==part.byteSize)throw storageError('Saved project content sizes conflict.','HISTORY_VERSION_MISMATCH');\n",after:''},
-  {before:"if(historyEncodedProjectBytes(body)!==body.projectBytes)throw storageError('Saved canonical project bytes do not match their checkpoint identity.','HISTORY_VERSION_MISMATCH');}",after:'}'}
- ]}
+  {before:"if(historyEncodedProjectBytes(body,hashedSkeletonBytes(measured,body))!==body.projectBytes)throw storageError('Saved canonical project bytes do not match their checkpoint identity.','HISTORY_VERSION_MISMATCH');}",after:'}'}
+ ]},
+ // One per guard of the cold projectBytes check's reuse of the skeleton
+ // length its read's preimage digest measured; each runs the measured
+ // skeleton cases (test-history-segmented-parts.mjs) on the faulted source.
+ 'measured-skeleton-unchecked-use':{measuredSkeleton:true,before:"measure.skeleton===body.project&&typeof measure.bytes==='number'&&packageDigestNativesUnchanged(measure.baseline)?measure.bytes:undefined",after:"measure.skeleton===body.project&&typeof measure.bytes==='number'?measure.bytes:undefined"},
+ 'measured-skeleton-unchecked-start':{measuredSkeleton:true,changes:[
+  {before:'try{baseline=hash.createCanonicalDigestScope(null);counting=packageDigestNativesUnchanged(baseline);if(counting)encoder=new TextEncoder();}catch{counting=false;}',after:'try{counting=true;encoder=new TextEncoder();}catch{counting=false;}'},
+  {before:'try{if(counting&&packageDigestNativesUnchanged(baseline)){',after:'try{baseline=hash.createCanonicalDigestScope(null);if(counting&&packageDigestNativesUnchanged(baseline)){'}
+ ]},
+ 'measured-skeleton-unchecked-end':{measuredSkeleton:true,before:'try{if(counting&&packageDigestNativesUnchanged(baseline)){measure.skeleton=value;',after:'try{if(counting){measure.skeleton=value;'},
+ 'measured-skeleton-any-skeleton':{measuredSkeleton:true,before:'try{return measure&&measure.skeleton===body.project&&typeof measure.bytes',after:'try{return measure&&typeof measure.bytes'},
+ 'measured-skeleton-continuation-read':{measuredSkeleton:true,before:"const hashedSkeleton=!rootContinuation&&!measuredPair&&Object.hasOwn(body,'projectBytes')",after:"const hashedSkeleton=!measuredPair&&Object.hasOwn(body,'projectBytes')"},
+ 'measured-skeleton-pair-read':{measuredSkeleton:true,before:"const hashedSkeleton=!rootContinuation&&!measuredPair&&Object.hasOwn(body,'projectBytes')",after:"const hashedSkeleton=!rootContinuation&&Object.hasOwn(body,'projectBytes')"},
+ 'measured-skeleton-cross-read-memo':{measuredSkeleton:true,before:"function hashedSkeletonBytes(measure,body){\n  try{return measure&&measure.skeleton===body.project&&typeof measure.bytes==='number'&&packageDigestNativesUnchanged(measure.baseline)?measure.bytes:undefined;}",after:"const hashedSkeletonMemo=new Map();\nfunction hashedSkeletonBytes(measure,body){\n  try{const key=body.projectSha256+':'+body.projectBytes;if(measure&&measure.skeleton===body.project&&typeof measure.bytes==='number'&&packageDigestNativesUnchanged(measure.baseline)){hashedSkeletonMemo.set(key,measure.bytes);return measure.bytes;}return hashedSkeletonMemo.get(key);}"}
 };
 const engineFaults={
  'share-custom-recalculation':{before:'const sharedProjection=evaluateGate===installed?.gate&&nextAction===installed?.operationalNextAction;',after:'const sharedProjection=true;'},
@@ -47,6 +60,8 @@ const engineFaults={
  'retain-input-scope':{before:'finally{inputScopeEvaluation=null;}',after:'finally{if(!globalThis.__retainInputScopeFault)inputScopeEvaluation=null;}'}
 };
 if(faultMode&&!faults[faultMode]&&!engineFaults[faultMode])throw new Error('Unknown implementation fault: '+faultMode);
+// A fault in the measured skeleton reuse fails its own guard case first.
+if(faults[faultMode]?.measuredSkeleton){let faulted=source;for(const fault of faults[faultMode].changes||[faults[faultMode]]){assert.equal(faulted.split(fault.before).length-1,1);faulted=faulted.replace(fault.before,fault.after);}await verifyHistoryMeasuredSkeleton({source:faulted});}
 const capacity=2*1024*1024,changes=12;
 const anchor='maxCompressedProjectBytes:512*1024*1024';
 assert.equal(source.split(anchor).length-1,1);

@@ -3617,11 +3617,43 @@ async function restoreHistoryProject(body,readFile,verifiedParts=new Map(),verif
 // The UTF-8 length of an encoded complete version's canonical project: the
 // skeleton's canonical bytes with each entry's canonical bytes in place of its
 // null. Exact for this encoder's canonical parts, segments and arrays.
-function historyEncodedProjectBytes(contents){
+// skeletonBytes is the skeleton's canonical length as a cold read's preimage
+// digest measured it (hashedSkeletonBytes); without it the skeleton is walked.
+function historyEncodedProjectBytes(contents,skeletonBytes){
   const encoder=new TextEncoder();let size=0;
-  for(const chunk of hash.canonicalChunks(contents.project))size+=encoder.encode(chunk).length;
+  if(typeof skeletonBytes==='number')size=skeletonBytes;
+  else for(const chunk of hash.canonicalChunks(contents.project))size+=encoder.encode(chunk).length;
   for(const part of contents.projectParts?.entries||[])size+=part.byteSize-4;
   return size;
+}
+// The project member of a History body as its read's preimage digest hashes
+// it (packageJsonChunks): exactly the chunks hash.canonicalChunks yields, in
+// order, with their UTF-8 length counted, so the count is the length of the
+// bytes that digest compares with packageSha256. It is recorded in measure
+// only when the walk completed and the digest-scope native baseline and the
+// initial digest primitives (packageDigestNativesUnchanged, which cover every
+// native canonicalChunks and TextEncoder's encode dispatch through) held in
+// the synchronous turn of the walk's first step, immediately before it, and of
+// its last step, immediately after it; as for the digest itself, a native
+// replaced and restored between two steps is not seen. Counting never changes
+// what is yielded or thrown: a failed confirmation or count leaves measure
+// empty, and the check then walks the skeleton.
+function* measuredCanonicalChunks(value,measure){
+  let baseline=null,encoder=null,counting=false,bytes=0;
+  try{baseline=hash.createCanonicalDigestScope(null);counting=packageDigestNativesUnchanged(baseline);if(counting)encoder=new TextEncoder();}catch{counting=false;}
+  for(const chunk of hash.canonicalChunks(value)){
+    if(counting)try{bytes+=encoder.encode(chunk).length;}catch{counting=false;}
+    yield chunk;
+  }
+  try{if(counting&&packageDigestNativesUnchanged(baseline)){measure.skeleton=value;measure.bytes=bytes;measure.baseline=baseline;}}catch{/* The skeleton is walked at its check. */}
+}
+// The measured skeleton length (measuredCanonicalChunks) for the declared
+// projectBytes check of the same cold read, only for that read's own decoded
+// skeleton and with the same natives and primitives confirmed again in the
+// synchronous turn of the check; undefined otherwise.
+function hashedSkeletonBytes(measure,body){
+  try{return measure&&measure.skeleton===body.project&&typeof measure.bytes==='number'&&packageDigestNativesUnchanged(measure.baseline)?measure.bytes:undefined;}
+  catch{return undefined;}
 }
 async function encodeCheckpoint(project,artifactRows,{id=crypto.randomUUID(),parentId=null,label='Saved project',view=historyView(project),workSha256=historyWorkSha256(project),projectDigest=projectSha256(project),artifactManifestSha256=historyArtifactsSha256(artifactRows),projectReference=null,retainValue=null,verifiedIntegrity=null,integrityComparedSynchronously=false,privateSource=false}={}){
   const jobId=projectIdentity(project),exposedCanonical=canonicalProject(project),artifacts=artifactRows.map(historyDescriptor);
@@ -4130,9 +4162,21 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
   // the decoded value: the cold export classifies its own decode, which no
   // hook ever sees.
   const credential=proofInputs?decodedCredentialFact(payload):null;
-  if(await hash.sha256Chunks(packageJsonChunks(body,fileContents))!==packageSha256)throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
-  return bindCheckpointBody(body,false,credential);
-  async function bindCheckpointBody(body,carried,credential=null){
+  // For a version with parts and a declared projectBytes, the preimage digest
+  // also measures the decoded skeleton's canonical length
+  // (measuredCanonicalChunks), which the cold check of that projectBytes below
+  // uses in place of a second walk. From this digest to that check, a read
+  // without a write continuation runs only bindCheckpointBody's synchronous
+  // identity checks, none of which reads the skeleton: parser-owned plain JSON
+  // data that only this read holds. A write continuation can first hand the
+  // decoded body to its certificate's byte comparison (writeRootBytesVerified),
+  // so such a read measures nothing. Nor does a read with a measured pair:
+  // its restored project may skip the digest pass that measures the restored
+  // length, so this check is its only projectBytes check and walks.
+  const hashedSkeleton=!rootContinuation&&!measuredPair&&Object.hasOwn(body,'projectBytes')&&body.projectParts?{}:null;
+  if(await hash.sha256Chunks(packageJsonChunks(body,fileContents,hashedSkeleton))!==packageSha256)throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
+  return bindCheckpointBody(body,false,credential,hashedSkeleton);
+  async function bindCheckpointBody(body,carried,credential=null,measured=null){
   if(body.schema!==HISTORY_SCHEMA||body.id!==entry.id||body.jobId!==String(jobId)||body.projectSha256!==entry.projectSha256||body.parentId!==entry.parentId||body.label!==entry.label||body.createdAt!==entry.createdAt||Number(body.view?.activeStage)!==Number(entry.stage)||!Array.isArray(body.artifacts))throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
   if(hash.sha256Value(body.projectReference||null)!==hash.sha256Value(entry.projectReference||null))throw storageError('Saved project reference does not match its checkpoint.','HISTORY_VERSION_MISMATCH');
   if(body.projectBytes!==entry.projectBytes||Object.hasOwn(body,'projectBytes')&&(body.projectReference||!Number.isSafeInteger(body.projectBytes)||body.projectBytes<=0))throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
@@ -4182,7 +4226,9 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
       // The declared length bounds the restore before it runs: the skeleton's
       // canonical bytes plus each entry's declared bytes in place of its null
       // (a segments entry's bytes are its segments' bytes) are exactly it.
-      if(Object.hasOwn(body,'projectBytes')&&body.projectParts&&body.project&&typeof body.project==='object'){assertHistoryProjectParts(body.projectParts);if(historyEncodedProjectBytes(body)!==body.projectBytes)throw storageError('Saved canonical project bytes do not match their checkpoint identity.','HISTORY_VERSION_MISMATCH');}
+      // The skeleton's bytes are those the preimage digest hashed, when their
+      // measurement holds (hashedSkeletonBytes); otherwise it is walked here.
+      if(Object.hasOwn(body,'projectBytes')&&body.projectParts&&body.project&&typeof body.project==='object'){assertHistoryProjectParts(body.projectParts);if(historyEncodedProjectBytes(body,hashedSkeletonBytes(measured,body))!==body.projectBytes)throw storageError('Saved canonical project bytes do not match their checkpoint identity.','HISTORY_VERSION_MISMATCH');}
       // Tier 1.5 (importPackage only): a root this worker proved is restored
       // from its stored bytes, which this read has re-hashed above and whose
       // parts restoreHistoryProject re-reads and re-hashes, and its digest
@@ -4953,7 +4999,9 @@ async function decompressBytes(bytes){if(typeof DecompressionStream!=='function'
 // Package schemas have string-valued file members. Keep those members as Blob
 // references during assembly and emit their exact JSON strings on demand. The
 // canonical serializer remains the authority for every ordinary key and value.
-async function* packageJsonChunks(value,fileContents){
+// measure (a History read's preimage only): the project member is yielded
+// through measuredCanonicalChunks, the same chunks with their length counted.
+async function* packageJsonChunks(value,fileContents,measure=null){
   async function* fileString(source){
     yield '"';
     if(source.encoding==='base64'){
@@ -4976,6 +5024,7 @@ async function* packageJsonChunks(value,fileContents){
   for(const key of Object.keys(value).sort(hash.compareUnicodeScalarSequence)){
     if(!first)yield ',';first=false;yield* hash.canonicalChunks(key);yield ':';
     if((key==='artifacts'||key==='contextFiles')&&Array.isArray(value[key])){yield '[';let firstMember=true;for(const row of value[key]){if(!firstMember)yield ',';firstMember=false;yield* member(row);}yield ']';}
+    else if(measure&&key==='project')yield* measuredCanonicalChunks(value[key],measure);
     else yield* hash.canonicalChunks(value[key]);
   }
   yield '}';

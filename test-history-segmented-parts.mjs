@@ -426,6 +426,122 @@ async function storeCases(source){
  return cases;
 }
 
+// A cold read's check of a version's declared projectBytes takes the
+// skeleton's canonical length from that read's own preimage digest walk
+// (measuredCanonicalChunks, hashedSkeletonBytes) rather than walking the
+// skeleton again. Each guard of that reuse has its own oracle here and its own
+// intended fault (verify-history-canonical-sharing.mjs): the natives confirmed
+// immediately before the walk's first step, after its last step and at the
+// check; the read's own skeleton object; nothing carried from one read to the
+// next; and no measurement on a read with a write continuation or a measured
+// pair. The store's internals and two observation points are reached only in
+// this disposable realm; neither changes a value or an outcome.
+const MEASURE_EXPOSE='globalThis.closedLoopProjectStore=Object.freeze({STORAGE_IO_TIMEOUT_MS',MEASURE_READ='return bindCheckpointBody(body,false,credential,hashedSkeleton);',MEASURE_USE='function hashedSkeletonBytes(measure,body){';
+function measuredSkeletonSource(source){
+ for(const anchor of [MEASURE_EXPOSE,MEASURE_READ,MEASURE_USE])assert.equal(source.split(anchor).length,2,'HISTORY_MEASURED_SKELETON_ANCHOR '+anchor);
+ return source.replace(MEASURE_EXPOSE,'globalThis.__historyMeasure={packageJsonChunks,measuredCanonicalChunks,hashedSkeletonBytes,readPackageJson};'+MEASURE_EXPOSE)
+  .replace(MEASURE_READ,'globalThis.__historyMeasuredRead?.({continuation:Boolean(rootContinuation),pair:Boolean(measuredPair),measured:Boolean(hashedSkeleton)});'+MEASURE_READ)
+  .replace(MEASURE_USE,MEASURE_USE+'const value=unobservedHashedSkeletonBytes(measure,body);globalThis.__historyMeasuredUse?.(value);return value;}\nfunction unobservedHashedSkeletonBytes(measure,body){');
+}
+export async function verifyHistoryMeasuredSkeleton({source=fs.readFileSync(new URL('./project-store.js',import.meta.url),'utf8')}={}){
+ const cases=[],overrides={'project-store.js':measuredSkeletonSource(source)},hooks={},reads=[];
+ const observe=r=>{r.runtime.__historyMeasuredRead=info=>{reads.push({...info});hooks.read?.(info);};r.runtime.__historyMeasuredUse=value=>hooks.use?.(value);return r;};
+ const r=observe(projectStoreRuntime({storageWorker:false,sourceOverrides:overrides})),{store,core,engine,copy,runtime}=r,api=runtime.__historyMeasure;
+ let p=core.createBlankState('HISTORY-MEASURED-SKELETON');
+ p.vendorExtension=copy({records:Array.from({length:600},(_,i)=>record(i)),notes:[{text:'n'.repeat(40000)},{text:'short ünïcødé ☃ 𝄞'}]});
+ engine.ensureShape(p);engine.recalculate(p);p=await store.writeProject(p,{expectedProjectRevision:0,incrementRevision:false,createOnly:true});
+ const jobId=p.job.JOB_ID,view=scrollY=>copy({activeStage:1,activeView:'Project',drafts:{},scrollX:0,scrollY});
+ await store.saveCheckpoint(jobId,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:view(3)});
+ const next=copy(p);next.vendorExtension.records.push(record(9999));engine.recalculate(next);p=await store.writeProject(next,{expectedProjectRevision:p.revision});
+ await store.saveCheckpoint(jobId,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256,view:view(4)});
+ // A read with a write continuation (this runtime's own checkpoints) can
+ // hand its decoded body to the certificate's byte comparison before the
+ // check: it measures nothing.
+ {const continued=reads.filter(read=>read.continuation);assert.ok(continued.length>=2,'HISTORY_MEASURED_SKELETON_FIXTURE: continuation reads');
+  assert.ok(continued.every(read=>!read.measured),'HISTORY_MEASURED_SKELETON_CONTINUATION_ORACLE: a read with a write continuation measured its skeleton');
+  cases.push({name:'measured-skeleton:continuation-read-walks',reads:continued.length});}
+ // A read with a measured pair (a checkpoint over an operational journal,
+ // in a store holding no root certificate) may skip the restored project's
+ // digest pass, so its pre-restore check is its only projectBytes check: it
+ // measures nothing either.
+ {const operational=copy(p);operational.activeView='Records';p=await store.writeProject(operational,{operational:true,expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
+  const fresh=observe(cloneRuntime(r,overrides)),current=await fresh.store.readProject(jobId);reads.length=0;
+  assert.ok(await fresh.store.saveCheckpoint(jobId,{expectedProjectRevision:current.revision,expectedStateSha256:current.projectSha256,view:fresh.copy({activeStage:1,activeView:'Workflow',drafts:{},scrollX:0,scrollY:5})}),'HISTORY_MEASURED_SKELETON_FIXTURE: pair checkpoint');
+  const paired=reads.filter(read=>read.pair&&!read.continuation);assert.ok(paired.length>=1,'HISTORY_MEASURED_SKELETON_FIXTURE: measured-pair read');
+  assert.ok(paired.every(read=>!read.measured),'HISTORY_MEASURED_SKELETON_PAIR_ORACLE: a read with a measured pair measured its skeleton');
+  cases.push({name:'measured-skeleton:pair-read-walks',reads:paired.length});}
+ const snapshots=[...r.rows.get('meta').entries()].filter(([key])=>key.startsWith(jobKey(jobId)+':snapshot:')).map(([,row])=>row.value);
+ const decode=async row=>{const {payload,fileContents}=await api.readPackageJson(row.blob,{spoolArtifacts:false}),{packageSha256,...body}=payload;return {body,fileContents,packageSha256};};
+ const collect=async chunks=>{const out=[];for await(const chunk of chunks)out.push(chunk);return out;};
+ const root=snapshots.find(row=>row.projectParts?.schema===V2&&!row.projectReference);assert.ok(root,'HISTORY_MEASURED_SKELETON_FIXTURE: a /2 root');
+ // The measured stream is the digest's stream; its count is the UTF-8 length
+ // of the project member that stream hashes, counted here independently of
+ // the store (this file's serializer reproduces the hashed bytes exactly),
+ // and with the entries' bytes it is the declared projectBytes.
+ let measured=0;
+ for(const row of snapshots){
+  const {body,fileContents,packageSha256}=await decode(row),measure={},plain=await collect(api.packageJsonChunks(body,fileContents)),stream=await collect(api.packageJsonChunks(body,fileContents,measure));
+  assert.deepEqual(stream,plain,'HISTORY_MEASURED_SKELETON_STREAM_ORACLE: measuring changed the preimage chunks');
+  assert.equal(sha(stream.join('')),packageSha256,'HISTORY_MEASURED_SKELETON_STREAM_ORACLE: the measured stream is the hashed preimage');
+  if(!body.projectParts||!Object.hasOwn(body,'projectBytes'))continue;
+  assert.equal(sha(canonical(body)),packageSha256,'HISTORY_MEASURED_SKELETON_FIXTURE: independent serializer');
+  assert.equal(measure.bytes,bytesOf(canonical(body.project)),'HISTORY_MEASURED_SKELETON_LENGTH_ORACLE: the count is the hashed skeleton bytes');
+  assert.equal(measure.bytes+body.projectParts.entries.reduce((n,part)=>n+part.byteSize-4,0),body.projectBytes,'HISTORY_MEASURED_SKELETON_LENGTH_ORACLE: the count with the entries is the declared projectBytes');
+  assert.equal(api.hashedSkeletonBytes(measure,body),measure.bytes,'HISTORY_MEASURED_SKELETON_USE_ORACLE: an unchanged measurement is used');measured++;
+ }
+ assert.ok(measured>=2,'HISTORY_MEASURED_SKELETON_FIXTURE: measured roots');
+ cases.push({name:'measured-skeleton:stream-and-length',snapshots:snapshots.length,measured});
+ // A later read of the same bytes that measured nothing reuses no earlier
+ // read's count, and a count is used for its own decoded skeleton only.
+ {const {body,fileContents}=await decode(root),measure={};await collect(api.packageJsonChunks(body,fileContents,measure));assert.equal(api.hashedSkeletonBytes(measure,body),measure.bytes);
+  const later=(await decode(root)).body;
+  assert.equal(api.hashedSkeletonBytes({},later),undefined,'HISTORY_MEASURED_SKELETON_CROSS_READ_ORACLE: a read that measured nothing used an earlier read\'s count');
+  assert.equal(api.hashedSkeletonBytes(null,later),undefined,'HISTORY_MEASURED_SKELETON_CROSS_READ_ORACLE: a read without a measurement used an earlier read\'s count');
+  cases.push({name:'measured-skeleton:no-cross-read-reuse'});
+  assert.equal(api.hashedSkeletonBytes(measure,later),undefined,'HISTORY_MEASURED_SKELETON_IDENTITY_ORACLE: a count was used for another decode of the skeleton');
+  assert.equal(api.hashedSkeletonBytes(measure,{...body,project:copy(body.project)}),undefined,'HISTORY_MEASURED_SKELETON_IDENTITY_ORACLE: a count was used for another skeleton object');
+  cases.push({name:'measured-skeleton:own-skeleton-only'});}
+ // Each replaceable native the walk and the count dispatch through, changed
+ // and later restored at each guard's boundary.
+ const generator=Object.getPrototypeOf(Object.getPrototypeOf(runtime.closedLoopHash.canonicalChunks(null)));
+ const replace=(target,key)=>{const before=Object.getOwnPropertyDescriptor(target,key),original=before.value;Object.defineProperty(target,key,{...before,value:function(...args){return original.apply(this,args);}});return ()=>Object.defineProperty(target,key,before);};
+ const changes={'encoder-encode':()=>replace(runtime.TextEncoder.prototype,'encode'),'generator-next':()=>replace(generator,'next'),'object-keys':()=>replace(runtime.Object,'keys')};
+ // Steps the measured walk by hand; at(event) runs before its first step,
+ // after its first step and after its last (done) step.
+ const walk=(value,measure,at)=>{const chunks=api.measuredCanonicalChunks(value,measure);let count=0;at('before');for(let step=chunks.next();!step.done;step=chunks.next())if(++count===1)at('first');at('end');return count;};
+ for(const [name,change] of Object.entries(changes)){
+  // Changed before the walk and kept through the check.
+  {const {body,fileContents}=await decode(root),measure={},restore=change();try{await collect(api.packageJsonChunks(body,fileContents,measure));assert.equal(measure.skeleton,undefined,'HISTORY_MEASURED_SKELETON_BEFORE_WALK_ORACLE '+name+': a walk under changed natives was measured');assert.equal(api.hashedSkeletonBytes(measure,body),undefined,'HISTORY_MEASURED_SKELETON_BEFORE_WALK_ORACLE '+name);}finally{restore();}}
+  // Changed before the first step and restored right after it: only the
+  // check before that step sees it.
+  {const {body}=await decode(root),measure={};let restore=null;const steps=walk(body.project,measure,event=>{if(event==='before')restore=change();else if(event==='first'&&restore){restore();restore=null;}});if(restore)restore();
+   assert.ok(steps>=2,'HISTORY_MEASURED_SKELETON_FIXTURE: skeleton steps');assert.equal(measure.skeleton,undefined,'HISTORY_MEASURED_SKELETON_START_GUARD_ORACLE '+name+': a change spanning the first step was not seen');}
+  // Changed after the first step and restored after the last: only the
+  // check after that step sees it.
+  {const {body}=await decode(root),measure={};let restore=null;walk(body.project,measure,event=>{if(event==='first')restore=change();else if(event==='end'&&restore){restore();restore=null;}});if(restore)restore();
+   assert.equal(measure.skeleton,undefined,'HISTORY_MEASURED_SKELETON_END_GUARD_ORACLE '+name+': a change spanning the last step was not seen');}
+  // Changed after a measured walk, before the check uses its count.
+  {const {body,fileContents}=await decode(root),measure={};await collect(api.packageJsonChunks(body,fileContents,measure));assert.equal(measure.skeleton,body.project,'HISTORY_MEASURED_SKELETON_FIXTURE: measured');
+   const restore=change();try{assert.equal(api.hashedSkeletonBytes(measure,body),undefined,'HISTORY_MEASURED_SKELETON_USE_GUARD_ORACLE '+name+': a count was used under changed natives');}finally{restore();}
+   assert.equal(api.hashedSkeletonBytes(measure,body),measure.bytes,'HISTORY_MEASURED_SKELETON_USE_ORACLE '+name+': restored natives');}
+  cases.push({name:'measured-skeleton:guards:'+name});
+ }
+ // The real cold read path: an export's cold reads use their counts.
+ {const used=[];hooks.use=value=>used.push(value);try{assert.equal((await store.exportPackage(jobId)).type,'application/gzip');}finally{delete hooks.use;}
+  assert.ok(used.length>=2&&used.every(value=>typeof value==='number'),'HISTORY_MEASURED_SKELETON_USED_ORACLE: a cold export read walked its skeleton again '+JSON.stringify(used));
+  cases.push({name:'measured-skeleton:export-uses-count',reads:used.length});}
+ // A native changed after a real read's digest and restored once its check
+ // has run: that read walks, and the export completes.
+ for(const [name,change] of Object.entries(changes)){
+  let state=null;hooks.read=info=>{if(!state&&info.measured)state={restore:change()};};hooks.use=value=>{if(state&&!state.done){state.restore();state.done=true;state.value=value;}};
+  try{assert.equal((await store.exportPackage(jobId)).type,'application/gzip');}finally{delete hooks.read;delete hooks.use;if(state&&!state.done)state.restore();}
+  assert.ok(state?.done,'HISTORY_MEASURED_SKELETON_FIXTURE: a measured read reached its check');
+  assert.equal(state.value,undefined,'HISTORY_MEASURED_SKELETON_READ_USE_GUARD_ORACLE '+name+': a read used its count under natives changed after its digest');
+  cases.push({name:'measured-skeleton:read-use-guard:'+name});
+ }
+ return cases;
+}
+
 // Every part-custody loop goes through historyPartFiles. Any other loop over a
 // part list's entries outside the owners allowed to read entries fails here.
 // For a one-segment array without extracted strings this scan is the guard:
@@ -454,6 +570,6 @@ export function verifyHistoryPartCustodySites(source){
 
 export async function verifyHistorySegmentedParts({source=fs.readFileSync(new URL('./project-store.js',import.meta.url),'utf8')}={}){
  const blankRuntime=projectStoreRuntime({storageWorker:false}),blank=blankRuntime.core.createBlankState('HISTORY-SEGMENTED-BLANK');blankRuntime.engine.ensureShape(blank);blankRuntime.engine.recalculate(blank);
- const custody=verifyHistoryPartCustodySites(source),encoder=await encoderCases(source,JSON.parse(JSON.stringify(blank))),stored=await storeCases(source);
- return {historySegmentedParts:'PASS',synthetic:true,actualBrowser:false,custody,cases:[...encoder,...stored]};
+ const custody=verifyHistoryPartCustodySites(source),encoder=await encoderCases(source,JSON.parse(JSON.stringify(blank))),stored=await storeCases(source),measured=await verifyHistoryMeasuredSkeleton({source});
+ return {historySegmentedParts:'PASS',synthetic:true,actualBrowser:false,custody,cases:[...encoder,...stored,...measured]};
 }
