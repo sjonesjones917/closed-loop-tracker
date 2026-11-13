@@ -107,6 +107,10 @@ const CAPTURED_FIELDS_COMPARED='  for(let index=0;index<fields.length;index++)if
 const PACKAGE_PASS_NATIVES='function packageDigestNativesUnchanged(baseline){return Boolean(baseline)&&hash.canonicalDigestScopeMatches(baseline,null)&&rootDigestPrimitivesUnchanged(initialRootDigestPrimitives);}';
 // The P1 re-binding's re-read of the checkpoint's files.
 const RETAINED_FILES='    for(let index=0;index<proof.artifactBytes.length;index+=2){const file=await metaGet(historyFileKey(jobId,proof.artifactBytes[index]));';
+// The mint's record, the baseline confirmed before it, and the checks after it.
+const MINT_RECORD_BEFORE='    if(!packageDigestNativesUnchanged(nullRootDigestScope))return;\n    const record=';
+const MINT_RECORD_AFTER='    if(!packageDigestNativesUnchanged(nullRootDigestScope)||!historyProofInputsCurrent(inputs))return;';
+const MINT_CREDENTIAL='artifactsSha256:body.artifactManifestSha256,descriptorsSha256:historyDescriptorRowsSha256(body.artifacts),credential,viewChecked,';
 const EXPORT_ROUTE="  if(useStoreWorker())return requestStoreWorker('EXPORT_PACKAGE',[jobId,{passphrase,historyRecovery}]);\n";
 // The measured watchdog (project-store.js HISTORY_WATCHDOG_MEASUREMENT),
 // re-derived here from its stated arithmetic at the declared History limits.
@@ -173,6 +177,16 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  // Retained-version checks the other owners carry into proofs.
  'mint-certificate-unchecked':fault(['permissive-writer'],'HISTORY_PROOF_PERMISSIVE_WRITER_ORACLE',[['if(proofValidators&&digests.projectSha256===verifiedProjectSha256&&digests.workSha256===verifiedWorkSha256){assertProjectIntegrity(project,{verifyDerived:false});proofBasis','if(proofValidators){proofBasis']]),
  'ignore-proven-credential':fault(['credential'],'HISTORY_PROOF_CREDENTIAL_ORACLE',[['      if(proven)requiresEncryption=requiresEncryption||proven.credential;','      if(proven){}']]),
+ // The mint's credential scanned in its record, after replaceable code that
+ // received the decoded lineage ran (the inventory check's prompt-context hook).
+ 'mint-credential-from-body':fault(['credential'],'HISTORY_PROOF_CREDENTIAL_ORACLE',[[MINT_CREDENTIAL,MINT_CREDENTIAL.replace(',credential,',',credential:containsCredentialSecret(body),')]]),
+ // The decode's credential scan without the baseline confirmed around it.
+ 'decoded-credential-unbracketed':fault(['credential'],'HISTORY_PROOF_CREDENTIAL_ORACLE',[['function decodedCredentialFact(payload){\n','function decodedCredentialFact(payload){return containsCredentialSecret(payload);\n']]),
+ // The mint's record built without the baseline confirmed before and after it.
+ 'mint-record-unbracketed':fault(['credential'],'HISTORY_PROOF_MINT_FACTS_ORACLE',[[MINT_RECORD_BEFORE,'    const record='],[MINT_RECORD_AFTER,'    if(!historyProofInputsCurrent(inputs))return;']]),
+ // The mint's inventory digest computed through clone's prompt-context hook
+ // before its record (hook-calling facts first, then the guarded facts).
+ 'mint-calls-clone-hook':fault(['credential'],'HISTORY_PROOF_MINT_FACTS_ORACLE',[[MINT_RECORD_BEFORE,'    const inventorySha256=historyArtifactsSha256(body.artifacts);\n'+MINT_RECORD_BEFORE],[MINT_CREDENTIAL,MINT_CREDENTIAL.replace('artifactsSha256:body.artifactManifestSha256,','artifactsSha256:inventorySha256,')]]),
  // Worker transport: watchdogs, unconfirmed exports, captured inputs.
  'watchdog-armed-at-post':fault(['watchdog'],'HISTORY_PROOF_WATCHDOG_QUEUE_ORACLE',[['  const head=workerRequests.values().next().value;\n  if(!head||head.timer!==null)return;','  const head=[...workerRequests.values()].findLast(row=>row.timer===null);\n  if(!head)return;']]),
  'export-unconfirmed-claimed-unchanged':fault(['unconfirmed-export'],'HISTORY_PROOF_UNCONFIRMED_EXPORT_ORACLE',[['      if(receipt===undefined){pending.reject(Object.assign(error,{existingProjectsUnchanged:error?.existingProjectsUnchanged!==false}));return;}\n      await clearWorkerCommit(pending.operationId);pending.reject(Object.assign(error,{existingProjectsUnchanged:false}));','      pending.reject(Object.assign(error,{existingProjectsUnchanged:true}));']]),
@@ -206,9 +220,16 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
  // self-undoing baseline-native change at an entry poisons a digest later
  // checks reuse.
  'parts-digest-skip-baseline':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_SWAP_ORACLE',[['  if(held!==undefined)return held.baselineConfirmed&&Object.isFrozen(parts)?held.digest:hash.sha256Value(parts);','  if(held!==undefined)return held.digest;'],['baselineConfirmed:before&&packageDigestNativesUnchanged(nullRootDigestScope)&&Object.isFrozen(parts)});','baselineConfirmed:true});']]),
- // The list is not frozen after it is digested, so an in-place change across
- // the awaits before a reuse (foreign code that captured it) is reused stale.
- 'parts-list-unfrozen':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_SWAP_ORACLE',[['  if(before)freezePartsListTree(parts);\n','']]),
+ // The list is not frozen after it is digested: every reuse site's
+ // Object.isFrozen gate then digests it afresh, so its held digest is never
+ // served (the saving lost, the outcome unchanged).
+ 'parts-list-unfrozen':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_REUSE_ORACLE',[['  if(before)freezePartsListTree(parts);\n','']]),
+ // The list not frozen and its digest still reused (the freeze and every
+ // Object.isFrozen gate removed), so an in-place change across the awaits
+ // before a reuse (foreign code that captured it) is reused stale.
+ 'parts-list-unfrozen-reused':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_SWAP_ORACLE',[['  if(before)freezePartsListTree(parts);\n',''],['  if(held!==undefined)return held.baselineConfirmed&&Object.isFrozen(parts)?held.digest:hash.sha256Value(parts);','  if(held!==undefined)return held.baselineConfirmed?held.digest:hash.sha256Value(parts);'],['baselineConfirmed:before&&packageDigestNativesUnchanged(nullRootDigestScope)&&Object.isFrozen(parts)});','baselineConfirmed:before&&packageDigestNativesUnchanged(nullRootDigestScope)});'],['  return held?.baselineConfirmed&&Object.isFrozen(parts)&&packageDigestNativesUnchanged(nullRootDigestScope)?held.digest:hash.sha256Value(parts);','  return held?.baselineConfirmed&&packageDigestNativesUnchanged(nullRootDigestScope)?held.digest:hash.sha256Value(parts);']]),
+ // A memo that stores every list's digest and never serves one.
+ 'parts-digest-never-served':fault(['digest-spans'],'HISTORY_PROOF_PARTS_DIGEST_REUSE_ORACLE',[['baselineConfirmed:before&&packageDigestNativesUnchanged(nullRootDigestScope)&&Object.isFrozen(parts)});','baselineConfirmed:false});']]),
  // packageProjectDigest caches the unguarded projectSha256(project) fallback
  // across sites when the pass is unavailable, so bindRestoredCandidates stores a
  // digest a native changed at the recovery check instead of digesting afresh.
@@ -246,7 +267,8 @@ export const HISTORY_PROOF_FAULTS=Object.freeze({
 // of cold root validations, snapshot decodes and proof hits, a hook on each
 // hit, the package encoder (to re-encode edited backups), a shift of every
 // pair proof's derivedAt (the worker's clock reading earlier than every
-// derivation), and the module-private checks for layer tests.
+// derivation), the module-private checks for layer tests, and a hook right
+// after a snapshot's decode (__onSnapshotDecoded).
 export function observed(source){
  source=replaceOnce(source,LEDGER,LEDGER+`globalThis.__historyProofLedger={
   roots:()=>[...historyRootProofs.values()].flatMap(bucket=>[...bucket.values()]).map(proof=>({kind:proof.kind,jobId:proof.jobId,snapshotSha256:proof.snapshotSha256,id:proof.id,rootSnapshotSha256:proof.rootSnapshotSha256,verifiedProjectSha256:proof.verifiedProjectSha256,verifiedWorkSha256:proof.verifiedWorkSha256})),
@@ -259,7 +281,7 @@ export function observed(source){
   restore:saved=>{historyRootProofs.clear();for(const [job,bucket] of saved.roots)historyRootProofs.set(job,new Map(bucket));historyPairProofs.clear();for(const [job,bucket] of saved.pairs)historyPairProofs.set(job,new Map(bucket));}};
  globalThis.__compressPackage=(body,fileContents)=>compressPackage(body,fileContents);`,'ledger');
  source=replaceOnce(source,COLD_ROOT,'if(globalThis.__historyCounts)globalThis.__historyCounts.coldRoots++;'+COLD_ROOT,'cold-root');
- source=replaceOnce(source,SNAPSHOT_DECODE,'if(globalThis.__historyCounts)globalThis.__historyCounts.decodes++;'+SNAPSHOT_DECODE,'decode');
+ source=replaceOnce(source,SNAPSHOT_DECODE,'if(globalThis.__historyCounts)globalThis.__historyCounts.decodes++;'+SNAPSHOT_DECODE+'globalThis.__onSnapshotDecoded?.(payload);','decode');
  source=replaceOnce(source,EXPORT_HIT,"    historyProofUsed(operation,proof);if(globalThis.__historyCounts)globalThis.__historyCounts.exportHits++;globalThis.__onProofHit?.('export');\n    return {payload:",'export-hit');
  source=replaceOnce(source,IMPORT_HIT,IMPORT_HIT+"if(globalThis.__historyCounts){globalThis.__historyCounts.importHits++;globalThis.__historyCounts.importHitIds.push(String(entry.id));}globalThis.__onProofHit?.('import');",'import-hit');
  source=insertBeforeFirst(source,RETAINED_REBOUND,"    globalThis.__onImportReuse?.('retained-rebound');\n",'retained-rebound');
@@ -278,11 +300,17 @@ export function observed(source){
  source=replaceOnce(source,ACTIVE_WORK,"?(globalThis.__digestSpan?.use('package-work',packageDigests.workSha256,()=>historyWorkSha256(project)),packageDigests.workSha256):historyWorkSha256(project));globalThis.__digestSpan?.open('active-work');",'active-work');
  source=replaceOnce(source,ACTIVE_WORK_REUSE,"?(globalThis.__digestSpan?.use('active-work',activeWorkMatches,()=>historyWorkSha256(importedActive.project)===historyWorkSha256(project)),activeWorkMatches):historyWorkSha256(importedActive.project)===historyWorkSha256(project))){",'active-work-reuse');
  // Every call with an operation's digests reports that map, the digest it
- // returns and a fresh computation; a shared capture reports its skipped check.
- source=replaceOnce(source,PARTS_DIGEST,"function historyPartsDigest(parts,operation=null,inputs=null){const digests=operation&&operation.partsDigests,held=Boolean(digests&&parts&&typeof parts==='object'&&digests.has(parts)),value=historyPartsDigestObserved(parts,operation,inputs);if(digests)globalThis.__partsDigest?.(digests,parts,value,()=>hash.sha256Value(parts),held);return value;}\nfunction historyPartsDigestObserved(parts,operation=null,inputs=null){if(globalThis.__noPartsMemo&&operation&&parts&&typeof parts==='object')return hash.sha256Value(parts);",'parts-digest');
- // The conflict check reports whether an operation's digest stood in, and a
- // fresh computation in its own turn.
- source=replaceOnce(source,CONFLICT_DIGEST,"function historyConflictPartsDigest(parts,digests){const held=digests&&parts&&typeof parts==='object'?digests.get(parts):undefined,value=historyConflictPartsDigestObserved(parts,digests);if(digests)globalThis.__conflictDigest?.(digests,value,()=>hash.sha256Value(parts),Boolean(held)&&value===held.digest);return value;}\nfunction historyConflictPartsDigestObserved(parts,digests){",'conflict-digest');
+ // returns, a fresh computation, whether it served the operation's held digest
+ // (the list was held and the call digested nothing itself, whatever condition
+ // decided it) and whether the list was held; a shared capture reports its
+ // skipped check.
+ source=replaceOnce(source,PARTS_DIGEST,"function historyPartsDigest(parts,operation=null,inputs=null){const digests=operation&&operation.partsDigests,held=Boolean(digests&&parts&&typeof parts==='object'&&digests.has(parts)),fresh=observedPartsDigests,value=historyPartsDigestObserved(parts,operation,inputs);if(digests)globalThis.__partsDigest?.(digests,parts,value,()=>hash.sha256Value(parts),held&&observedPartsDigests===fresh,held);return value;}\nlet observedPartsDigests=0;function observedPartsDigest(parts){observedPartsDigests++;return hash.sha256Value(parts);}\nfunction historyPartsDigestObserved(parts,operation=null,inputs=null){if(globalThis.__noPartsMemo&&operation&&parts&&typeof parts==='object')return hash.sha256Value(parts);",'parts-digest');
+ source=freshDigestsCounted(source,'function historyPartsDigestObserved(','parts-digest-fresh');
+ // The conflict check reports whether its own condition chose an operation's
+ // held digest (the call digested nothing itself), and a fresh computation in
+ // its own turn.
+ source=replaceOnce(source,CONFLICT_DIGEST,"function historyConflictPartsDigest(parts,digests){const held=digests&&parts&&typeof parts==='object'?digests.get(parts):undefined,fresh=observedPartsDigests,value=historyConflictPartsDigestObserved(parts,digests);if(digests)globalThis.__conflictDigest?.(digests,value,()=>hash.sha256Value(parts),Boolean(held)&&observedPartsDigests===fresh);return value;}\nfunction historyConflictPartsDigestObserved(parts,digests){",'conflict-digest');
+ source=freshDigestsCounted(source,'function historyConflictPartsDigestObserved(','conflict-digest-fresh');
  source=insertAfterFirst(source,PAIR_INPUTS,"globalThis.__digestSpan?.open('pair-inputs');",'pair-inputs');
  source=replaceOnce(source,PAIR_INPUTS_SHARED,"    if(pair.natives===proof.natives&&pair.primitive===proof.primitive)globalThis.__digestSpan?.use('pair-inputs',true,()=>historyProofInputsCurrent(proof));\n"+PAIR_INPUTS_SHARED,'pair-inputs-shared');
  source=replaceOnce(source,RESTORED_ROOT,RESTORED_ROOT+"if(globalThis.__historyCounts){globalThis.__historyCounts.restoredRoots++;globalThis.__historyCounts.restoredRootIds.push(String(entry.id));}",'restored-root');
@@ -296,6 +324,15 @@ export function observed(source){
  // predicate selects, raised where the derived check runs.
  source=replaceOnce(source,RECOVERY_DERIVED,"if(globalThis.__recoveryRefusal?.(project))throw Object.assign(storageError('Canonical project integrity validation failed: Injected recovery-compatibility refusal.','PROJECT_INTEGRITY_FAILED'),{issues:['Injected recovery-compatibility refusal.']});"+RECOVERY_DERIVED,'recovery-refusal');
  return source;
+}
+// Within one observed function (its header up to the closing brace of its
+// definition), every fresh parts digest is counted (observedPartsDigest).
+function freshDigestsCounted(source,header,label){
+ const start=source.indexOf(header),end=source.indexOf('\n}\n',start);
+ assert.ok(start>=0&&end>start&&source.indexOf(header,start+1)<0,'HISTORY_PROOF_ANCHOR_ORACLE '+label);
+ const body=source.slice(start,end),counted=body.split('hash.sha256Value(parts)').join('observedPartsDigest(parts)');
+ assert.ok(counted!==body,'HISTORY_PROOF_ANCHOR_ORACLE '+label+': no fresh digest to count');
+ return source.slice(0,start)+counted+source.slice(end);
 }
 const counts=()=>({coldRoots:0,decodes:0,exportHits:0,importHits:0,importHitIds:[],retainedHits:0,restoredRoots:0,restoredRootIds:[]});
 const workerEnvironment=name=>({__historyCounts:counts(),location:{search:`?v=${name}&storeWorker=1&storeContext=${name}-PAGE`},URLSearchParams,importScripts(){},addEventListener(){},postMessage(){}});
@@ -781,6 +818,101 @@ async function credentialSection(context){
  assert.equal(refused.code,'BACKUP_PASSPHRASE_REQUIRED','HISTORY_PROOF_CREDENTIAL_ORACLE: a proven retained secret still requires a backup password');
  assert.deepEqual(refused,cold,'HISTORY_PROOF_CREDENTIAL_ORACLE: identical to the cold export');
  emit('HISTORY-PROOF-RETAINED-CREDENTIAL',{code:refused.code,exportHits:hits});
+ for(const label of MINT_CREDENTIAL_CASES)await mintCredentialCase(context,label);
+}
+// The facts a mint records, the password-deciding credential first, are those
+// of the stored bytes under replaceable code that runs in or before the mint.
+// clone's prompt-context hook (closedLoopPromptEngine.copyRetainedPromptContextFiles,
+// part of the captured validator graph, so a replacement installed before the
+// capture is unchanged to every input check; it receives the decoded lineage it
+// copies) is replaced in the worker by one that, while a plan is armed:
+//  mint-clone-hook: at a call inside a mint, makes Object.entries hide the
+//   credential marker until the next microtask (the review reproducer: the
+//   mint's credential scan ran after that call);
+//  mint-clone-hook-in-place: at a call inside a mint, deletes the marker from
+//   the decoded lineage it receives;
+//  cold-check-clone-hook-in-place: the same at the read's own inventory check
+//   (historyArtifactsSha256 in bindCheckpointBody), before its mint;
+//  cold-check-clone-hook-standing: at that inventory check, makes
+//   Object.getOwnPropertyDescriptor serve another scrollY for a saved view until
+//   the next microtask, so that the change stands into the mint of the same run;
+// and decoded-snapshot makes Object.entries hide the marker at the decode
+// (instrumented) of each snapshot holding it until the next microtask, undone
+// across the read's next await. Armed over the flow that mints the versions of a retained secret and a
+// protected export; then, unarmed, every root proof of the job carries the
+// facts of its stored bytes (cold-check-clone-hook-in-place: the credential,
+// since every realm's inventory check reads the changed rows alike and only the
+// cold export classifies a private decode), and a password-less export refuses
+// exactly as a cold page-realm store does. changes counts what the plan did;
+// a mint calls no prompt-context hook, so the in-mint plans never act.
+export const MINT_CREDENTIAL_CASES=Object.freeze(['mint-clone-hook','mint-clone-hook-in-place','cold-check-clone-hook-in-place','cold-check-clone-hook-standing','decoded-snapshot']);
+const CREDENTIAL_KEYS=['DISCLOSURE_CLASSIFICATION','disclosureClassification'];
+const credentialMarked=item=>Boolean(item)&&typeof item==='object'&&CREDENTIAL_KEYS.some(key=>item[key]==='CREDENTIAL_SECRET');
+const holdsCredential=value=>Boolean(value)&&typeof value==='object'&&Object.entries(value).some(([key,item])=>(CREDENTIAL_KEYS.includes(key)&&item==='CREDENTIAL_SECRET')||holdsCredential(item));
+function installCredentialHook(t){
+ const original=t.closedLoopPromptEngine;
+ t.closedLoopPromptEngine=Object.freeze({...original,copyRetainedPromptContextFiles(value,copy){t.__credentialPlan?.atClone(value,walkFrames());return original.copyRetainedPromptContextFiles(value,copy);}});
+}
+function credentialPlan(t,label){
+ const plan={changes:0,active:false,undo(){}};
+ const inMint=stack=>stack.some(frame=>frame.startsWith('mintHistorySnapshotProof'));
+ const atInventoryCheck=stack=>!inMint(stack)&&stack.some(frame=>frame.startsWith('historyArtifactsSha256'))&&stack.some(frame=>frame.startsWith('bindCheckpointBody'));
+ // A change of a realm native, undone at the next microtask.
+ const change=(target,key,make)=>{
+  if(plan.active)return;plan.active=true;plan.changes++;
+  const d=Object.getOwnPropertyDescriptor(target,key),original=d.value;
+  plan.undo=()=>{if(plan.active){plan.active=false;Object.defineProperty(target,key,d);}};
+  Object.defineProperty(target,key,{...d,value:make(original)});t.queueMicrotask(()=>plan.undo());
+ };
+ const hideMarker=()=>change(t.Object,'entries',entries=>function(item){const result=Reflect.apply(entries,this,[item]);return plan.active&&credentialMarked(item)?result.filter(([key])=>!CREDENTIAL_KEYS.includes(key)):result;});
+ const deleteMarker=value=>{if(!credentialMarked(value))return;plan.changes++;for(const key of CREDENTIAL_KEYS)delete value[key];};
+ const otherScroll=gopd=>function(target,key){const result=Reflect.apply(gopd,this,[target,key]);return plan.active&&key==='scrollY'&&result&&target&&typeof target==='object'&&Object.prototype.hasOwnProperty.call(target,'activeView')&&typeof result.value==='number'?{...result,value:result.value+1000}:result;};
+ plan.atClone=(value,stack)=>{
+  if(label==='mint-clone-hook'&&inMint(stack))hideMarker();
+  else if(label==='mint-clone-hook-in-place'&&inMint(stack))deleteMarker(value);
+  else if(label==='cold-check-clone-hook-in-place'&&atInventoryCheck(stack))deleteMarker(value);
+  else if(label==='cold-check-clone-hook-standing'&&atInventoryCheck(stack))change(t.Object,'getOwnPropertyDescriptor',otherScroll);
+ };
+ plan.atDecode=payload=>{if(label==='decoded-snapshot'&&holdsCredential(payload))hideMarker();};
+ return plan;
+}
+// Every root proof of the job, against the facts of its stored bytes decoded
+// and digested here (in the worker realm, its natives restored).
+async function mintedFactMismatches(b,jobId,credentialOnly){
+ const realm=b.worker().realm,t=realm.runtime,ledger=ownLedger(t),{metaGet,snapshotKey}=ledger.internals(),digest=value=>t.closedLoopHash.sha256Value(realm.copy(value));
+ const proofs=[...ledger.save().roots.values()].flatMap(bucket=>[...bucket.values()]).filter(proof=>proof.jobId===String(jobId)),credential=[],facts=[];
+ for(const proof of proofs){
+  const saved=await metaGet(snapshotKey(jobId,proof.id)),{packageSha256,...body}=JSON.parse(gunzipSync(Buffer.from(await saved.blob.arrayBuffer())).toString('utf8'));
+  if(proof.credential!==holdsCredential(body))credential.push(proof.kind+' '+proof.id+' credential '+proof.credential);
+  if(credentialOnly)continue;
+  const expected={activeStage:Number(body.view?.activeStage),viewSha256:digest(body.view),descriptorsSha256:digest(body.artifacts),projectPartsSha256:digest(body.projectParts||null),projectReferenceSha256:digest(body.projectReference||null),artifactsSha256:body.artifactManifestSha256};
+  for(const [field,value] of Object.entries(expected))if(proof[field]!==value)facts.push(proof.kind+' '+proof.id+' '+field);
+ }
+ return {proofs:proofs.length,credential,facts};
+}
+async function mintCredentialCase(context,label){
+ const {source,production,emit}=context;
+ const b=browser(source,null,{onWorker:realm=>installCredentialHook(realm.runtime)}),{store,page}=b;
+ let p=await store.createProject({commandId:'HISTORY-PROOF-REUSE-MINT-'+label});const jobId=p.job.JOB_ID,t=b.worker().realm.runtime;
+ const plan=credentialPlan(t,label);t.__credentialPlan=plan;t.__onSnapshotDecoded=payload=>plan.atDecode(payload);
+ let protectedType;
+ try{
+  await store.putArtifact({artifactId:'HISTORY-PROOF-MINT-SECRET',jobId,blob:new Blob(['Exact retained secret bytes.']),filename:'retained-secret.bin',lineage:page.copy({stage:1,DISCLOSURE_CLASSIFICATION:'CREDENTIAL_SECRET'})});
+  p=await store.readProject(jobId);
+  await store.saveCheckpoint(jobId,{expectedProjectRevision:p.revision,label:'Saved view'});
+  await store.deleteArtifact('HISTORY-PROOF-MINT-SECRET',jobId);
+  protectedType=(await store.exportPackage(jobId,{passphrase:'history proof mint passphrase'})).type;
+ }finally{plan.undo();delete t.__credentialPlan;delete t.__onSnapshotDecoded;}
+ assert.equal(protectedType,'application/vnd.closed-loop.encrypted+json','HISTORY_PROOF_CREDENTIAL_FIXTURE_ORACLE '+label+': the retained secret requires protection');
+ const minted=await mintedFactMismatches(b,jobId,label==='cold-check-clone-hook-in-place');
+ assert.deepEqual(minted.credential,[],'HISTORY_PROOF_CREDENTIAL_ORACLE '+label+': a proof carries another credential classification than its stored bytes');
+ assert.deepEqual(minted.facts,[],'HISTORY_PROOF_MINT_FACTS_ORACLE '+label+': a proof carries other facts than its stored bytes');
+ assert.ok(minted.proofs>0,'HISTORY_PROOF_CREDENTIAL_FIXTURE_ORACLE '+label+': the job holds proofs');
+ const held=copyRows(b.rows,page),refused=await exportOutcome(store,jobId),cold=await exportOutcome(coldCopy(held,production).store,jobId);
+ assert.equal(refused.code,'BACKUP_PASSPHRASE_REQUIRED','HISTORY_PROOF_CREDENTIAL_ORACLE '+label+': a proven retained secret still requires a backup password');
+ assert.deepEqual(refused,cold,'HISTORY_PROOF_CREDENTIAL_ORACLE '+label+': identical to the cold export');
+ if(!label.startsWith('mint-'))assert.ok(plan.changes>0,'HISTORY_PROOF_CREDENTIAL_FIXTURE_ORACLE '+label+': the plan acted');
+ emit('HISTORY-PROOF-RETAINED-CREDENTIAL-'+label,{code:refused.code,proofs:minted.proofs,factsEqual:true,changes:plan.changes});
 }
 
 // 7. The measured, finite History watchdog: EXPORT_PACKAGE and IMPORT_PACKAGE
@@ -1330,14 +1462,19 @@ async function partsDigestSwaps(context){
   emit('HISTORY-PROOF-PARTS-SWAP-baseline-native',{refused:!same.ok,code:same.code??null,equalToParent:true});
  }
  // captured-mutation: once the target's first digest is held, a microtask
- // swaps its two segments in place. The frozen list defeats it; the untampered
- // backup imports exactly as without the mutation.
+ // swaps its two segments in place. The list is frozen once digested, so the
+ // swap is attempted and refused (a TypeError on the frozen list) and the list
+ // still holds its original order after the import; the untampered backup
+ // imports exactly as without the mutation.
  {
-  const armMutation=t=>{let done=false;t.__partsDigest=(digests,parts,value,fresh,heldBefore)=>{if(!done&&!heldBefore&&parts?.entries?.[partIndex]?.segments?.[0]?.sha256===seg0&&parts.entries[partIndex].segments[1]?.sha256===seg1&&parts.schema===SEGMENTED){done=true;const list=parts.entries[partIndex].segments;queueMicrotask(()=>{try{[list[0],list[1]]=[list[1],list[0]];}catch{/* frozen: the mutation is defeated */}});}};return ()=>{};};
+  const mutation={attempted:0,refused:0,applied:0,list:null};
+  const armMutation=t=>{let done=false;t.__partsDigest=(digests,parts,value,fresh,served,held)=>{if(!done&&!held&&parts?.entries?.[partIndex]?.segments?.[0]?.sha256===seg0&&parts.entries[partIndex].segments[1]?.sha256===seg1&&parts.schema===SEGMENTED){done=true;const list=mutation.list=parts.entries[partIndex].segments;queueMicrotask(()=>{mutation.attempted++;try{[list[0],list[1]]=[list[1],list[0]];mutation.applied++;}catch(error){if(error?.name==='TypeError'&&Object.isFrozen(list))mutation.refused++;else throw error;}});}};return ()=>{};};
   const withMutation=await run(backup,armMutation,false),plain=await run(backup,()=>()=>{},false);
+  const originalOrder=mutation.list?.[0]?.sha256===seg0&&mutation.list?.[1]?.sha256===seg1;
+  assert.deepEqual([mutation.attempted,mutation.refused,mutation.applied,originalOrder],[1,1,0,true],'HISTORY_PROOF_PARTS_DIGEST_SWAP_ORACLE captured-mutation: the in-place swap of the digested list was not attempted and refused, or the list lost its order');
   assert.deepEqual(withMutation,plain,'HISTORY_PROOF_PARTS_DIGEST_SWAP_ORACLE captured-mutation: an in-place change of a frozen list across an await changed the import');
   assert.equal(withMutation.ok,true,'HISTORY_PROOF_PARTS_DIGEST_SWAP_ORACLE captured-mutation: the untampered backup imports');
-  emit('HISTORY-PROOF-PARTS-SWAP-captured-mutation',{refused:!withMutation.ok,code:withMutation.code??null,equalToUnmutated:true});
+  emit('HISTORY-PROOF-PARTS-SWAP-captured-mutation',{refused:!withMutation.ok,code:withMutation.code??null,equalToUnmutated:true,mutationRefused:true});
  }
 }
 async function digestSpansSection(context){
@@ -1345,7 +1482,9 @@ async function digestSpansSection(context){
  const b=browser(source),{jobId}=await fixture(b);
  assert.equal((await exportOutcome(b.store,jobId)).ok,true,'HISTORY_PROOF_DIGEST_SPAN_FIXTURE_ORACLE: the minting export');
  // P4: each parts-list digest an operation holds, observed with a fresh
- // computation at every call; a hit is a call the operation's digests answered.
+ // computation at every call; a hit is a call the operation's held digest
+ // answered (it digested nothing itself), and a conflict reuse a conflict check
+ // whose own condition chose the held digest.
  const partsCalls=[],pairInputReuses=[],conflictCalls=[];
  const spanImport=async(label,blob,expected,between=null)=>{
   const ids=(await backupBody(blob)).recovery.entries.map(entry=>entry.id),before=copyRows(b.rows,b.page),worker=b.worker().realm.runtime,spans=digestSpans(worker,between),calls=[],conflicts=[];let same;
@@ -1527,7 +1666,13 @@ async function restoredRootsSection(context){
   'recovery-refusal':{blob:backup,realm:refuseMarked},
   // The second segment relabelled (a retained part no longer named), its
   // segment count raised, and the /2 entry's declared projectBytes raised: each
-  // refused by the Tier 1.5 restore's own checks exactly as a cold store.
+  // refused exactly as a cold store, never at the Tier 1.5 restore itself (every
+  // archive member is hashed at intake and a root's part list and declared
+  // bytes are bound to its snapshot): the relabelled segment, which other
+  // versions still name by its old digest, before the History loop by the
+  // archive's part-size check (no root restored); the segment count and the
+  // declared bytes by the segmented root's own read, before its restore, once
+  // the archived root before it was restored under its proof.
   'segment-member-relabeled':{blob:await edited(async copy=>{const part=segOf(copy),member=copy.artifacts.find(a=>a.archiveKind==='RECOVERY_BYTES'&&a.sha256===part.sha256),bytes=Buffer.concat([Buffer.from(member.base64,'base64'),Buffer.from(' ')]);const info=copy.recovery.files[part.sha256];delete copy.recovery.files[part.sha256];const sha256=await setMemberBytes(b.worker().realm,copy,member,bytes);member.filename=sha256+'.bin';member.artifactId='RECOVERY-BYTES-'+sha256;const row=copy.packageManifest.artifacts.find(a=>a.sha256===sha256);Object.assign(row,{artifactId:member.artifactId,filename:member.filename});copy.recovery.files[sha256]={...info,byteSize:bytes.length};copy.recovery.retainedFileBytes+=bytes.length-info.byteSize;part.sha256=sha256;part.byteSize=bytes.length;})},
   'segment-count':{blob:await edited(copy=>{segOf(copy).count++;})},
   'project-bytes':{blob:await edited(copy=>{copy.recovery.entries.find(entry=>entry.id===segTarget.id).projectBytes++;})}

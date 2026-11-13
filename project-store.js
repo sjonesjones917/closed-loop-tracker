@@ -2534,18 +2534,36 @@ function captureHistoryProofInputs(){
   lastHistoryProofInputs=Object.freeze({primitive:initialRootDigestPrimitives,natives});return lastHistoryProofInputs;
 }
 function historyProofInputsCurrent(inputs){return Boolean(inputs)&&rootDigestPrimitivesUnchanged(inputs.primitive)&&historyProofNativesUnchanged(inputs.natives);}
+// The credential classification of a decoded snapshot (containsCredentialSecret,
+// which dispatches through Object.entries, Array.prototype.some and includes
+// and the array iterator: the digest-scope native baseline), computed on the
+// value as decoded, plain JSON data no replaceable code has received a part
+// of, under that baseline and the digest primitives confirmed in this
+// synchronous turn immediately before and after it; null otherwise, and a
+// snapshot whose classification is null mints no proof.
+function decodedCredentialFact(payload){
+  if(!packageDigestNativesUnchanged(nullRootDigestScope))return null;
+  const credential=containsCredentialSecret(payload);
+  return packageDigestNativesUnchanged(nullRootDigestScope)?credential:null;
+}
 // Mint (readCheckpointBody, after its last check): the facts the cold path
 // checks of one snapshot whose stored bytes this worker decoded and verified.
 // A root mints only after both digests and the strict static check of its
 // decoded value passed (never the legacy job-pointer tolerance); for a write
 // certificate, after its byte-verified first use and the same checks of the
 // certified value. A view reference mints only when its root's proof holds
-// the same verified digests.
-function mintHistorySnapshotProof(jobId,entry,body,payload,basis,inputs,verifiedProjectSha256,verifiedWorkSha256){
+// the same verified digests. credential: decodedCredentialFact of these bytes.
+function mintHistorySnapshotProof(jobId,entry,body,credential,basis,inputs,verifiedProjectSha256,verifiedWorkSha256){
   try{
-    if(!HISTORY_ROOT_PROOFS||!basis||!inputs||!historyProofInputsCurrent(inputs))return;
+    if(!HISTORY_ROOT_PROOFS||!basis||!inputs||typeof credential!=='boolean'||!historyProofInputsCurrent(inputs))return;
     const scalar=value=>value===null||value===undefined||['string','number','boolean'].includes(typeof value);
     if(![body.schema,body.id,body.jobId,body.parentId,body.label,body.createdAt,body.projectSha256,body.workSha256,body.artifactManifestSha256,entry.sha256].every(scalar))return;
+    // The inventory digest the record carries is the one readCheckpointBody's
+    // own inventory check established, in this synchronous run, for these
+    // artifacts (historyArtifactsSha256, which clones each lineage through the
+    // replaceable prompt-context hook): a version without one mints nothing,
+    // so that the mint runs no hook.
+    if(typeof body.artifactManifestSha256!=='string'||!body.artifactManifestSha256)return;
     let validators=basis.validators||null,rootSnapshotSha256=null;
     if(basis.kind==='reference'){
       // A reference's own checks read no validator. It is used only after its
@@ -2560,14 +2578,16 @@ function mintHistorySnapshotProof(jobId,entry,body,payload,basis,inputs,verified
     // The same proof under the same captures needs no second mint.
     const existing=historyRootProof(jobId,entry.sha256);
     if(existing&&existing.kind===basis.kind&&existing.verifiedProjectSha256===verifiedProjectSha256&&existing.verifiedWorkSha256===verifiedWorkSha256&&existing.validators===validators&&existing.primitive===inputs.primitive&&historyProofInputsCurrent(existing))return;
-    // A root mint's rootValidatorsUnchanged walk is the only point at which
-    // foreign code (a getter on a captured validator node) can run between the
-    // input checks and the record below; it now reconfirms the digest primitives
-    // and the digest-scope native baseline after the walk, so a change the walk
-    // leaves standing, the one that could poison the password-deciding credential
-    // fact, mints nothing. A reference mint runs no walk, computes its facts
-    // under the digest primitives and decode natives (historyProofInputsCurrent),
-    // and carries no credential payload of its own.
+    // Replaceable code can run in a mint only before its record: a getter on a
+    // captured validator node in a root's rootValidatorsUnchanged walk, and the
+    // captured schema's STAGE_CONTRACTS read by assertRecoveryViewFiles below.
+    // Code that ran earlier in this read (the inventory check's prompt-context
+    // hook, which receives the decoded lineage) can also have left a native
+    // changed. The record is therefore built in one synchronous span that calls
+    // no replaceable code, under the digest-scope native baseline and the digest
+    // primitives (packageDigestNativesUnchanged) confirmed immediately before
+    // and after it, from plain decoded data; a change seen at either point mints
+    // nothing. The credential fact was classified at decode.
     if(basis.kind==='root'&&!rootValidatorsUnchanged(validators))return;
     // The checks validateCheckpointArtifacts makes that read only these bytes.
     let viewChecked=false;const artifactBytes=[];
@@ -2578,9 +2598,10 @@ function mintHistorySnapshotProof(jobId,entry,body,payload,basis,inputs,verified
       if(body.view?.pendingMutation&&body.view.pendingMutation.baseProjectSha256!==body.projectSha256)throw new Error();
       viewChecked=true;
     }catch{artifactBytes.length=0;}
-    const record=Object.freeze({kind:basis.kind,jobId:String(jobId),snapshotSha256:entry.sha256,schema:body.schema,projectBytes:body.projectBytes,id:body.id,bodyJobId:body.jobId,parentId:body.parentId,label:body.label,createdAt:body.createdAt,activeStage:Number(body.view?.activeStage),artifactsArray:Array.isArray(body.artifacts),projectReferenceSha256:hash.sha256Value(body.projectReference||null),rootSnapshotSha256,hasProjectParts:Boolean(body.projectParts),projectPartsSha256:hash.sha256Value(body.projectParts||null),projectSha256:body.projectSha256,workSha256:body.workSha256,verifiedProjectSha256,verifiedWorkSha256,viewSha256:hash.sha256Value(body.view),artifactManifestSha256:body.artifactManifestSha256,artifactsSha256:historyArtifactsSha256(body.artifacts),descriptorsSha256:historyDescriptorRowsSha256(body.artifacts),credential:containsCredentialSecret(payload),viewChecked,artifactBytes:Object.freeze(artifactBytes),primitive:inputs.primitive,natives:inputs.natives,validators});
-    // Every fact above was computed in this synchronous turn.
-    if(!historyProofInputsCurrent(inputs))return;
+    if(!packageDigestNativesUnchanged(nullRootDigestScope))return;
+    const record=Object.freeze({kind:basis.kind,jobId:String(jobId),snapshotSha256:entry.sha256,schema:body.schema,projectBytes:body.projectBytes,id:body.id,bodyJobId:body.jobId,parentId:body.parentId,label:body.label,createdAt:body.createdAt,activeStage:Number(body.view?.activeStage),artifactsArray:Array.isArray(body.artifacts),projectReferenceSha256:hash.sha256Value(body.projectReference||null),rootSnapshotSha256,hasProjectParts:Boolean(body.projectParts),projectPartsSha256:hash.sha256Value(body.projectParts||null),projectSha256:body.projectSha256,workSha256:body.workSha256,verifiedProjectSha256,verifiedWorkSha256,viewSha256:hash.sha256Value(body.view),artifactManifestSha256:body.artifactManifestSha256,artifactsSha256:body.artifactManifestSha256,descriptorsSha256:historyDescriptorRowsSha256(body.artifacts),credential,viewChecked,artifactBytes:Object.freeze(artifactBytes),primitive:inputs.primitive,natives:inputs.natives,validators});
+    // Every fact above was computed in this synchronous span.
+    if(!packageDigestNativesUnchanged(nullRootDigestScope)||!historyProofInputsCurrent(inputs))return;
     retainHistoryProof(historyRootProofs,jobId,entry.sha256,record);
   }catch{/* An unproven snapshot keeps the cold path. */}
 }
@@ -2591,9 +2612,14 @@ function mintHistorySnapshotProof(jobId,entry,body,payload,basis,inputs,verified
 // these validators. A later non-strict outcome withdraws the carried time.
 function mintHistoryPairProof(jobId,projectSha256,artifacts,{derived='NOT_CHECKED',derivedAt=null,validators=null,inputs=null}={}){
   try{
+    // rootValidatorsUnchanged confirms the digest-scope native baseline and the
+    // digest primitives after its walk; the record below runs no replaceable
+    // code on the plain descriptor rows, and the baseline is confirmed again
+    // after it.
     if(!HISTORY_ROOT_PROOFS||!inputs||!validators||!historyProofInputsCurrent(inputs)||!rootValidatorsUnchanged(validators))return;
     const descriptorsSha256=historyDescriptorRowsSha256(artifacts),key=historyPairKey(projectSha256,descriptorsSha256),prior=historyPairProof(jobId,projectSha256,descriptorsSha256);
     const carried=derived==='STRICT'&&Number.isFinite(derivedAt)?derivedAt:derived==='NOT_STRICT'?null:prior&&prior.validators===validators?prior.derivedAt:null;
+    if(!packageDigestNativesUnchanged(nullRootDigestScope))return;
     retainHistoryProof(historyPairProofs,jobId,key,Object.freeze({projectSha256:String(projectSha256),descriptorsSha256,derivedAt:carried,validators,primitive:inputs.primitive,natives:inputs.natives}));
   }catch{/* An unproven pair keeps the cold path. */}
 }
@@ -4094,9 +4120,14 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
   const carried=certifiedRootEnvelope(entry,validatedRoots,inspection,rootContinuation);
   if(carried)try{return await bindCheckpointBody(carried,true);}catch{/* Decode the stored bytes; their own outcome stands. */}
   const {payload,fileContents}=await readPackageJson(entry.blob,{spoolArtifacts:false}),{packageSha256,...body}=payload;
+  // The credential fact a proof of these bytes carries, classified here
+  // (decodedCredentialFact), before any replaceable code receives a part of
+  // the decoded value: the cold export classifies its own decode, which no
+  // hook ever sees.
+  const credential=proofInputs?decodedCredentialFact(payload):null;
   if(await hash.sha256Chunks(packageJsonChunks(body,fileContents))!==packageSha256)throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
-  return bindCheckpointBody(body,false);
-  async function bindCheckpointBody(body,carried){
+  return bindCheckpointBody(body,false,credential);
+  async function bindCheckpointBody(body,carried,credential=null){
   if(body.schema!==HISTORY_SCHEMA||body.id!==entry.id||body.jobId!==String(jobId)||body.projectSha256!==entry.projectSha256||body.parentId!==entry.parentId||body.label!==entry.label||body.createdAt!==entry.createdAt||Number(body.view?.activeStage)!==Number(entry.stage)||!Array.isArray(body.artifacts))throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
   if(hash.sha256Value(body.projectReference||null)!==hash.sha256Value(entry.projectReference||null))throw storageError('Saved project reference does not match its checkpoint.','HISTORY_VERSION_MISMATCH');
   if(body.projectBytes!==entry.projectBytes||Object.hasOwn(body,'projectBytes')&&(body.projectReference||!Number.isSafeInteger(body.projectBytes)||body.projectBytes<=0))throw storageError('Saved project identity or contents do not match the checkpoint.','HISTORY_VERSION_MISMATCH');
@@ -4203,7 +4234,7 @@ async function readCheckpointBody(jobId,entry,readSnapshot,validatedRoots=new Ma
   // Snapshot, descriptor, view and file checks still run for every checkpoint.
   if(!body.projectReference&&validatedRoots.has(entry.id)&&!inspection?.issues.length)validatedRoots.set(entry.id,{snapshotSha256:entry.sha256,project,projectSha256:verifiedProjectSha256,workSha256:verifiedWorkSha256});
   if(!body.projectReference)recoveryProjectionBounds.set(project,body.createdAt);
-  if(proofBasis&&!carried&&!inspection)mintHistorySnapshotProof(jobId,entry,body,payload,proofBasis,proofInputs,verifiedProjectSha256,verifiedWorkSha256);
+  if(proofBasis&&!carried&&!inspection)mintHistorySnapshotProof(jobId,entry,body,credential,proofBasis,proofInputs,verifiedProjectSha256,verifiedWorkSha256);
   const materialized={...body,project};if(inspection){inspection.bodies.set(entry.id,materialized);inspectedHistoryBodies.add(materialized);}
   return materialized;
   }
