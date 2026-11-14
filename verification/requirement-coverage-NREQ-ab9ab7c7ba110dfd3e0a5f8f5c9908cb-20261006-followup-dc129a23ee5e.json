@@ -1,0 +1,187 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb",
+  "sourceLineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "d72ab55ccf986642b075e41acfc19795a579cfc25618c293005a98350bfa7823",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Fresh bounded source review of regenerated packet after environment replacement. Original ab89b638 review artifact body is unavailable, not recovered. Exact surviving source hashes and prior published declaration/review bytes were checked again; retained conversational review context informs source analysis but is not presented as recovered execution evidence.",
+  "author": {
+    "actor": "Codex follow-up source-qualified renewal author",
+    "contextId": "/root/ci_delivery_audit"
+  },
+  "reviewer": {
+    "actor": "Codex independent exact-clause declaration reviewer",
+    "contextId": "/root/storage_audit"
+  },
+  "reviewedInputs": [
+    {
+      "path": "hash.js",
+      "sha256": "c5df5b7459ad610ee07e1793be3b3b38efbf0a65aeb22b03e2dd89026fed31a6"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261005.json",
+      "sha256": "f8c18e4339278370751ff0db5723c31878451b281466460055c1e156bd6e3146"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261006.json",
+      "sha256": "aaea900f0b24a8375b34c7bcea1f73384204f8bf1ede65ecf06ec38d70201646"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-hash.mjs",
+      "sha256": "05e6cf685433a3314c777aa7734017e6e9d885779fb88b1fd920430f0c10a136"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "3a8098a9bb4ea108eadaa9bec90c76a1522f57f6465f45341cedf60937ddd008"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "1394709c1928d1763d1d01b37164e608259454eea01363c276c0f4b95fea3ee8"
+    },
+    {
+      "declarationSha256": "d72ab55ccf986642b075e41acfc19795a579cfc25618c293005a98350bfa7823"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "reviewCompletedAt": "2026-10-06T21:54:08.261034+00:00",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 3023,
+    "endLine": 3023,
+    "lineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2"
+  },
+  "controllingText": "- safe-integer-only JSON numbers, with typed canonical strings for other exact numbers;",
+  "governingContext": [],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-hash.mjs",
+      "checkId": "canonical.exact-serialization-controls"
+    }
+  ],
+  "semanticDecision": "EXACT_CANONICAL_SERIALIZATION_RULE",
+  "reason": "canonicalChunks rejects non-safe-integer JSON numbers, while the schema owns exact reduced-rational typed strings. Independent literal expected canonical JSON covers both safe integer boundaries and exact rational strings; negative controls include fractional, unsafe, non-finite, negative-zero and noncanonical rational values. canonicalDecimal and isCanonicalNumber are byte-identical to the prior reviewed owners. This approval is only the numeric serialization clause, not every canonical hash or Unicode obligation.",
+  "scopeLimit": "The named serialization clause; Unicode normalization tables, all hash preimages and ID allocation remain separate obligations.",
+  "actorIndependenceBoundary": "Renewal author /root/ci_delivery_audit and actual reviewer /root/storage_audit are separate agent contexts. This declaration sufficiency review does not certify hidden-context or external-actor independence.",
+  "reviewerPriorContributionDisclosure": "Reviewer authored retry helper/regressions and prior nested-type guards, plus quarantine direct body-delete assertion and maintained omission fault. Root separately reviewed correction diffs/oracles. This source review covers CI-authored unchanged narrow declaration scopes and their dependency effects, not independent certification of all reviewer-authored production repairs.",
+  "retainedReviewInputs": {
+    "proposal": {
+      "path": "/workspace/scratch/full-coverage-storage-proposals.json",
+      "sha256": "3a805bca70e96b132d5f8923fc4d87d8131af0977692ddfbc361ce9f7bd8656e"
+    },
+    "priorSemanticReview": {
+      "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+      "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+    }
+  },
+  "qualifiedExecutionAndReviewEvidence": [
+    {
+      "path": "/workspace/scratch/storage-normative-coverage-20261005/batch-execution.json",
+      "sha256": "495f6cee1b4086064ce550a7327c9daa619f365177b4f756a58092362e5335d0",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    },
+    {
+      "path": "/workspace/scratch/storage-normative-coverage-20261005/hash.final.stdout.log",
+      "sha256": "f2ead20564fbe62885913176ba0e83de247908b4d851909687fdd8820edb54bb",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    }
+  ],
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261006.json",
+    "sha256": "aaea900f0b24a8375b34c7bcea1f73384204f8bf1ede65ecf06ec38d70201646",
+    "author": {
+      "actor": "Codex current-owner declaration renewal author",
+      "contextId": "/root/ci_delivery_audit"
+    },
+    "reviewer": {
+      "actor": "Codex independent exact-clause declaration reviewer",
+      "contextId": "/root/storage_audit"
+    },
+    "reviewCompletedAt": "2026-10-06T20:42:47.521746+00:00",
+    "retainedEarlierPriorReview": {
+      "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261005.json",
+      "sha256": "f8c18e4339278370751ff0db5723c31878451b281466460055c1e156bd6e3146",
+      "author": {
+        "actor": "Codex declaration author",
+        "contextId": "/root/storage"
+      },
+      "reviewer": {
+        "actor": "Codex independent declaration reviewer",
+        "contextId": "/root/independent_spec"
+      },
+      "reviewCompletedAt": "2026-10-05T17:00:42.182Z",
+      "declarationSha256": "e3ede76e45b7f6c6ff7801dc4b5ae7bedc6a17bb39ae1b5b977f1d16af1361f3"
+    }
+  },
+  "currentDependencyReconciliation": {
+    "status": "APPROVED_EXACT_CURRENT_SOURCE_REBIND",
+    "baselineHead": "5fd6d120cea99e514560365684ffe3eec53ea206",
+    "sourceInputsSha256": "3de26df2d3c285c252614b63a5d45bd5fe31e7c283b0bcc022f94caa525b22fd",
+    "changes": [
+      {
+        "path": "verification-evidence-catalog.mjs",
+        "sha256": "e6378e7747ba860e5312a813c55625748d2fbaee5f2838d8ee4e97349ba4640f",
+        "priorSha256": "feedf2e728fca37acf303536dd55216389d591567c1ab89236a53aa0b2d19eed",
+        "kind": "CHANGED_PREVIOUSLY_REVIEWED_INPUT"
+      },
+      {
+        "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261006.json",
+        "sha256": "aaea900f0b24a8375b34c7bcea1f73384204f8bf1ede65ecf06ec38d70201646",
+        "priorSha256": null,
+        "kind": "ADDED_ACTUAL_DEPENDENCY_OR_RETAINED_REVIEW"
+      }
+    ],
+    "changedOwners": [],
+    "supplementalInputRationale": [],
+    "priorReview": {
+      "path": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261006.json",
+      "sha256": "aaea900f0b24a8375b34c7bcea1f73384204f8bf1ede65ecf06ec38d70201646"
+    },
+    "sourceReviewStatus": "COMPLETE_COVERAGE_DECLARATION_SUFFICIENCY_ONLY",
+    "executionStatus": "CURRENT_COMPLETE_PRODUCER_RECEIPTS_STILL_REQUIRED"
+  },
+  "currentIndependentReview": {
+    "path": "/workspace/.closed-loop-engineering/followup-145-renewal-recovered/storage14-independent-current-review.json",
+    "sha256": "c477019fee5517a9be3193d37d3f8fe013f7daf70981a1676b1b1399c768e26b",
+    "decision": "APPROVE_14_EXACT_NARROW_SOURCE_DECLARATIONS_CURRENT_EXECUTION_REQUIRED",
+    "proposal": {
+      "path": "/workspace/.closed-loop-engineering/followup-145-renewal-recovered/storage14.json",
+      "sha256": "67a1b09c98f2f88c5f57eae0a018cd3a6a46011fad887740db6a3500f787e6b9"
+    },
+    "reviewCompletedAt": "2026-10-06T21:54:08.261034+00:00",
+    "reviewer": {
+      "actor": "Codex independent exact-clause declaration reviewer",
+      "contextId": "/root/storage_audit"
+    },
+    "sourceReviewOnly": true,
+    "reason": "Direct canonical numeric serializer/typed-number owners and literal safe-boundary, unsafe/fractional/nonfinite/negativezero/rational controls remain unchanged; new ingestion checks do not substitute for this check."
+  },
+  "recoveryQualification": {
+    "historicalTemporaryArtifactBytesAvailable": false,
+    "priorObservedApprovalSha256": "ab89b638fbe64fa619dbb78b92cbcdc5d7bcae141ecbaa67f2c39e5ed4086496",
+    "freshApprovalRequiredAndObtained": true,
+    "retainedRepositoryReviewFilesPreserved": true,
+    "executionEvidenceRecreated": false
+  }
+}

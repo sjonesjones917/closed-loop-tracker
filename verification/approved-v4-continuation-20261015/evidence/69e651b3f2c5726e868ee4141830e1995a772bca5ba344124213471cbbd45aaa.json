@@ -1,0 +1,631 @@
+{
+  "sourceOnly": true,
+  "originalPredecessor": {
+    "role": "PREDECESSOR",
+    "path": "/workspace/shared/clrt-integration/verification/atomic-extraction-20261014/reconciliation.json",
+    "sha256": "1cc93c4e49e3e5530ee2a802314617f3aa07d5c72282ded6cd1da68570dac280",
+    "byteLength": 71701945,
+    "purpose": "Pinned source-only evidence",
+    "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+  },
+  "baseLedger": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+    "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+    "byteLength": 20401933
+  },
+  "originalOccurrenceTransport": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+    "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+    "byteLength": 6309790
+  },
+  "exactPassages": {
+    "BASE:305:305": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 305,
+      "endLine": 305,
+      "startByte": 18141,
+      "endByte": 18177,
+      "sha256": "bc0a045657c2e2ea69603d1552c4fda07bd976fcda3a564f49e077f55d7f2107",
+      "text": "- reading the complete user request;"
+    },
+    "BASE:300:300": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 300,
+      "endLine": 300,
+      "startByte": 17935,
+      "endByte": 17986,
+      "sha256": "0c0561aaf9da37439c267831ffd994473798a8bfeffcd825f3ec42527a489770",
+      "text": "6.2 The Stage 01 agent is the first semantic reader"
+    },
+    "BASE:302:302": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 302,
+      "endLine": 302,
+      "startByte": 17988,
+      "endByte": 18036,
+      "sha256": "8c1cac13bf5424f64321a14e66c0c8cc34bdbec1eb7da20bb121ad9bbc3aa760",
+      "text": "Stage 01 is the first semantic extraction stage."
+    },
+    "BASE:304:304": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 304,
+      "endLine": 304,
+      "startByte": 18038,
+      "endByte": 18140,
+      "sha256": "25b1b7b48dbdcdba9bc8f897f8e5dc96a81f266548cd54908f051577819bc407",
+      "text": "The Stage 01 prompt MUST tell the external agent that it is the first semantic reader responsible for:"
+    },
+    "SUCCESSOR_SOURCE:122801:126361": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startByte": 122801,
+      "endByte": 126361,
+      "sha256": "1f02226ccf6e99fe0c9d31d773dd69ef747d08978cbf7a7a6b5cbcf3730bb190",
+      "text": "A. Insert after §18's unknown-key sentence: closed-loop-human-input-fallback/1\n\nhumanInputRequests is a required, non-null ordered array, empty allowed. Each item is a closed object with exactly these required properties: temporaryKey, question, whyRequired, affectedStageFields, affectedRecords, answerType, allowedValues; its only optional property is blocking. No item property is nullable. All strings preserve their supplied scalar values; nonblank means containing at least one character outside U+0009–U+000D and U+0020.\n\n- temporaryKey is a string matching ^[A-Za-z][A-Za-z0-9._:-]{0,119}$, unique across response record tempKey values and temporaryKey values in attachments, evidence, humanInputRequests and humanAuthorityCandidates. It is a response-local reference, not a canonical identity.\n- question and whyRequired are nonblank strings.\n- affectedStageFields is an ordered array of strings naming registered fields of this response's stage; affectedRecords is an ordered array of strings naming canonical families in this operation's registered read, agent-writable or application-owned set. Both arrays may be empty. These names identify affected context, not authority to write the named fields or families.\n- answerType is exactly one of the eight controls already listed in this section.\n- allowedValues is an ordered array of strings. CHOICE and MULTI_CHOICE require one or more unique nonblank strings, compared exactly. For other controls the array may be empty; its values have no answer-validation effect.\n- blocking is Boolean; absence normalizes to true. No other absent property receives a default. False only makes this particular fallback request optional and cannot waive any governing requirement, human authority, missing evidence or unresolved material uncertainty.\n\nAll item content is an AGENT proposal admitted only through the owning registered external operation. The APPLICATION owns canonical request identity, envelope-derived job/stage/operation/scope, currentness and lifecycle. Answers remain HUMAN values written only by SAVE_HUMAN_INPUT. These proposal fields share the envelope's §14.7 scope, have no migration default other than the expressly stated blocking default for an otherwise valid request, and are invalidated by the owning input/prompt lifecycle under §18; references above point from the request to its affected stage fields/families and grant no reverse ownership.\n\nFor SAVE_HUMAN_INPUT, an absent/null/empty-string answer, or an empty MULTI_CHOICE array, is unanswered; a blocking request rejects it. A nonmissing TEXT or LONG_TEXT answer is a nonblank string; BOOLEAN is Boolean; NUMBER is either a JSON safe integer other than negative zero, or a string rational:N/D where N is a nonzero signed base-10 integer with no plus or leading zeros, D is a positive base-10 integer with no leading zeros, and gcd(abs(N),D)=1. D=1 is permitted only when N is outside the JSON safe-integer range. Zero is represented only by JSON integer 0. Other strings and typed objects are rejected; saving preserves this canonical representation; CHOICE is one exact allowed string; MULTI_CHOICE is an ordered duplicate-free array of exact allowed strings; DATE is a valid Gregorian calendar date in four-digit YYYY-MM-DD form with year 0001–9999, validated without time-zone conversion; FILE_REFERENCE is one current canonical artifact ID in the same project. Optional unanswered requests confer no factual assertion. Successful saving has precisely the existing §18 invalidation and replacement consequences.\n"
+    },
+    "SUCCESSOR_SOURCE:25996:53483": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startByte": 25996,
+      "endByte": 53483,
+      "sha256": "1edc5f5d721400425addba1c9dff124bb905532b9f27c2843b41d59afc9398dc",
+      "text": "C. Insert after §6.5A: normative algorithm closed-loop-raw-units/1\n\nThe unit universe is structural accounting. Retain the exact originating input and artifact bytes; no normalized projection replaces them or asserts inspection. Each unit binds the input version, supplied occurrence, exact structural location and source-value hash. Enumerate roots in their retained source occurrence order; within a structured value visit arrays in index order and object keys in unsigned Unicode-scalar order. A canonical mirror of the same originating field is visited only once, using the originating field; separately supplied equal values are separate occurrences.\n\nFor human text and string-valued structured human input, CRLF, CR and LF delimit physical lines. Retain original line positions. Emit each line containing a character other than U+0009–U+000D or U+0020; if a nonempty string has no such line, emit that entire string as one unit. Empty strings, null and absent scalar values emit no content unit. Other scalar leaves emit one unit retaining their declared type and value. Original blank lines and exact original text remain available to the mandatory semantic reader even when the line projection emits no separate blank-line unit.\n\nFor every supplied artifact occurrence, emit one inventory unit. Where exact bytes are valid UTF-8 and the text projection re-encodes to those exact bytes, also emit physical content units: scan left to right, treating CRLF as one terminator and otherwise CR, LF or form feed as a terminator; each unit contains the span through its terminator. Retain every nonempty span, including blank lines; emit a final unterminated span if present, but no zero-length trailing span. Coordinates start at page 1/line 1; form feed increments page and resets line to 1, other terminators increment line. BOM bytes, if present, remain part of the exact projection, not silently removed. This rule is accounting, not a claim that every UTF-8 artifact's media semantics have been parsed.\n\nFor a mechanically supported structured-media subdivision, emit one structural unit per exposed page, section, archive member, embedded document/object, comment, annotation, tracked change or metadata object, using its exact parent and source locator; traverse children in source order, breaking any absent source-order tie by unsigned Unicode-scalar locator order. Recurse into textual leaves using the physical-content rule and into child media using this rule. A structural node is counted once per occurrence/location/kind; a node's structural unit and its descendant content units are distinct. Preserve inaccessible exposed nodes as INACCESSIBLE_OR_BLOCKED; do not fabricate children. Detailed coverage requires a closed format mapping that is part of this named versioned normative algorithm or an explicitly identified versioned normative format mapping authorized under §34.3. Merely publishing an implementation descriptor does not authorize such semantics. The mapping must fix node kinds, source locators, ordering, exact canonical source values and child extraction. This insertion adds no format-specific adapter or mapping. A claim of supported detailed coverage without that normative mapping is blocked; genuinely unsupported formats retain the fallback below. A mechanically available subdivision cannot be suppressed or relabeled unsupported to avoid that blocker.\n\nSubdivision is additive: an exact UTF-8 whole-file projection emits its physical spans even when a supported structured mapping also emits structural nodes and textual leaves. Whole-file spans, structural nodes and structural textual-leaf spans have distinct kinds and locators and are all counted; overlap in underlying bytes does not deduplicate these different accounting obligations. Each archive-member or embedded-file occurrence emits both its parent structural occurrence unit and its own child inventory unit, followed by its own supported content/subdivisions. A textual leaf is not a child file and gets no inventory unit. Repeated references to the same emitted unit still deduplicate under the rule below.\n\nSource hashes and binding are closed as follows. C(x) means the exact UTF-8 bytes of §34.1 canonical JSON; H(b) means lowercase SHA-256 hexadecimal of exact bytes b. Source-value hash preimages by kind are:\n- HUMAN_TEXT_LINE or HUMAN_TEXT_WHOLE: C({\"type\":\"STRING\",\"value\":s}), where s is the exact emitted line excluding its terminator, or the entire whitespace-only nonempty string respectively. Physical line number and original field pointer retain position; retained originating bytes preserve terminators.\n- HUMAN_SCALAR: C({\"type\":t,\"value\":v}), where t is the declared scalar type and v its exact canonical value; no string coercion. Null/absent values remain excluded as above.\n- ARTIFACT_INVENTORY: C({\"byteLength\":n,\"contentSha256\":h}), where n is exact byte length and h=H(exact artifact bytes). If bytes are unavailable, both values are null; asserted length/digest remains source context, never substituted for observed bytes. The unit remains inaccessible/blocked, with its retained occurrence/locator binding.\n- PHYSICAL_SPAN: the exact original byte span including its terminator, without canonical JSON wrapping. Its locator binds zero-based byte start and exclusive end plus the one-based page/line coordinates.\n- STRUCTURAL_NODE: C({\"nodeKind\":k,\"status\":q,\"value\":v}), where k and v are the exact kind and canonical source value fixed by the authorized format mapping, and q is ACCESSIBLE or INACCESSIBLE_OR_BLOCKED. Inaccessible nodes have v=null; exact exposed parent/locator and k remain bound. No invented serialization of an adapter object is permitted.\n- STRUCTURAL_TEXT_SPAN: exact UTF-8 bytes of the mapped exact textual leaf's physical span, including its terminator. The authorized mapping identifies the leaf and its exact extraction; no silent whitespace normalization is allowed.\n\nEach unit's binding hash preimage is C({\"algorithm\":\"closed-loop-raw-units/1\",\"inputVersion\":V,\"occurrence\":O,\"kind\":K,\"locator\":L,\"sourceValueSha256\":S}). V is the exact owning input-version identity string; O is the ordered zero-based safe-integer path of supplied root and, where applicable, child-member occurrence indices; K is exactly one of the seven uppercase kinds above; S is the corresponding source-value hash. L is an ordered locator array: human units use [originating JSON pointer, one-based physical line] or [originating JSON pointer] for whole strings/scalars; inventories use []; whole-file spans use [startByte,endByte,page,line]; structural nodes use [normative format mapping ID, exact mapping locator]; structural textual spans append [startByte,endByte,page,line] to their structural-leaf locator. Byte offsets for a structural textual leaf refer to its exact UTF-8 extraction. The source-value hash alone does not identify the occurrence: binding hash plus retained input/source supplies the exact type, location and occurrence. These accounting hashes/locators are not §34.2 canonical record IDs. Distinct roots are numbered in retained source occurrence order, including separately supplied identical roots; a canonical mirror does not receive a second root number.\n\nAn image/media occurrence without a supported finer subdivision uses its inventory unit as its whole-media unit. A format with no supported mechanically available subdivision likewise uses its inventory unit as the whole-file fallback, with an explicit unsupported/unavailable-subdivision basis and the original bytes retained. These fallbacks neither prove inspection nor remove existing material uncertainty/blockers. Comments, annotations, tracked changes, metadata and embedded content are not discarded as nonsemantic.\n\nDeduplicate only repeated accounting references to the same occurrence, kind, location and exact source-value hash. Never merge distinct supplied occurrences, even with identical hashes. Order and retained source identity determine stable accounting references; canonical record IDs still use §34.2. Count the entire resulting unit universe, including inventory, structural and inaccessible units, when applying the unchanged §6.5A limits. The raw-unit challenge condition is strictly greater than 500, not greater than or equal to 500; every other size-independent trigger remains effective.\n\nC1. Named structured mapping: closed-loop-raw-units-zip/1\nInsert immediately after C's common raw-unit rules. This is the only structured-media mapping added by this revision. It makes the following counting choices explicit; the existence of a transport parser alone did not authorize these choices.\n\nScope and preservation\nApply this mapping to a supplied ZIP occurrence for which the application can use its existing bounded closed-loop-inbound-zip/1 structural decoder. Preserve the exact compressed archive bytes, their original supplied occurrence, byte length and SHA-256. Expanded member bytes are verified immutable child copies; they never replace the original archive. Decode and retain bytes only in the existing isolated in-memory/Blob/storage path. No member is extracted to a filesystem, executed, followed as a link, or used as a path outside that path-safe storage authority.\n\nThe supported decoding subset is ordinary single-volume ZIP and the decoder's bounded ZIP64 forms, with stored or DEFLATE compression, permitted data descriptors, UTF-8 or CP437 names and the decoder's validated Unicode-path extras. Keep its existing checks for complete consistent local/central headers, exact boundaries, safe noncolliding canonical paths, actual expanded lengths, CRC and SHA-256, permitted flags/extras and resource/platform bounds. Encrypted entries, split volumes, self-extracting prefixes, directory/link/device/special entries, unsupported compression/extra fields and ambiguous or colliding paths do not become supported through this mapping. The exact intake safety profile below and existing worker isolation remain effective. The response transport contract remains unchanged. A resource or platform failure is not reclassified as an unsupported format to bypass a blocker. Intake uses this decoder's structural/byte validation, not the inbound response's manifest, response.json role or attachment-admission semantics.\n\nRecognition and bounded decoding\nApply the same recognition test to each supplied root and each verified expanded child. A byte candidate exists if the first four bytes are a ZIP local-header, EOCD, ZIP64 EOCD or ZIP64-locator signature (respectively hexadecimal 504b0304, 504b0506, 504b0606, 504b0607), or if the EOCD signature 504b0506 occurs anywhere in the last min(byteLength,65557) bytes. Also attempt validation when a supplied filename ends with .zip under ASCII case-insensitive comparison, or the supplied media type, before a semicolon and after ASCII whitespace trim/case-fold, is application/zip or application/x-zip-compressed. Names and media types can require an attempt but cannot suppress a byte candidate or establish success. A random signature or claimed filename can never create successful ZIP coverage: the complete retained structural, boundary, path and integrity checks decide that. Missing bytes retain an unavailable inventory/blocker; they do not establish absence of ZIP structure. Noncandidate bytes without a ZIP claim do not receive ZIP nodes through speculation; C's other available accounting rules remain applicable.\n\nUse a centralized, versioned intake profile closed-loop-raw-units-zip-limits/1. Its bounds are: 27 cumulative central-directory entries across the entire selected input-version archive-mapping pass, including every supplied root and recursively decoded child; 67108864 bytes per expanded member; 70254592 cumulative reserved-or-produced expanded bytes; 140509184 cumulative archive bytes submitted to decoding (count a nested archive again when it is submitted); compression ratio at most 1100 per member; filename byte length at most 65535; canonical path depth at most 128; maximum archive nesting level 27 with the supplied archive at level 1; and one cumulative elapsed-worker deadline of 600000 ms for that entire input-version archive-mapping pass. The entry budget is charged on exposure before expansion, including unsupported/blocked entries; the maximum depth cannot bypass that budget. Expansion and byte accounting are checked before allocation and incrementally, against both declared and actual lengths; declared metadata never substitutes for verified bytes. The expansion safety counter reserves each declared output length before allocation; actual production within that reservation does not charge the same byte twice, while any additional produced byte must first fit and consume remaining budget. Every produced/reserved byte remains charged even if later CRC, validation or decoding fails; no refund, reset or retry can escape the pass-wide ceiling. It includes every child occurrence at every depth, including a nested archive's bytes as its parent's output and its own children separately. This work-safety counter is distinct from the semantic aggregate-byte review sum, which includes only actually verified retained child bytes. The archive-byte sum counts each archive occurrence once when submitted to decoding. The same original per-archive structural and byte checks remain; a bound can stop processing earlier, never authorize weaker checking. These ceilings reuse the current default decoder's 27 entries, 64 MiB file bound, 64 MiB + 1 MiB response + 2 MiB manifest total, twice-total archive bound, ratio/name/path/work bounds; the intake profile assigns those generic ceilings without granting any response.json/manifest.json role or larger filename-specific allowance. Transport recursiveExpansion=false and maxNestingDepth=0 remain response-transport rules, not intake accounting rules. A lower already-applicable storage/worker bound still stops work and remains explicitly blocked; it must not silently change this profile or yield favorable completeness. The exact profile-hash preimage is C({\"version\":\"closed-loop-raw-units-zip-limits/1\",\"scope\":\"INPUT_VERSION_PASS\",\"maxEntries\":27,\"maxEntryBytes\":67108864,\"maxExpandedBytes\":70254592,\"maxArchiveBytes\":140509184,\"maxCompressionRatio\":1100,\"maxFilenameBytes\":65535,\"maxPathDepth\":128,\"maxNestingDepth\":27,\"workerTimeoutMs\":600000}); its SHA-256 is the profile hash. The retained unitization derivation binds the owning input version, mapping ID, this exact profile ID/hash, actual counters and completion/blocker status; changed profile or source invalidates reuse under the existing derivation rules. Repeated equal roots and members are charged separately. Any future profile change follows existing versioning and acceptance requirements.\n\nOccurrence identity and order\nLet P be the parent archive's C occurrence path, already bound to the owning input version. Number central-directory entries from zero in their exact central-directory order, not local-file-offset order, canonical-filename order or extraction completion order. The child occurrence for entry i is P followed by i. Different supplied archives and different nested occurrences remain distinct even when bytes or names are equal. Local/central identity validation is still required; choosing central-directory order for accounting does not weaken it.\n\nUse the base C unit kinds STRUCTURAL_NODE, ARTIFACT_INVENTORY, PHYSICAL_SPAN and STRUCTURAL_TEXT_SPAN only; do not add canonical record families or a second unit-ID scheme. Every archive, member, metadata, extra and comment structural node uses occurrence P of the archive being mapped; child inventories/content and recursively mapped child archive nodes use P followed by i. Every ZIP structural unit's locator is [\"closed-loop-raw-units-zip/1\", locatorValue], where locatorValue is one of the exact ordered arrays below. All offsets and lengths are nonnegative safe integers measured in the parent archive's original bytes; an index is a zero-based safe integer. A node with verified source bytes has status ACCESSIBLE. Its C source-value hash is H(C({\"nodeKind\":k,\"status\":\"ACCESSIBLE\",\"value\":v})); the outer binding hash uses the unchanged C input-version/occurrence/kind/locator/source-value preimage. Exact raw bytes below use lowercase hexadecimal, preserving every byte without character decoding. Metadata offsets/bytes belong to the archive, not to a reserialized ZIP.\n\nEmit the parent's inventory and any applicable exact whole-file UTF-8 spans under C first. Then emit the following archive-level nodes in increasing original byte-offset order:\n- ZIP_CONTROL_RECORD for each present end-of-central-directory fixed record, ZIP64 end record and ZIP64 locator. locatorValue is [\"CONTROL\", recordType, offset]; recordType is EOCD, ZIP64_EOCD or ZIP64_LOCATOR. v has exactly recordType, offset, byteLength and rawHex. The ordinary EOCD record excludes its following archive-comment bytes; ZIP64 records use the exact validated decoder-supported record extent.\n- ZIP_ARCHIVE_COMMENT only when the EOCD archive-comment length is nonzero. locatorValue is [\"ARCHIVE_COMMENT\", offset]. v has exactly offset, byteLength and rawHex for all declared comment bytes. An empty comment creates no comment unit. No character-set guess or interpretation makes comment bytes executable or favorable evidence.\n\nThen, for every entry i in central-directory order, emit in this exact order:\n1. One ZIP_MEMBER structural node, with occurrence P and locatorValue [\"MEMBER\", i, centralHeaderOffset]. Its v has exactly index, centralHeaderOffset, localHeaderOffset, rawFilename, rawFilenameHex, canonicalPath, compressionMethod, compressedByteLength, compressedSha256, expandedByteLength, expandedSha256 and crc32. rawFilename is the decoder's exact decoded central name before path normalization; rawFilenameHex retains its exact original name bytes. canonicalPath is the separately validated safe canonical path, never a replacement for the raw name. compressionMethod is integer 0 or 8; both digests are H of the actual compressed data span and actual verified expanded bytes respectively; crc32 is the verified unsigned integer. No timestamp, name or claimed digest substitutes for observed member bytes.\n2. ZIP_MEMBER_METADATA nodes for the central fixed header, local fixed header and data descriptor if present, in that order. locatorValue is [\"MEMBER_METADATA\", i, recordType, offset], with recordType CENTRAL_HEADER, LOCAL_HEADER or DATA_DESCRIPTOR. v has exactly recordType, offset, byteLength and rawHex. Central and local fixed-header extents are 46 and 30 bytes respectively; the descriptor extent is the exact 12/16/20/24-byte form validated by the existing decoder. Filename, extras and comment bytes are excluded from these fixed-header units because their exact representations are bound separately.\n3. One ZIP_EXTRA_FIELD node per actually present local extra field, followed by one per actually present central extra field; preserve byte order within each area, including separately present equal fields in the two areas. locatorValue is [\"EXTRA_FIELD\", i, area, ordinal, offset], with area LOCAL or CENTRAL and ordinal zero-based within that area. v has exactly area, headerId, offset, byteLength and rawHex. byteLength and rawHex cover the full 4-byte ID/length header plus its declared payload. Existing duplicate/unsupported/malformed-extra rejection is unchanged. No decoded timestamp, UID, Unicode name or other extra interpretation replaces its exact source bytes.\n4. ZIP_MEMBER_COMMENT only when the central entry's comment length is nonzero. locatorValue is [\"MEMBER_COMMENT\", i, offset]. v has exactly offset, byteLength and rawHex. Empty comments create no comment unit. These bytes are counted even though comments have no transport authority.\n5. One child ARTIFACT_INVENTORY with occurrence P followed by i and inventory locator [], binding the actual expanded byte length and H(expanded bytes) by C. Then emit that child's exact verified UTF-8 physical spans when C permits them, using offsets in the expanded child bytes, and apply the recursive rule below before proceeding to entry i+1. A recursively mapped child archive uses this already-emitted inventory and physical spans without emitting them a second time. The ZIP_MEMBER structural node and child inventory are different accounting obligations and both count. Metadata/comment nodes are not child files and do not receive inventory units. This mapping creates no semantic XML/JSON/CSV/Office/PDF section or annotation units from a member's contents; plain supported UTF-8 spans do not claim such parsing or inspection.\n\nRecursive child media\nFor every verified expanded child, apply the byte/claim recognition test above. A ZIP candidate is mapped recursively by this same mapping, in depth-first central-directory order, under the entire input-version mapping pass's shared cumulative safety counters and deadline. The expanded child becomes the next archive occurrence P; no new root identity, fresh budget or favorable parent result is substituted. Exact expanded bytes remain retained and bound even when their own ZIP structure is blocked. A ZIP-based document can expose these ZIP members without thereby claiming semantic Office/XML/PDF parsing. A child that is not a ZIP candidate still receives its inventory and applicable exact UTF-8 physical spans under C; this addendum invents no other media mapping.\n\nWhen a depth, entry, byte, ratio, path, name, worker or work bound actually stops a recognized child, retain that child's already exposed member occurrence, inventory and available exact bytes, mark its unresolved subdivision INACCESSIBLE_OR_BLOCKED with the precise cause, and stop the affected expansion safely. It is neither a successful opaque fallback nor proof that children do not exist. Never reset counters for nested ZIPs, invoke unbounded recursive decompression, fabricate descendants, or treat unknown remaining units as zero. A separately supplied copy is a separate root occurrence with its own identity and is charged again to the same input-version pass counters; equality of bytes does not merge it or reset the budget.\n\nCounting and thresholds\nEvery emitted inventory, member, metadata, comment and content unit participates in C's unchanged greater-than-500 raw-unit trigger. The supplied-file/archive-member count includes the supplied archive occurrence once and each enumerated child member occurrence once; metadata/comments do not add file occurrences. For the existing aggregate-supplied-byte challenge, count each retained file occurrence's actual bytes once: the original compressed archive plus each verified expanded child occurrence at every recursive depth; do not count metadata byte spans again or deduplicate equal occurrences. Apply the existing per-text/document and mechanically countable-page thresholds to eligible original/child content by their existing rules. This additive count can trigger review sooner than treating an archive as one opaque file; no threshold value is raised or reduced. Storage/expansion safety budgets remain separate from these review triggers and retain their original enforcement.\n\nFailure and unknown content\nA supplied archive always retains its C inventory, exact original bytes when available, and a precise outcome. Distinguish (a) unsupported/encrypted structural features; (b) malformed/truncated/inconsistent structures, bad CRC or changed bytes; (c) unsafe/duplicate/colliding member identities; (d) absent/unreadable required bytes or unavailable decompressor/worker; and (e) resource-limit, timeout or interrupted execution. None is a successful parse or a favorable whole-file completeness result. Keep the exact typed cause and existing recovery route; do not silently drop the failing member, retry with weaker validation or invent child bytes.\n\nOnly fully verified members receive ACCESSIBLE ZIP_MEMBER values with observed expanded hashes/lengths. An exposed member means a central-directory record with the exact central signature and complete in-bounds fixed header, filename, extra area and comment area, within the established central-directory extent and traversal order. Its entry index and central-header offset establish the member locator even when local validation or expansion fails. Preserve each such exposed occurrence, including duplicate names, directories, links and unsupported entries, as INACCESSIBLE_OR_BLOCKED with value=null when it cannot be validated; do not expand it or grant its path authority. It still receives exactly one child ARTIFACT_INVENTORY at P followed by i under C: when verified expanded bytes are unavailable, both byteLength and contentSha256 are null, with an explicit blocked disposition. A claimed member size or digest does not fill these values. Distinct colliding/duplicate central occurrences are never merged to hide them. No child inventory is created for a guessed entry, unparsed count or incomplete/unbounded central record.\n\nPreserve independently established exact metadata and comment spans as their corresponding ACCESSIBLE structural units even when the owning member is blocked; accessibility here concerns the exact metadata bytes, not the member's safe expansion or semantic validity. An extra field receives its specified unit only when its own 4-byte header and full declared payload are in bounds; duplicate/unsupported fields can be preserved as separate observed bytes but still block member admission. If malformed metadata prevents complete field segmentation, preserve the exact whole extra-area bytes as diagnostic provenance on the blocked occurrence, without inventing extra-field units. For a blocked member whose local metadata is not safely established, emit only established central metadata/extras/comments, then its blocked child inventory. This is bounded read-only exposure; it does not relax existing decoder rejection. Unknown remaining structure remains an explicit archive-level blocker, and a smaller observed count cannot discharge it.\n\nA structurally established zero-entry EOCD with zero central-directory size and consistent offsets is a known empty archive, not malformed merely because the existing decoder rejects count=0. Preserve its inventory and exposed control/comment nodes, emit no invented member or child inventory, and record EMPTY_ARCHIVE_DECODER_BOUNDARY as INACCESSIBLE_OR_BLOCKED for detailed decoding under this current parser scope. It does not yield a successful detailed-coverage claim or unsupported-format fallback. A missing or unusable DEFLATE implementation/worker is unavailable evidence, not unsupported ZIP format; preserve originals, established nodes and blocked child inventories. Corrupt bytes, an unsupported feature, unsafe paths, actual resource exhaustion and unavailable machinery retain distinct causes and recovery requirements.\n\nThis mapping adopts accounting order, unit granularity, raw-name/metadata/comment identity, additive counts, recursive traversal and its explicit bounded intake profile only. It does not adopt arbitrary parser output as normative truth, authorize an unbounded parser or relaxed safety policy, establish semantic inspection, waive current evidence requirements, or accept historical coverage proof. Implementation must expose the required exact locators/bytes from the existing decoder without changing its retained safety predicates; actual boundary and fault tests remain due.\n"
+    },
+    "BASE:306:306": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 306,
+      "endLine": 306,
+      "startByte": 18178,
+      "endByte": 18229,
+      "sha256": "ae4ad2359752017e3321983ccae7b9b2c09e105cdf4b4779024dbc7e93f5330a",
+      "text": "- reading every supplied file made available to it;"
+    },
+    "BASE:307:307": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 307,
+      "endLine": 307,
+      "startByte": 18230,
+      "endByte": 18286,
+      "sha256": "371b02b85850d24b276b781825713184d5dacc0d86b122e206842ef2e3e92703",
+      "text": "- extracting every project-relevant human-authored fact;"
+    },
+    "BASE:308:308": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 308,
+      "endLine": 308,
+      "startByte": 18287,
+      "endByte": 18318,
+      "sha256": "b0edb1e2e45492d8e65615f376cd0cbace468a49459dbe075a1922c6532fbcda",
+      "text": "- extracting every requirement;"
+    },
+    "BASE:309:309": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 309,
+      "endLine": 309,
+      "startByte": 18319,
+      "endByte": 18349,
+      "sha256": "56afce4c3dd56a1bf912c9abdc9039a5c970956f429448a552c73ef4dbe30f54",
+      "text": "- extracting every constraint;"
+    },
+    "BASE:310:310": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 310,
+      "endLine": 310,
+      "startByte": 18350,
+      "endByte": 18381,
+      "sha256": "5d8d156acd351391bb564ba24869960bb053c2831769b38887d9f1b19ffa90de",
+      "text": "- extracting every prohibition;"
+    },
+    "BASE:311:311": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 311,
+      "endLine": 311,
+      "startByte": 18382,
+      "endByte": 18410,
+      "sha256": "89bf2a042e7e998ee79a243475bf36befce97c6f5e97812785034bbe709f42bc",
+      "text": "- extracting every decision;"
+    },
+    "BASE:312:312": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 312,
+      "endLine": 312,
+      "startByte": 18411,
+      "endByte": 18447,
+      "sha256": "1f5f47c9c550d77f7788227899f5ad469859ebf512ed345e60b117e67cdfbd4b",
+      "text": "- extracting every requested output;"
+    },
+    "BASE:313:313": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 313,
+      "endLine": 313,
+      "startByte": 18448,
+      "endByte": 18488,
+      "sha256": "4e84776291c9760d3e62f57c5f24f0b4f3b768a659c5c584cfaf193bdfb44b59",
+      "text": "- extracting every acceptance condition;"
+    },
+    "BASE:314:314": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 314,
+      "endLine": 314,
+      "startByte": 18489,
+      "endByte": 18527,
+      "sha256": "98d6e07d34e343a51b1946cdaa5d5d7cf143e12b17fcb35fab1d3a6af5555720",
+      "text": "- extracting every material reference;"
+    },
+    "BASE:315:315": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 315,
+      "endLine": 315,
+      "startByte": 18528,
+      "endByte": 18612,
+      "sha256": "429bc5d43a158b924f143021a50fbbfddb50b5e9ef0be8133717d2337e2504a8",
+      "text": "- identifying every unresolved issue that must ultimately come from human authority;"
+    },
+    "BASE:316:316": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 316,
+      "endLine": 316,
+      "startByte": 18613,
+      "endByte": 18662,
+      "sha256": "2b36405c73b1d70c8f8ae5055016e2e4347d0a2cd2d1e4a54ceab089a4aaa55f",
+      "text": "- distinguishing supplied facts from assumptions;"
+    },
+    "BASE:317:317": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 317,
+      "endLine": 317,
+      "startByte": 18663,
+      "endByte": 18742,
+      "sha256": "8fd918d608f087440a28c8c284a6a28ee499b4f33b8140d092c297839700ea67",
+      "text": "- distinguishing human-only unknowns from matters resolvable by later research."
+    },
+    "BASE:427:427": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 427,
+      "endLine": 427,
+      "startByte": 26107,
+      "endByte": 26257,
+      "sha256": "440b301b2b8c4478315b6fa1a8e819c2c209fc2462e4f6c361a534097c553efb",
+      "text": "Read the complete request and every accessible supplied artifact from beginning to end. Extract all distinct project-relevant human-origin statements."
+    },
+    "BASE:422:422": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 422,
+      "endLine": 422,
+      "startByte": 25996,
+      "endByte": 26037,
+      "sha256": "eb21c0108272a6540062d9ff508c384869afac26fe3fad9227869adce7a349c3",
+      "text": "6.6 Mandatory two-pass Stage 01 procedure"
+    },
+    "BASE:424:424": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 424,
+      "endLine": 424,
+      "startByte": 26039,
+      "endByte": 26072,
+      "sha256": "5c2dde2dafb7a9569a82c85cb63a89e1c107758cf79b16dfc66a12ac5268a3a1",
+      "text": "The Stage 01 prompt MUST require:"
+    },
+    "BASE:426:426": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 426,
+      "endLine": 426,
+      "startByte": 26074,
+      "endByte": 26106,
+      "sha256": "2d60c0e8534c451718723f447c795891b0888cf62848d6f290f188ff042af068",
+      "text": "Pass 1 — exhaustive extraction"
+    },
+    "BASE:448:448": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 448,
+      "endLine": 448,
+      "startByte": 26796,
+      "endByte": 26983,
+      "sha256": "665443c664b01b467862b39945c2d0f766736d768bba7ff71caa223bc6a50f6d",
+      "text": "Raw coverage plus this mandatory semantic process provides enforceable accounting without falsely representing arbitrary semantic understanding as a deterministic application calculation."
+    },
+    "BASE:431:431": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 431,
+      "endLine": 431,
+      "startByte": 26389,
+      "endByte": 26402,
+      "sha256": "567b3f37ec104f330ef6147b9054216a285258a1c55135d59676be79e1cb520d",
+      "text": "- qualifiers;"
+    },
+    "BASE:429:429": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 429,
+      "endLine": 429,
+      "startByte": 26259,
+      "endByte": 26288,
+      "sha256": "10b12fa07b3ca65600f6c365a11df099de07b34b6a3fa7f3996b742812fcca16",
+      "text": "Pass 2 — omission challenge"
+    },
+    "BASE:430:430": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 430,
+      "endLine": 430,
+      "startByte": 26289,
+      "endByte": 26388,
+      "sha256": "0d16386277c976990ffc7acfbe4fd3cf9526ffee850d5a4728bf8fec7e315420",
+      "text": "Compare the extracted ledger back against every raw input unit and specifically search for omitted:"
+    },
+    "BASE:432:432": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 432,
+      "endLine": 432,
+      "startByte": 26403,
+      "endByte": 26416,
+      "sha256": "c6e1fa3d6945827e40a4cbbc8826ef7a222fafc2ba56e68ed4aff88587107840",
+      "text": "- exceptions;"
+    },
+    "BASE:433:433": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 433,
+      "endLine": 433,
+      "startByte": 26417,
+      "endByte": 26432,
+      "sha256": "5c7a4c21bc78d60bbd44c1aaaf7842206eccd61d93bf4b71735029733dfd9898",
+      "text": "- dependencies;"
+    },
+    "BASE:434:434": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 434,
+      "endLine": 434,
+      "startByte": 26433,
+      "endByte": 26457,
+      "sha256": "14e71ba516e9393cc89e4f16ecf28fcd0276224455039d8e2c5827391ef59ab9",
+      "text": "- negative requirements;"
+    },
+    "BASE:435:435": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 435,
+      "endLine": 435,
+      "startByte": 26458,
+      "endByte": 26487,
+      "sha256": "71b313abc8c3320bbbd8ac16dd199f6db20e5592969969bd507588240dec30f4",
+      "text": "- \"do not change\" statements;"
+    },
+    "BASE:436:436": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 436,
+      "endLine": 436,
+      "startByte": 26488,
+      "endByte": 26509,
+      "sha256": "c491bd32a0424d6d77238b4b7ef7ed6ff767a082b131b03d4c4f546e62213079",
+      "text": "- visual constraints;"
+    },
+    "BASE:437:437": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 437,
+      "endLine": 437,
+      "startByte": 26510,
+      "endByte": 26533,
+      "sha256": "f3f2c69626354ed1bb5b50bab7f549903cc0d201bf747a6434d5f69dafb2135a",
+      "text": "- temporal constraints;"
+    },
+    "BASE:438:438": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 438,
+      "endLine": 438,
+      "startByte": 26534,
+      "endByte": 26558,
+      "sha256": "5fb8590e82c8ccceb6749d7097c7d4da13840e069fc62c3109deae5eab1af821",
+      "text": "- acceptance conditions;"
+    },
+    "BASE:439:439": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 439,
+      "endLine": 439,
+      "startByte": 26559,
+      "endByte": 26582,
+      "sha256": "26c4bb6b6bb600039673a6c737e744f568b92a945be8d265e64fb8b0eac93474",
+      "text": "- authority statements;"
+    },
+    "BASE:440:440": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 440,
+      "endLine": 440,
+      "startByte": 26583,
+      "endByte": 26603,
+      "sha256": "b36b5d67ce8a16dbdd8f21c7d25f50100f5f937affe07a7cea376c36b4d498cf",
+      "text": "- tool restrictions;"
+    },
+    "BASE:441:441": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 441,
+      "endLine": 441,
+      "startByte": 26604,
+      "endByte": 26622,
+      "sha256": "a23159d038810eb44db5fa99fbd177e793b3ae83be3c67a78600d274ee9eebff",
+      "text": "- file references;"
+    },
+    "BASE:442:442": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 442,
+      "endLine": 442,
+      "startByte": 26623,
+      "endByte": 26652,
+      "sha256": "d99c3641609337d5db167b617e05f765f1e2a122374708dc5912ed8429d30101",
+      "text": "- output-format requirements;"
+    },
+    "BASE:443:443": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 443,
+      "endLine": 443,
+      "startByte": 26653,
+      "endByte": 26667,
+      "sha256": "b21856c22e02378948b84d4516c1f483dfc9cff316073c39a0ae0ab3e96f9fce",
+      "text": "- corrections;"
+    },
+    "BASE:444:444": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 444,
+      "endLine": 444,
+      "startByte": 26668,
+      "endByte": 26720,
+      "sha256": "b7618d41294d8b37580f17a99e50c2656590b18bd003b7b0e5a2b28d0b9cd37e",
+      "text": "- later statements that override earlier statements."
+    },
+    "BASE:474:474": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 474,
+      "endLine": 474,
+      "startByte": 27488,
+      "endByte": 27496,
+      "sha256": "27c39af97a977b75b6d4c6c6514ad02bb6ec7249798aadbbe96b1ee667f0eddb",
+      "text": "- facts;"
+    },
+    "BASE:471:471": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 471,
+      "endLine": 471,
+      "startByte": 27335,
+      "endByte": 27358,
+      "sha256": "51b4a3b0464899fe232a863a6a724247f3bdae322665318708178db58f0b69ce",
+      "text": "7.2 Required extraction"
+    },
+    "BASE:473:473": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 473,
+      "endLine": 473,
+      "startByte": 27360,
+      "endByte": 27487,
+      "sha256": "0d8b8eff2011f2f832a2b6c9bba63b028dd2f50871485839b18b772fb9b56a72",
+      "text": "Stage 01 MUST extract every human-supplied item relevant to defining or ultimately satisfying the requested outcome, including:"
+    },
+    "BASE:475:475": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 475,
+      "endLine": 475,
+      "startByte": 27497,
+      "endByte": 27512,
+      "sha256": "8c4c3b6f1cb844f8445804c41c64a6cb1e98061a209a026cb0673b56d977fe26",
+      "text": "- requirements;"
+    },
+    "BASE:476:476": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 476,
+      "endLine": 476,
+      "startByte": 27513,
+      "endByte": 27527,
+      "sha256": "cb7af06d45f5ad38ef680f9ecd7124ce975cdd38670638253d61df2850ebffce",
+      "text": "- constraints;"
+    },
+    "BASE:477:477": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 477,
+      "endLine": 477,
+      "startByte": 27528,
+      "endByte": 27540,
+      "sha256": "8a5d74136d34fa8b6899ad127f283a5aff89930dab1b9dde5fd52d5c37019090",
+      "text": "- decisions;"
+    },
+    "BASE:478:478": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 478,
+      "endLine": 478,
+      "startByte": 27541,
+      "endByte": 27556,
+      "sha256": "a72ce4d5046e074cda04e36fceeaaf9b15cf491906f649cd3cfa57733767c9f9",
+      "text": "- prohibitions;"
+    },
+    "BASE:479:479": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 479,
+      "endLine": 479,
+      "startByte": 27557,
+      "endByte": 27577,
+      "sha256": "8548f6a2bf24c1719c2fdba0517b954f5d1d00d98c87f7d91e328e9143d2d383",
+      "text": "- requested outputs;"
+    },
+    "BASE:480:480": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 480,
+      "endLine": 480,
+      "startByte": 27578,
+      "endByte": 27595,
+      "sha256": "9f4e558ca1943264dd274ec0b04466cddf3e8df3b560695a278b7a4dea6b4f6c",
+      "text": "- output formats;"
+    },
+    "BASE:481:481": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 481,
+      "endLine": 481,
+      "startByte": 27596,
+      "endByte": 27620,
+      "sha256": "5fb8590e82c8ccceb6749d7097c7d4da13840e069fc62c3109deae5eab1af821",
+      "text": "- acceptance conditions;"
+    },
+    "BASE:482:482": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 482,
+      "endLine": 482,
+      "startByte": 27621,
+      "endByte": 27633,
+      "sha256": "e80bec2eec3b81fb49f3504002eaf29ca43d358d10fc0faaa40a7005bb0872d1",
+      "text": "- deadlines;"
+    },
+    "BASE:483:483": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 483,
+      "endLine": 483,
+      "startByte": 27634,
+      "endByte": 27652,
+      "sha256": "e44e647a87d8ca8a8599559b68070de0bb6a245734424204eadf78def41c766b",
+      "text": "- available tools;"
+    },
+    "BASE:484:484": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 484,
+      "endLine": 484,
+      "startByte": 27653,
+      "endByte": 27683,
+      "sha256": "31f3f727d39f2a9d6d8ad46634f8d523a48eb1cb961b7c35c690fe7d86cd66c0",
+      "text": "- prohibited tools or actions;"
+    },
+    "BASE:485:485": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 485,
+      "endLine": 485,
+      "startByte": 27684,
+      "endByte": 27715,
+      "sha256": "0cc57c3ed76b3035191e4e791ab25a62682b65faaa5c4fc6cd13d6d2fecaa902",
+      "text": "- supplied-material references;"
+    },
+    "BASE:486:486": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 486,
+      "endLine": 486,
+      "startByte": 27716,
+      "endByte": 27743,
+      "sha256": "7cd6b878d49dfb03ba5d4b4fa64056be06650ba2b1ca5cd4030dc0b70bfa8c88",
+      "text": "- human-authority unknowns;"
+    },
+    "BASE:487:487": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 487,
+      "endLine": 487,
+      "startByte": 27744,
+      "endByte": 27763,
+      "sha256": "aa960c5134782bdb889b37a6143761038a77e26bbc452c74bdb23f65d2f15764",
+      "text": "- user corrections;"
+    },
+    "BASE:488:488": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 488,
+      "endLine": 488,
+      "startByte": 27764,
+      "endByte": 27795,
+      "sha256": "8f0913bf80a9e1c6ff0b37409ddeba26c3e39603546cba9d3e76d5aee6354435",
+      "text": "- \"do not change\" instructions;"
+    },
+    "BASE:489:489": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 489,
+      "endLine": 489,
+      "startByte": 27796,
+      "endByte": 27831,
+      "sha256": "c5acacf53303bd480078e8ed2c26b4da62d00a29fe82dd51a3293b9a53b2a931",
+      "text": "- visual-preservation instructions;"
+    },
+    "BASE:490:490": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 490,
+      "endLine": 490,
+      "startByte": 27832,
+      "endByte": 27862,
+      "sha256": "06a7bbc4bd8cf3ebe104ba8529fe342ef0638fa19bdfe6536a58fc5013cc59b6",
+      "text": "- project-specific priorities."
+    },
+    "SUCCESSOR:424:446": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 424,
+      "endLine": 446,
+      "startByte": 26065,
+      "endByte": 34347,
+      "sha256": "405ac1ce12a6094fd3050828157db5a597a8878bbbe6a2d9f13043a3950d12da",
+      "text": "The unit universe is structural accounting. Retain the exact originating input and artifact bytes; no normalized projection replaces them or asserts inspection. Each unit binds the input version, supplied occurrence, exact structural location and source-value hash. Enumerate roots in their retained source occurrence order; within a structured value visit arrays in index order and object keys in unsigned Unicode-scalar order. A canonical mirror of the same originating field is visited only once, using the originating field; separately supplied equal values are separate occurrences.\n\nFor human text and string-valued structured human input, CRLF, CR and LF delimit physical lines. Retain original line positions. Emit each line containing a character other than U+0009–U+000D or U+0020; if a nonempty string has no such line, emit that entire string as one unit. Empty strings, null and absent scalar values emit no content unit. Other scalar leaves emit one unit retaining their declared type and value. Original blank lines and exact original text remain available to the mandatory semantic reader even when the line projection emits no separate blank-line unit.\n\nFor every supplied artifact occurrence, emit one inventory unit. Where exact bytes are valid UTF-8 and the text projection re-encodes to those exact bytes, also emit physical content units: scan left to right, treating CRLF as one terminator and otherwise CR, LF or form feed as a terminator; each unit contains the span through its terminator. Retain every nonempty span, including blank lines; emit a final unterminated span if present, but no zero-length trailing span. Coordinates start at page 1/line 1; form feed increments page and resets line to 1, other terminators increment line. BOM bytes, if present, remain part of the exact projection, not silently removed. This rule is accounting, not a claim that every UTF-8 artifact's media semantics have been parsed.\n\nFor a mechanically supported structured-media subdivision, emit one structural unit per exposed page, section, archive member, embedded document/object, comment, annotation, tracked change or metadata object, using its exact parent and source locator; traverse children in source order, breaking any absent source-order tie by unsigned Unicode-scalar locator order. Recurse into textual leaves using the physical-content rule and into child media using this rule. A structural node is counted once per occurrence/location/kind; a node's structural unit and its descendant content units are distinct. Preserve inaccessible exposed nodes as INACCESSIBLE_OR_BLOCKED; do not fabricate children. Detailed coverage requires a closed format mapping that is part of this named versioned normative algorithm or an explicitly identified versioned normative format mapping authorized under §34.3. Merely publishing an implementation descriptor does not authorize such semantics. The mapping must fix node kinds, source locators, ordering, exact canonical source values and child extraction. This insertion adds no format-specific adapter or mapping. A claim of supported detailed coverage without that normative mapping is blocked; genuinely unsupported formats retain the fallback below. A mechanically available subdivision cannot be suppressed or relabeled unsupported to avoid that blocker.\n\nSubdivision is additive: an exact UTF-8 whole-file projection emits its physical spans even when a supported structured mapping also emits structural nodes and textual leaves. Whole-file spans, structural nodes and structural textual-leaf spans have distinct kinds and locators and are all counted; overlap in underlying bytes does not deduplicate these different accounting obligations. Each archive-member or embedded-file occurrence emits both its parent structural occurrence unit and its own child inventory unit, followed by its own supported content/subdivisions. A textual leaf is not a child file and gets no inventory unit. Repeated references to the same emitted unit still deduplicate under the rule below.\n\nSource hashes and binding are closed as follows. C(x) means the exact UTF-8 bytes of §34.1 canonical JSON; H(b) means lowercase SHA-256 hexadecimal of exact bytes b. Source-value hash preimages by kind are:\n- HUMAN_TEXT_LINE or HUMAN_TEXT_WHOLE: C({\"type\":\"STRING\",\"value\":s}), where s is the exact emitted line excluding its terminator, or the entire whitespace-only nonempty string respectively. Physical line number and original field pointer retain position; retained originating bytes preserve terminators.\n- HUMAN_SCALAR: C({\"type\":t,\"value\":v}), where t is the declared scalar type and v its exact canonical value; no string coercion. Null/absent values remain excluded as above.\n- ARTIFACT_INVENTORY: C({\"byteLength\":n,\"contentSha256\":h}), where n is exact byte length and h=H(exact artifact bytes). If bytes are unavailable, both values are null; asserted length/digest remains source context, never substituted for observed bytes. The unit remains inaccessible/blocked, with its retained occurrence/locator binding.\n- PHYSICAL_SPAN: the exact original byte span including its terminator, without canonical JSON wrapping. Its locator binds zero-based byte start and exclusive end plus the one-based page/line coordinates.\n- STRUCTURAL_NODE: C({\"nodeKind\":k,\"status\":q,\"value\":v}), where k and v are the exact kind and canonical source value fixed by the authorized format mapping, and q is ACCESSIBLE or INACCESSIBLE_OR_BLOCKED. Inaccessible nodes have v=null; exact exposed parent/locator and k remain bound. No invented serialization of an adapter object is permitted.\n- STRUCTURAL_TEXT_SPAN: exact UTF-8 bytes of the mapped exact textual leaf's physical span, including its terminator. The authorized mapping identifies the leaf and its exact extraction; no silent whitespace normalization is allowed.\n\nEach unit's binding hash preimage is C({\"algorithm\":\"closed-loop-raw-units/1\",\"inputVersion\":V,\"occurrence\":O,\"kind\":K,\"locator\":L,\"sourceValueSha256\":S}). V is the exact owning input-version identity string; O is the ordered zero-based safe-integer path of supplied root and, where applicable, child-member occurrence indices; K is exactly one of the seven uppercase kinds above; S is the corresponding source-value hash. L is an ordered locator array: human units use [originating JSON pointer, one-based physical line] or [originating JSON pointer] for whole strings/scalars; inventories use []; whole-file spans use [startByte,endByte,page,line]; structural nodes use [normative format mapping ID, exact mapping locator]; structural textual spans append [startByte,endByte,page,line] to their structural-leaf locator. Byte offsets for a structural textual leaf refer to its exact UTF-8 extraction. The source-value hash alone does not identify the occurrence: binding hash plus retained input/source supplies the exact type, location and occurrence. These accounting hashes/locators are not §34.2 canonical record IDs. Distinct roots are numbered in retained source occurrence order, including separately supplied identical roots; a canonical mirror does not receive a second root number.\n\nAn image/media occurrence without a supported finer subdivision uses its inventory unit as its whole-media unit. A format with no supported mechanically available subdivision likewise uses its inventory unit as the whole-file fallback, with an explicit unsupported/unavailable-subdivision basis and the original bytes retained. These fallbacks neither prove inspection nor remove existing material uncertainty/blockers. Comments, annotations, tracked changes, metadata and embedded content are not discarded as nonsemantic.\n\nDeduplicate only repeated accounting references to the same occurrence, kind, location and exact source-value hash. Never merge distinct supplied occurrences, even with identical hashes. Order and retained source identity determine stable accounting references; canonical record IDs still use §34.2. Count the entire resulting unit universe, including inventory, structural and inaccessible units, when applying the unchanged §6.5A limits. The raw-unit challenge condition is strictly greater than 500, not greater than or equal to 500; every other size-independent trigger remains effective."
+    },
+    "SUCCESSOR:451:494": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 451,
+      "endLine": 494,
+      "startByte": 34651,
+      "endByte": 53482,
+      "sha256": "cfa0acea3e16a18d3b4f90a558a1a36bfe27c8ef751d7552436e0dc95adb7aeb",
+      "text": "Scope and preservation\nApply this mapping to a supplied ZIP occurrence for which the application can use its existing bounded closed-loop-inbound-zip/1 structural decoder. Preserve the exact compressed archive bytes, their original supplied occurrence, byte length and SHA-256. Expanded member bytes are verified immutable child copies; they never replace the original archive. Decode and retain bytes only in the existing isolated in-memory/Blob/storage path. No member is extracted to a filesystem, executed, followed as a link, or used as a path outside that path-safe storage authority.\n\nThe supported decoding subset is ordinary single-volume ZIP and the decoder's bounded ZIP64 forms, with stored or DEFLATE compression, permitted data descriptors, UTF-8 or CP437 names and the decoder's validated Unicode-path extras. Keep its existing checks for complete consistent local/central headers, exact boundaries, safe noncolliding canonical paths, actual expanded lengths, CRC and SHA-256, permitted flags/extras and resource/platform bounds. Encrypted entries, split volumes, self-extracting prefixes, directory/link/device/special entries, unsupported compression/extra fields and ambiguous or colliding paths do not become supported through this mapping. The exact intake safety profile below and existing worker isolation remain effective. The response transport contract remains unchanged. A resource or platform failure is not reclassified as an unsupported format to bypass a blocker. Intake uses this decoder's structural/byte validation, not the inbound response's manifest, response.json role or attachment-admission semantics.\n\nRecognition and bounded decoding\nApply the same recognition test to each supplied root and each verified expanded child. A byte candidate exists if the first four bytes are a ZIP local-header, EOCD, ZIP64 EOCD or ZIP64-locator signature (respectively hexadecimal 504b0304, 504b0506, 504b0606, 504b0607), or if the EOCD signature 504b0506 occurs anywhere in the last min(byteLength,65557) bytes. Also attempt validation when a supplied filename ends with .zip under ASCII case-insensitive comparison, or the supplied media type, before a semicolon and after ASCII whitespace trim/case-fold, is application/zip or application/x-zip-compressed. Names and media types can require an attempt but cannot suppress a byte candidate or establish success. A random signature or claimed filename can never create successful ZIP coverage: the complete retained structural, boundary, path and integrity checks decide that. Missing bytes retain an unavailable inventory/blocker; they do not establish absence of ZIP structure. Noncandidate bytes without a ZIP claim do not receive ZIP nodes through speculation; C's other available accounting rules remain applicable.\n\nUse a centralized, versioned intake profile closed-loop-raw-units-zip-limits/1. Its bounds are: 27 cumulative central-directory entries across the entire selected input-version archive-mapping pass, including every supplied root and recursively decoded child; 67108864 bytes per expanded member; 70254592 cumulative reserved-or-produced expanded bytes; 140509184 cumulative archive bytes submitted to decoding (count a nested archive again when it is submitted); compression ratio at most 1100 per member; filename byte length at most 65535; canonical path depth at most 128; maximum archive nesting level 27 with the supplied archive at level 1; and one cumulative elapsed-worker deadline of 600000 ms for that entire input-version archive-mapping pass. The entry budget is charged on exposure before expansion, including unsupported/blocked entries; the maximum depth cannot bypass that budget. Expansion and byte accounting are checked before allocation and incrementally, against both declared and actual lengths; declared metadata never substitutes for verified bytes. The expansion safety counter reserves each declared output length before allocation; actual production within that reservation does not charge the same byte twice, while any additional produced byte must first fit and consume remaining budget. Every produced/reserved byte remains charged even if later CRC, validation or decoding fails; no refund, reset or retry can escape the pass-wide ceiling. It includes every child occurrence at every depth, including a nested archive's bytes as its parent's output and its own children separately. This work-safety counter is distinct from the semantic aggregate-byte review sum, which includes only actually verified retained child bytes. The archive-byte sum counts each archive occurrence once when submitted to decoding. The same original per-archive structural and byte checks remain; a bound can stop processing earlier, never authorize weaker checking. These ceilings reuse the current default decoder's 27 entries, 64 MiB file bound, 64 MiB + 1 MiB response + 2 MiB manifest total, twice-total archive bound, ratio/name/path/work bounds; the intake profile assigns those generic ceilings without granting any response.json/manifest.json role or larger filename-specific allowance. Transport recursiveExpansion=false and maxNestingDepth=0 remain response-transport rules, not intake accounting rules. A lower already-applicable storage/worker bound still stops work and remains explicitly blocked; it must not silently change this profile or yield favorable completeness. The exact profile-hash preimage is C({\"version\":\"closed-loop-raw-units-zip-limits/1\",\"scope\":\"INPUT_VERSION_PASS\",\"maxEntries\":27,\"maxEntryBytes\":67108864,\"maxExpandedBytes\":70254592,\"maxArchiveBytes\":140509184,\"maxCompressionRatio\":1100,\"maxFilenameBytes\":65535,\"maxPathDepth\":128,\"maxNestingDepth\":27,\"workerTimeoutMs\":600000}); its SHA-256 is the profile hash. The retained unitization derivation binds the owning input version, mapping ID, this exact profile ID/hash, actual counters and completion/blocker status; changed profile or source invalidates reuse under the existing derivation rules. Repeated equal roots and members are charged separately. Any future profile change follows existing versioning and acceptance requirements.\n\nOccurrence identity and order\nLet P be the parent archive's C occurrence path, already bound to the owning input version. Number central-directory entries from zero in their exact central-directory order, not local-file-offset order, canonical-filename order or extraction completion order. The child occurrence for entry i is P followed by i. Different supplied archives and different nested occurrences remain distinct even when bytes or names are equal. Local/central identity validation is still required; choosing central-directory order for accounting does not weaken it.\n\nUse the base C unit kinds STRUCTURAL_NODE, ARTIFACT_INVENTORY, PHYSICAL_SPAN and STRUCTURAL_TEXT_SPAN only; do not add canonical record families or a second unit-ID scheme. Every archive, member, metadata, extra and comment structural node uses occurrence P of the archive being mapped; child inventories/content and recursively mapped child archive nodes use P followed by i. Every ZIP structural unit's locator is [\"closed-loop-raw-units-zip/1\", locatorValue], where locatorValue is one of the exact ordered arrays below. All offsets and lengths are nonnegative safe integers measured in the parent archive's original bytes; an index is a zero-based safe integer. A node with verified source bytes has status ACCESSIBLE. Its C source-value hash is H(C({\"nodeKind\":k,\"status\":\"ACCESSIBLE\",\"value\":v})); the outer binding hash uses the unchanged C input-version/occurrence/kind/locator/source-value preimage. Exact raw bytes below use lowercase hexadecimal, preserving every byte without character decoding. Metadata offsets/bytes belong to the archive, not to a reserialized ZIP.\n\nEmit the parent's inventory and any applicable exact whole-file UTF-8 spans under C first. Then emit the following archive-level nodes in increasing original byte-offset order:\n- ZIP_CONTROL_RECORD for each present end-of-central-directory fixed record, ZIP64 end record and ZIP64 locator. locatorValue is [\"CONTROL\", recordType, offset]; recordType is EOCD, ZIP64_EOCD or ZIP64_LOCATOR. v has exactly recordType, offset, byteLength and rawHex. The ordinary EOCD record excludes its following archive-comment bytes; ZIP64 records use the exact validated decoder-supported record extent.\n- ZIP_ARCHIVE_COMMENT only when the EOCD archive-comment length is nonzero. locatorValue is [\"ARCHIVE_COMMENT\", offset]. v has exactly offset, byteLength and rawHex for all declared comment bytes. An empty comment creates no comment unit. No character-set guess or interpretation makes comment bytes executable or favorable evidence.\n\nThen, for every entry i in central-directory order, emit in this exact order:\n1. One ZIP_MEMBER structural node, with occurrence P and locatorValue [\"MEMBER\", i, centralHeaderOffset]. Its v has exactly index, centralHeaderOffset, localHeaderOffset, rawFilename, rawFilenameHex, canonicalPath, compressionMethod, compressedByteLength, compressedSha256, expandedByteLength, expandedSha256 and crc32. rawFilename is the decoder's exact decoded central name before path normalization; rawFilenameHex retains its exact original name bytes. canonicalPath is the separately validated safe canonical path, never a replacement for the raw name. compressionMethod is integer 0 or 8; both digests are H of the actual compressed data span and actual verified expanded bytes respectively; crc32 is the verified unsigned integer. No timestamp, name or claimed digest substitutes for observed member bytes.\n2. ZIP_MEMBER_METADATA nodes for the central fixed header, local fixed header and data descriptor if present, in that order. locatorValue is [\"MEMBER_METADATA\", i, recordType, offset], with recordType CENTRAL_HEADER, LOCAL_HEADER or DATA_DESCRIPTOR. v has exactly recordType, offset, byteLength and rawHex. Central and local fixed-header extents are 46 and 30 bytes respectively; the descriptor extent is the exact 12/16/20/24-byte form validated by the existing decoder. Filename, extras and comment bytes are excluded from these fixed-header units because their exact representations are bound separately.\n3. One ZIP_EXTRA_FIELD node per actually present local extra field, followed by one per actually present central extra field; preserve byte order within each area, including separately present equal fields in the two areas. locatorValue is [\"EXTRA_FIELD\", i, area, ordinal, offset], with area LOCAL or CENTRAL and ordinal zero-based within that area. v has exactly area, headerId, offset, byteLength and rawHex. byteLength and rawHex cover the full 4-byte ID/length header plus its declared payload. Existing duplicate/unsupported/malformed-extra rejection is unchanged. No decoded timestamp, UID, Unicode name or other extra interpretation replaces its exact source bytes.\n4. ZIP_MEMBER_COMMENT only when the central entry's comment length is nonzero. locatorValue is [\"MEMBER_COMMENT\", i, offset]. v has exactly offset, byteLength and rawHex. Empty comments create no comment unit. These bytes are counted even though comments have no transport authority.\n5. One child ARTIFACT_INVENTORY with occurrence P followed by i and inventory locator [], binding the actual expanded byte length and H(expanded bytes) by C. Then emit that child's exact verified UTF-8 physical spans when C permits them, using offsets in the expanded child bytes, and apply the recursive rule below before proceeding to entry i+1. A recursively mapped child archive uses this already-emitted inventory and physical spans without emitting them a second time. The ZIP_MEMBER structural node and child inventory are different accounting obligations and both count. Metadata/comment nodes are not child files and do not receive inventory units. This mapping creates no semantic XML/JSON/CSV/Office/PDF section or annotation units from a member's contents; plain supported UTF-8 spans do not claim such parsing or inspection.\n\nRecursive child media\nFor every verified expanded child, apply the byte/claim recognition test above. A ZIP candidate is mapped recursively by this same mapping, in depth-first central-directory order, under the entire input-version mapping pass's shared cumulative safety counters and deadline. The expanded child becomes the next archive occurrence P; no new root identity, fresh budget or favorable parent result is substituted. Exact expanded bytes remain retained and bound even when their own ZIP structure is blocked. A ZIP-based document can expose these ZIP members without thereby claiming semantic Office/XML/PDF parsing. A child that is not a ZIP candidate still receives its inventory and applicable exact UTF-8 physical spans under C; this addendum invents no other media mapping.\n\nWhen a depth, entry, byte, ratio, path, name, worker or work bound actually stops a recognized child, retain that child's already exposed member occurrence, inventory and available exact bytes, mark its unresolved subdivision INACCESSIBLE_OR_BLOCKED with the precise cause, and stop the affected expansion safely. It is neither a successful opaque fallback nor proof that children do not exist. Never reset counters for nested ZIPs, invoke unbounded recursive decompression, fabricate descendants, or treat unknown remaining units as zero. A separately supplied copy is a separate root occurrence with its own identity and is charged again to the same input-version pass counters; equality of bytes does not merge it or reset the budget.\n\nCounting and thresholds\nEvery emitted inventory, member, metadata, comment and content unit participates in C's unchanged greater-than-500 raw-unit trigger. The supplied-file/archive-member count includes the supplied archive occurrence once and each enumerated child member occurrence once; metadata/comments do not add file occurrences. For the existing aggregate-supplied-byte challenge, count each retained file occurrence's actual bytes once: the original compressed archive plus each verified expanded child occurrence at every recursive depth; do not count metadata byte spans again or deduplicate equal occurrences. Apply the existing per-text/document and mechanically countable-page thresholds to eligible original/child content by their existing rules. This additive count can trigger review sooner than treating an archive as one opaque file; no threshold value is raised or reduced. Storage/expansion safety budgets remain separate from these review triggers and retain their original enforcement.\n\nFailure and unknown content\nA supplied archive always retains its C inventory, exact original bytes when available, and a precise outcome. Distinguish (a) unsupported/encrypted structural features; (b) malformed/truncated/inconsistent structures, bad CRC or changed bytes; (c) unsafe/duplicate/colliding member identities; (d) absent/unreadable required bytes or unavailable decompressor/worker; and (e) resource-limit, timeout or interrupted execution. None is a successful parse or a favorable whole-file completeness result. Keep the exact typed cause and existing recovery route; do not silently drop the failing member, retry with weaker validation or invent child bytes.\n\nOnly fully verified members receive ACCESSIBLE ZIP_MEMBER values with observed expanded hashes/lengths. An exposed member means a central-directory record with the exact central signature and complete in-bounds fixed header, filename, extra area and comment area, within the established central-directory extent and traversal order. Its entry index and central-header offset establish the member locator even when local validation or expansion fails. Preserve each such exposed occurrence, including duplicate names, directories, links and unsupported entries, as INACCESSIBLE_OR_BLOCKED with value=null when it cannot be validated; do not expand it or grant its path authority. It still receives exactly one child ARTIFACT_INVENTORY at P followed by i under C: when verified expanded bytes are unavailable, both byteLength and contentSha256 are null, with an explicit blocked disposition. A claimed member size or digest does not fill these values. Distinct colliding/duplicate central occurrences are never merged to hide them. No child inventory is created for a guessed entry, unparsed count or incomplete/unbounded central record.\n\nPreserve independently established exact metadata and comment spans as their corresponding ACCESSIBLE structural units even when the owning member is blocked; accessibility here concerns the exact metadata bytes, not the member's safe expansion or semantic validity. An extra field receives its specified unit only when its own 4-byte header and full declared payload are in bounds; duplicate/unsupported fields can be preserved as separate observed bytes but still block member admission. If malformed metadata prevents complete field segmentation, preserve the exact whole extra-area bytes as diagnostic provenance on the blocked occurrence, without inventing extra-field units. For a blocked member whose local metadata is not safely established, emit only established central metadata/extras/comments, then its blocked child inventory. This is bounded read-only exposure; it does not relax existing decoder rejection. Unknown remaining structure remains an explicit archive-level blocker, and a smaller observed count cannot discharge it.\n\nA structurally established zero-entry EOCD with zero central-directory size and consistent offsets is a known empty archive, not malformed merely because the existing decoder rejects count=0. Preserve its inventory and exposed control/comment nodes, emit no invented member or child inventory, and record EMPTY_ARCHIVE_DECODER_BOUNDARY as INACCESSIBLE_OR_BLOCKED for detailed decoding under this current parser scope. It does not yield a successful detailed-coverage claim or unsupported-format fallback. A missing or unusable DEFLATE implementation/worker is unavailable evidence, not unsupported ZIP format; preserve originals, established nodes and blocked child inventories. Corrupt bytes, an unsupported feature, unsafe paths, actual resource exhaustion and unavailable machinery retain distinct causes and recovery requirements.\n\nThis mapping adopts accounting order, unit granularity, raw-name/metadata/comment identity, additive counts, recursive traversal and its explicit bounded intake profile only. It does not adopt arbitrary parser output as normative truth, authorize an unbounded parser or relaxed safety policy, establish semantic inspection, waive current evidence requirements, or accept historical coverage proof. Implementation must expose the required exact locators/bytes from the existing decoder without changing its retained safety predicates; actual boundary and fault tests remain due."
+    }
+  },
+  "currentMechanismReference": {
+    "artifactSha256": "2764061bb54548911dea088a0f7ab5b7b64074570df737723f82a0e7e5d5867e",
+    "jsonPointer": "/decisions/CURRENT_EXHAUSTIVE_READING_AND_EXTRACTION",
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016/mechanism-adjudication.json",
+    "selectedValueSha256": "7a55404270197aee50a4ea6ec6a2e163106e09500a327caea63d97d0a31c42a0"
+  },
+  "acceptedTechnicalLink": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-002/effective-governor-link.json",
+    "sha256": "2a99deda8b0fe212dc838120e9da2f06fad85a9d5cd99928d190b5e80da4d480",
+    "byteLength": 16854
+  },
+  "independentMechanismDecision": "All46 exact atoms and their original context/occurrences were examined.44 quantify exhaustive reading/extraction/omission search over the current source-occurrence domain, including C1 established ZIP metadata and verified children when supplied. Accepted technical11–19 directly conditions that domain without certifying semantic success.280/281 instead impose fact/assumption and human-authority/research distinctions; decoder semantics do not define those classifications. Those two retain current identities with explicit diagnostic-only closure, preserving upstream reading and coverage dependencies."
+}

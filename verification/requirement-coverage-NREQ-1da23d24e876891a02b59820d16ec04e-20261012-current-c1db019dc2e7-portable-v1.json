@@ -1,0 +1,184 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-1da23d24e876891a02b59820d16ec04e",
+  "sourceLineSha256": "7473c4ad24ec41dfc1b67b40962b9e6bc389de62781a442af49eebddb66c22af",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "05badd9a9ef6c039b1aabc01bcd043d4fbc9553715bc2ecd3a23bc8bf873eb90",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Independent bounded current-source applicability renewal of the retained correction-without-new-version coverage decision, incorporating the completed v2 applicability review. The exact correction selector (SHA-256 00bafe8de14f96b92aa713ffd2324a1351c538fbe69d03871d2e91b024ccc986), verify-complete sourceInputs, owning test, production workflow owner, declaration, and clause semantics remain unchanged. The final catalogue population correction affects only the backup-import failure predicate and does not intersect this check. No test, producer, receipt, persistence, browser, native, or application-conformance execution is claimed.",
+  "author": {
+    "actor": "Codex correction-version full-clause proposer",
+    "contextId": "review-context:due_consumer_population_closure"
+  },
+  "reviewer": {
+    "actor": "Codex independent bounded current-source applicability reviewer (included GPT)",
+    "contextId": "review-context:extension_regression_review"
+  },
+  "reviewPerformed": true,
+  "reviewedInputs": [
+    {
+      "declarationSha256": "05badd9a9ef6c039b1aabc01bcd043d4fbc9553715bc2ecd3a23bc8bf873eb90"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "6d45356cbd672d0e99d317f9fc0f3c6a0cd1195e9d038b56045775298b8dab93"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "01372de4f5f54a480d8ec8a14b21ae595e5d27486add7c882d944b59497ddd21"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-accepted-external-response-metrics.mjs",
+      "sha256": "298a0e7a0765a8fe70598d062068aabcbaf6909db32bc371517f5752981b3def"
+    },
+    {
+      "path": "test-accepted-run-correction-journey.mjs",
+      "sha256": "b3d9dee8b43ebf47ba8bdbad6b044e92c587cc979ab65384a15e95ca7cf6dfd0"
+    },
+    {
+      "path": "test-derivation-receipt-contract.mjs",
+      "sha256": "407410fd7cd1abf8f95a4d74497052b620926e91e2cf7a7ecd688e26e1caa4dc"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "cf29aa183e1f6079fb9ba0ec966a72dedc6a3dcf82549b5f7d154d087d2adda6"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-operational-response-metrics.mjs",
+      "sha256": "7a73ff5e1c7371931a79b86f73c174223e808e0649ddf140a9fe02367279f0d1"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "28a45861b76ba38038882e0dfb22afc886b7a32e615e801410a894d542f8cbdf"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "a9eadc5db096997c51540068fecddaa71dca221b7342eac703d243438a9d1c23"
+    },
+    {
+      "path": "test-stage16-operator-action.mjs",
+      "sha256": "58cdd202b1d1685757472c294046bef1f51e1788fedf7cbac3226a4fddb98684"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "c1db019dc2e7cd7d08d7654eed36a128de2f17bca19359b66b95e414fae2a067"
+    },
+    {
+      "path": "verification/accepted-run-stage10-prerequisite-20261007.json",
+      "sha256": "6b972c6ca0a0d8c13c9c075eb219abd3d4811d2ba7c659d9e8cff73096d72e86"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
+    },
+    {
+      "path": "verify-complete.mjs",
+      "sha256": "078ec516a3985a08d1d6b6e0a74726d03b5842f9001ccbb9a4e8ee6c33105bd9"
+    },
+    {
+      "path": "verify-corrected-iteration.mjs",
+      "sha256": "bb77dcdeeac5f4a8611eed0be4b124a5690840ec9b3cfcc9b7ee7c314ac41bcd"
+    },
+    {
+      "path": "verify-root-cause-correction.mjs",
+      "sha256": "9a9c20b5ab23186aee419fa5f69c56baec4dad9657ae8325497d600944373bf6"
+    },
+    {
+      "path": "verify-spec-residual-closure.mjs",
+      "sha256": "d9649a4916d916e212d73a3ca756fe42d84e42cd1da9083f4d9e3b73ac8d4720"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "384746b24ad6d4f50d640b50895736178e1f4102382006cb6584b09f225528bb"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "c680b30671e76d6c2489d7a86b1c3e2bbae5026f57194310cf9fd9b0ca4f4cf4"
+    }
+  ],
+  "findings": [],
+  "reviewedAt": "2026-10-12T12:55:26Z",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 4901,
+    "endLine": 4901,
+    "lineSha256": "7473c4ad24ec41dfc1b67b40962b9e6bc389de62781a442af49eebddb66c22af"
+  },
+  "controllingText": "- correction without new version;",
+  "governingContext": [],
+  "additionalControllingContext": [
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 4852,
+      "endLine": 4852,
+      "purpose": "Section 44 declares the acceptance-suite minimum; this is context only and a separate normative source row."
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 4846,
+      "endLine": 4846,
+      "purpose": "Section 43 describes intentional invalid fixtures and absence of mutation; this is context only and a separate normative source row."
+    }
+  ],
+  "reviewedChecks": [
+    {
+      "suite": "verify-complete.mjs",
+      "checkId": "correction.distinct-version-gate"
+    }
+  ],
+  "scopeLimit": "Complete only for the exact literal negative-matrix row. It does not establish ordinary response-ingestion refusal, application correction-command rollback, project-store persistence or transaction behavior, complete Stage 16/17 progression, real external or human action, browser/physical-device behavior, or any adjacent correction clause.",
+  "independentlyExpectedSemantics": "For a structurally complete correction record, NEW_ARTIFACT_VERSION must identify a version distinct from OLD_ARTIFACT_VERSION before the correction can satisfy corrected-iteration lineage or the Stage 16 correction gate. Equal nonempty identities must produce the specific version refusal; a distinct identity and a repaired distinct identity must not produce that refusal. Evaluation must not mutate the already-installed synthetic fixture.",
+  "coverageAssessment": {
+    "exactPartitions": [
+      "distinct nonempty old/new versions",
+      "equal nonempty old/new versions",
+      "equal version repaired to a distinct nonempty new version"
+    ],
+    "missingOrEmptyNewVersion": "Covered by the separate structural changeset validity rule and not a semantic partition of this exact in-place-version fault.",
+    "productionBoundaries": [
+      "validateTraceIntegrity dispatches to validateChangeTrace and proves the fault fixture remains structurally complete",
+      "evaluateCorrectedIterationLineage refuses equal version identities",
+      "evaluateIteration(CORRECTED) consumes the lineage refusal",
+      "gate(16) refuses equal version identities",
+      "all decision calls preserve the installed fixture state"
+    ],
+    "semanticRole": "NONAPPLICABLE_CLOSED_MECHANICAL_IDENTITY_RULE",
+    "mutationRole": "The same registered check installs the equal-version fault and repairs it to a distinct version, with independent expected outcomes."
+  },
+  "currentApplicabilityRenewal": {
+    "catalogSha256": "c1db019dc2e7cd7d08d7654eed36a128de2f17bca19359b66b95e414fae2a067",
+    "catalogDeltaScope": "completeBackupImportFailurePreservation exact expected fault population corrected from two to four; target selector/sourceInputs unchanged",
+    "priorReviewSha256": "cfe581fe6c768440b9ca419f5b4f3dc58900aadc3da923ecf70d7cee95a45ef8",
+    "semanticDecisionPreserved": true,
+    "testsRunByReviewer": false,
+    "receiptCreatedOrRestamped": false,
+    "applicationConformanceClaim": false,
+    "priorReviewArtifactFilename": "requirement-coverage-NREQ-1da23d24e876891a02b59820d16ec04e-20261012-final-composite-346917f18775.json",
+    "priorReviewPrivateAccessPrerequisite": "Historical predecessor inspection requires separately authorized access to the private artifact identified by basename and SHA-256. That private artifact is provenance only, is not repository publication evidence, and is not required to validate this current review, which stands on its exact current reviewedInputs."
+  }
+}

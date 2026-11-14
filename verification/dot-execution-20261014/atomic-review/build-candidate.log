@@ -1,0 +1,9 @@
+{
+  "schema": "closed-loop-deployment-manifest/1",
+  "sourceCommit": "46a3c55ec5a2776f1ca6dd921aa41d54677c4633",
+  "workflowRunIdentity": "INDEPENDENT-REVIEW",
+  "buildIdentity": "build-sha256-bd53275a79b31db15d087b8da3108a69d5ff9e16af0eb10d9b301e5f52ac0b81",
+  "resources": 13,
+  "manifestDigest": "41f369fac561840ae8f64415902200870a979a3fa55f15be9d6f891505b27219",
+  "outDir": "/workspace/shared/clrt-atomic-review-evidence/build-candidate"
+}

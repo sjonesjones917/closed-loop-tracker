@@ -1,0 +1,71 @@
+{
+  "schema": "closed-loop-additive-predecessor-technical-reference-resolution/1",
+  "status": "FROZEN_DISTINCT_QUALIFIER_LINKAGE_RECONCILIATION_004",
+  "records": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-004/per-entry-reconciliation.json",
+    "sha256": "b6272cc2e63bcafff259050ca881cafc9fd909cc14870bdc11b21a26a5564b5d",
+    "byteLength": 931319
+  },
+  "exactEvidence": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-004/source-evidence.json",
+    "sha256": "93d4ad0ecb0320350dd79055992a008368106fd1b75d92d37e31c5cd78ed7ba8",
+    "byteLength": 238680
+  },
+  "independentScopeDecisions": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-004/independent-scope-decisions.json",
+    "sha256": "0a3b6639b1c5acdb7da3e99bd9f6d2fd92f9b454f11e4e01a677f4818245bfee",
+    "byteLength": 230786
+  },
+  "requiredTypedGovernors": {
+    "SRC-GAP-DECODER-SUBSET": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-004/decoder-effective-governor-link.json",
+      "sha256": "c7ef05c94a20ef8be2021875c055583fb1f3c5a3ecc8fd6ed613832f86a3e1b7",
+      "byteLength": 13356
+    }
+  },
+  "requiredTypedComposites": {},
+  "validation": {
+    "entryCount": 127,
+    "edgeCount": 127,
+    "actualEffectiveEdges": 118,
+    "diagnosticOnlyEdges": 9,
+    "freshCurrentIdentityCount": 118,
+    "retainedCurrentIdentityCount": 9,
+    "proposalAdjudication": {
+      "acceptedEdges": 127,
+      "correctedEdges": 0,
+      "blockedEdges": 0
+    },
+    "verifiedOriginalOccurrenceBindings": 1221,
+    "uniqueOriginalOccurrences": 391,
+    "preservedOriginalIndentationQualifications": 0,
+    "currentMechanismCount": 31,
+    "originalPredecessorDenominator": 7486,
+    "predecessorPopulationAfter": {
+      "RETAINED": 5964,
+      "CHANGED": 1522,
+      "BLOCKED": 0
+    },
+    "newDutyPopulation": 712,
+    "remainingQualifierRows": 842,
+    "remainingQualifierEdges": 1890,
+    "remainingEdgesByIssue": {
+      "SRC-GAP-DECODER-SUBSET": 435,
+      "SRC-AMBIGUITY-XML-SUBNODE-ROOT": 695,
+      "SRC-GAP-DEFERRED-BINDING": 760
+    },
+    "explicitCompositeGovernorRows": [],
+    "compositeConsumerSupportNotClaimed": true,
+    "proofPromoted": false
+  },
+  "sourceAuthorProposalManifest": {
+    "path": "/tmp/clrt-current-qualifier-linkage-proposals-004/finalized/manifest.json",
+    "sha256": "690c4e08d4a6b4758ab39b4788e1072542fa3a9d0b30a13f139dfd7c3d00297b",
+    "byteLength": 2781
+  },
+  "priorReconciliations": [],
+  "mergeRule": "Require exact original ID/index/hash and prior current ID/row evidence. Preserve the proposition, exact original occurrence set, existing current source governors and historical qualifiers. Apply each exact per-issue decision. Actual governing dependencies issue the recorded fresh identity; diagnostic-only rows retain issued identity. Clear current issue arrays only for this exact batch. Composite governors preserve every component in a separately typed record. No original disposition, denominator or implementation/proof state changes.",
+  "consumerCompatibilityBoundary": "Single-issue rows use singular custody-link schema. Any listed composite requires explicit independently reviewed composite support before application. Source meaning is determinate; consumer support is not claimed.",
+  "sourceLedgerActivated": false,
+  "proofPromoted": false
+}

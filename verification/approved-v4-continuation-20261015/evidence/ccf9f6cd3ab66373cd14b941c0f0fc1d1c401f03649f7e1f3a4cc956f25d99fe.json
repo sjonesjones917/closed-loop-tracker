@@ -1,0 +1,37 @@
+{
+  "schema": "closed-loop-attributed-composite-source-resolution-custody-link/1",
+  "id": "V4-CURRENT-COMPLETION-XML-AND-F1-GOVERNOR-1022",
+  "status": "LINKED_IN_ADDITIVE_CANDIDATE_SOURCE_GOVERNOR_SET_PENDING_EXPLICIT_COMPOSITE_CONSUMER_SUPPORT",
+  "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+  "governedPredecessorIndexes": [
+    1022
+  ],
+  "componentGovernors": [
+    {
+      "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+      "governorLink": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/xml-effective-governor-link.json",
+        "sha256": "101e96ba58a52e2ce03fd48725753f225eb8b022bebc8dbb7b103ce598c10d7a",
+        "byteLength": 9047
+      }
+    },
+    {
+      "issueId": "SRC-GAP-DEFERRED-BINDING",
+      "governorLink": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/deferred-effective-governor-link.json",
+        "sha256": "51d16460052de0641646c9089a2bd2ea8ab52e2b883b3cae5172fd10b82fe362",
+        "byteLength": 10995
+      }
+    }
+  ],
+  "individualEffectiveScopeDecisions": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-003/independent-scope-decisions.json",
+    "sha256": "57552f91d84984463d267b3cb3810666496c1d0d72379b4799335189e8ba997b",
+    "byteLength": 187674
+  },
+  "scopeRule": "Preserve both separately bounded predicates for predecessor1022: applicable current native SELECT_XML meaning under the owning-stage completion contract, and current F1 accepted binding/scope/history/receipt-only completion. Neither component substitutes for the other, changes ordinary completion or grants writer/executor authority.",
+  "identityRule": "The exact composite bytes and both pinned components are effective scope inputs; never flatten to one issue or source line.",
+  "sourceLedgerActivated": false,
+  "implementationAcceptance": false,
+  "proofPromoted": false
+}

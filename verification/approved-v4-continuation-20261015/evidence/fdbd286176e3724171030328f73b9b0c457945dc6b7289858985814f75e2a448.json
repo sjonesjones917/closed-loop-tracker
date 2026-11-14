@@ -1,0 +1,92 @@
+{
+  "schema": "closed-loop-compact-source-reconciliation-evidence/1",
+  "sourcePassages": {
+    "SUCCESSOR_SOURCE:122801:126361": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1637,
+      "endLine": 1651,
+      "startByte": 122801,
+      "endByte": 126361,
+      "sha256": "1f02226ccf6e99fe0c9d31d773dd69ef747d08978cbf7a7a6b5cbcf3730bb190"
+    },
+    "SUCCESSOR_SOURCE:181854:185546": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2524,
+      "endLine": 2551,
+      "startByte": 181854,
+      "endByte": 185546,
+      "sha256": "2d28f71a5572a03779b269dfdcafa7de20dee38d32791a334a3522247c697762"
+    }
+  },
+  "exactControllingPassages": [
+    {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 365,
+      "endLine": 365,
+      "startByte": 21128,
+      "endByte": 21806,
+      "sha256": "61c18b2c95472731a0366beef455931cbf5ac6ad267ad0000bde0992c70f1637",
+      "text": "The external agent may ask concise human-authority questions in the external conversation. A human-origin answer first supplied there remains an EXTERNAL_CLAIM until the agent returns it in the response JSON and the application presents the exact extracted answer for one-action confirmation or correction. The resulting confirmation creates the HUMAN or HUMAN_DECISION record and provenance link. Exact confirmation may be atomically co-accepted with the dependent proposal under Section 14.10; correction requires a replacement prompt. The operator is not required to retype the answer. Facts already present in current raw input or accepted human records are not reconfirmed."
+    },
+    {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1260,
+      "endLine": 1262,
+      "startByte": 99979,
+      "endByte": 101049,
+      "sha256": "907b0b70ab62f18909b88bcdcf6d2bfa8088eeef9274699a7815dbbf35e6b79a",
+      "text": "A human-origin fact or decision first supplied inside an external-agent conversation does not become HUMAN or HUMAN_DECISION authority merely because the agent reports it. The response places each such value in humanAuthorityCandidates with its external-response pointer and claimed conversation basis. The application presents the exact extracted value for direct confirm or correct without requiring retyping. Information already present in current raw input or accepted human records is not reconfirmed.\n\nExact confirmation may be co-accepted atomically with the dependent agent proposal: the transaction creates the new human input or decision record first, revalidates that the response declared and used the identical confirmed value, binds the proposal to the confirmation receipt, and commits both or neither. This special co-acceptance does not permit any unconfirmed human value. A correction, omitted candidate, inconsistent value, or any other scope-changing input invalidates the response and requires a replacement prompt. This rule applies at every stage."
+    },
+    {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1637,
+      "endLine": 1650,
+      "startByte": 122801,
+      "endByte": 126360,
+      "sha256": "97ac3a1f64ae1f0facc793723a2816c5a21bc69814b58fae25fd3dd703cbfc23",
+      "text": "A. Insert after §18's unknown-key sentence: closed-loop-human-input-fallback/1\n\nhumanInputRequests is a required, non-null ordered array, empty allowed. Each item is a closed object with exactly these required properties: temporaryKey, question, whyRequired, affectedStageFields, affectedRecords, answerType, allowedValues; its only optional property is blocking. No item property is nullable. All strings preserve their supplied scalar values; nonblank means containing at least one character outside U+0009–U+000D and U+0020.\n\n- temporaryKey is a string matching ^[A-Za-z][A-Za-z0-9._:-]{0,119}$, unique across response record tempKey values and temporaryKey values in attachments, evidence, humanInputRequests and humanAuthorityCandidates. It is a response-local reference, not a canonical identity.\n- question and whyRequired are nonblank strings.\n- affectedStageFields is an ordered array of strings naming registered fields of this response's stage; affectedRecords is an ordered array of strings naming canonical families in this operation's registered read, agent-writable or application-owned set. Both arrays may be empty. These names identify affected context, not authority to write the named fields or families.\n- answerType is exactly one of the eight controls already listed in this section.\n- allowedValues is an ordered array of strings. CHOICE and MULTI_CHOICE require one or more unique nonblank strings, compared exactly. For other controls the array may be empty; its values have no answer-validation effect.\n- blocking is Boolean; absence normalizes to true. No other absent property receives a default. False only makes this particular fallback request optional and cannot waive any governing requirement, human authority, missing evidence or unresolved material uncertainty.\n\nAll item content is an AGENT proposal admitted only through the owning registered external operation. The APPLICATION owns canonical request identity, envelope-derived job/stage/operation/scope, currentness and lifecycle. Answers remain HUMAN values written only by SAVE_HUMAN_INPUT. These proposal fields share the envelope's §14.7 scope, have no migration default other than the expressly stated blocking default for an otherwise valid request, and are invalidated by the owning input/prompt lifecycle under §18; references above point from the request to its affected stage fields/families and grant no reverse ownership.\n\nFor SAVE_HUMAN_INPUT, an absent/null/empty-string answer, or an empty MULTI_CHOICE array, is unanswered; a blocking request rejects it. A nonmissing TEXT or LONG_TEXT answer is a nonblank string; BOOLEAN is Boolean; NUMBER is either a JSON safe integer other than negative zero, or a string rational:N/D where N is a nonzero signed base-10 integer with no plus or leading zeros, D is a positive base-10 integer with no leading zeros, and gcd(abs(N),D)=1. D=1 is permitted only when N is outside the JSON safe-integer range. Zero is represented only by JSON integer 0. Other strings and typed objects are rejected; saving preserves this canonical representation; CHOICE is one exact allowed string; MULTI_CHOICE is an ordered duplicate-free array of exact allowed strings; DATE is a valid Gregorian calendar date in four-digit YYYY-MM-DD form with year 0001–9999, validated without time-zone conversion; FILE_REFERENCE is one current canonical artifact ID in the same project. Optional unanswered requests confer no factual assertion. Successful saving has precisely the existing §18 invalidation and replacement consequences."
+    },
+    {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2524,
+      "endLine": 2551,
+      "startByte": 181854,
+      "endByte": 185546,
+      "sha256": "2d28f71a5572a03779b269dfdcafa7de20dee38d32791a334a3522247c697762",
+      "text": "F2. Insert after §26.6: closed-loop-external-input-binding-minima/1\n\nMINIMUM_INPUT_BINDING_BASIS is EXTERNALLY_SUPPORTED for the external route of each pair in the following closed mapping:\n01 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_INTAKE;\n02 COMPLETE, SEARCH_ADEQUACY_REVIEW, RECONCILE_SOURCE_SEARCH;\n03 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_RESEARCH;\n04 COMPLETE, DISPOSITION_CHALLENGE, ATOMICITY_CHALLENGE, RECONCILE_REQUIREMENTS;\n05 COMPLETE, SEMANTIC_REVIEW, RECONCILE_REQUIREMENT_SET;\n06 COMPLETE, PROOF_REVIEW, RECONCILE_VERIFICATION_SUITE;\n07 COMPLETE, EXECUTE_FAILURE_TEST when externally routed;\n08 COMPLETE; 09 COMPLETE; 11 EXECUTE_RUN; 12 VERIFY; 13 COMPARE; 14 ROOT_CAUSE;\n15 COMPLETE, EXECUTE_REGRESSION when externally routed;\n16 CORRECT;\n17 EXECUTE_RUN, VERIFY, COMPARE, ROOT_CAUSE, REGRESSION, CORRECT;\n19 EXECUTE_RUN, VERIFY, COMPARE (always external);\n19 REGRESSION_VERIFY only when externally routed;\n21 COMPLETE; 22 EXECUTE_EXTERNAL_TEST; 23 COMPLETE; 24 COMPLETE; 25 COMPLETE;\n26 COMPLETE, SEMANTIC_REVIEW, RECONCILE;\n27 ADVISORY_REVIEW; 29 INVESTIGATE_MISSING_EVIDENCE;\nand, only when externally routed, every one of the 38 exact conditional pairs listed in F1.\n\nThe mapping has 88 external routes: 50 from the original §14.6 list plus 23 later failure-test and 15 later regression routes. F1's closed lists, not a wildcard allowing arbitrary operation names or stages, determine the additional pairs. The minimum does not grant operation availability or new writer authority. ADVISORY_REVIEW remains optional and non-gating.\n\nFor the conditional native route of 07 EXECUTE_FAILURE_TEST, 15 EXECUTE_REGRESSION, 19 REGRESSION_VERIFY, and the 38 F1 pairs, the input-binding minimum is APPLICATION_OBSERVED. The application establishes that basis from actual custody and verification of each required exact input, its current identity/hash and scope, before execution may start. This is not a requirement that execution has already succeeded: execution outcome, isolation, provenance, disposition and evidence sufficiency are separately determined from the actual execution. An absent or mismatched required input blocks native execution; a download, actor echo or route label does not satisfy this native minimum. This clause does not change the execution mode or permit an unapproved fallback to a different executor. Existing application, human-decision and operator commands outside these conditional pairs retain their existing source contracts; no external evidence minimum is assigned to them by this amendment.\n\nFor an external route, exact attributable echoes of the application-issued package/manifest identity and each required member identity/digest may establish EXTERNALLY_SUPPORTED under the existing input-binding contract; missing or mismatched echoes cannot. A package download, filename, provider label or unbound assertion is insufficient. Echoes never become APPLICATION_OBSERVED external possession, VERIFIED_EXTERNAL attestation, or proof of hidden provider independence. Recording that the application supplied bytes does not prove that an external recipient independently possessed or executed them.\n\nIf the applicable proof obligation, evidence contract or dimensioned-independence contract requires a stronger or distinct basis, that requirement also must be met. This generic minimum cannot weaken it, convert SUPPORTS_ONLY into ESTABLISHES, remove a required accepted review, waive unknown freshness/independence, or supply a successful result. §29.14's registered attestation-verification contract remains necessary for VERIFIED_EXTERNAL. Actual basis and its supporting observations remain recorded and evaluated by the existing gates."
+    }
+  ],
+  "originalOccurrenceSetsUnchanged": true,
+  "originalOccurrencesAndTransport": {
+    "proposalJsonPointer": "/67/orderedTransportReferenceIds",
+    "sharedReferenceTable": {
+      "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-016/source-reference-table.json",
+      "sha256": "372e0e065a736022df234622c1f6e02d500d29b84c0816483c41a55c4ed7518b",
+      "byteLength": 561165,
+      "archiveCustody": {
+        "archive": {
+          "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-016-frozen-payloads.tar.gz",
+          "sha256": "9a13c1a5b654ca9d39f28e86e5d4cc628bb8d61a14a982453e578695c5d5d312",
+          "byteLength": 213950
+        },
+        "archiveMember": "batch-016/source-reference-table.json",
+        "deliverableManifest": {
+          "path": "/workspace/shared/clrt-v4-retained-impact-review/deliverable-manifest-016.json",
+          "sha256": "6255c037d2f499e4e9dfd20f3b3ed75b989c2be20e7219aaf957106f776d3a2d",
+          "byteLength": 5764
+        }
+      }
+    }
+  },
+  "priorArchiveCustody": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016-frozen-payloads.tar.gz",
+    "sha256": "4a223b1e41a70df8a72f90e658558c2ac82861389005d3dbb4362decd5955d8e",
+    "byteLength": 105409
+  }
+}

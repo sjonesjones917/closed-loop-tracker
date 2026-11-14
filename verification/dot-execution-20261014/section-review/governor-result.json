@@ -1,0 +1,44 @@
+{
+  "subject": "a155e804122d18bc49a7fa8875fd30c6a13ed12d",
+  "synthetic": true,
+  "independentlyAuthored": true,
+  "result": [
+    {
+      "name": "two-component-targets-positive",
+      "result": "PASS"
+    },
+    {
+      "name": "explicit-context-chain-positive",
+      "result": "PASS"
+    },
+    {
+      "name": "stale-component-snapshot",
+      "result": "PASS"
+    },
+    {
+      "name": "unbound-target-key",
+      "result": "PASS"
+    },
+    {
+      "name": "unsupported-edge-kind",
+      "result": "PASS"
+    },
+    {
+      "name": "skipped-chain-edge",
+      "result": "PASS"
+    },
+    {
+      "name": "cyclic-chain",
+      "result": "PASS"
+    },
+    {
+      "name": "missing-governor-scope",
+      "result": "PASS"
+    },
+    {
+      "name": "dropped-reviewed-component-target",
+      "result": "FAIL",
+      "message": "Missing expected exception."
+    }
+  ]
+}

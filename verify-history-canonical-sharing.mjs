@@ -1,3 +1,5 @@
+import {verifyHistorySmallPartAllocation} from './test-history-small-part-allocation.mjs';
+import {verifyHistorySegmentedParts,verifyHistoryMeasuredSkeleton} from './test-history-segmented-parts.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
@@ -8,17 +10,57 @@ import {stage04AcceptanceFixture} from './test-fixtures.mjs';
 // Scaled reproduction of the retained-version capacity failure from the real
 // all-stage browser journey. This is not a production-capacity browser claim.
 const source=fs.readFileSync(process.env.HISTORY_SOURCE||'project-store.js','utf8');
+const smallPartAllocation=await verifyHistorySmallPartAllocation({source});
 const faultMode=process.argv.find(value=>value.startsWith('--fault='))?.slice(8);
+// Segmented (/2) roots: encoder differential and rule, custody sites, store
+// round trip and refusals. Its oracles are its own; fault runs skip it.
+const segmentedParts=faultMode?null:await verifyHistorySegmentedParts({source});
 const faults={
  'duplicate-canonical-content':{before:'const contents=projectReference?null:await encodeHistoryProject(canonical,retainValue);',after:'const contents={project:canonical};'},
  'repeat-import-shared-content':{before:'const project=body.project; // verifiedParts belongs to this read/import only.',after:'const project=body.project;verifiedParts=new Map(); // disposable repeat-decoding fault'},
- // The size contract has two enforcing consumers. Mutating either alone is
- // behaviorally masked by the other; the fault removes that one contract at
- // both sites, while the disposable input contains only one size violation.
+ // A part's promised size must match the retained-file manifest, the actual
+ // import Blob and the decoded value. Remove only those import size checks:
+ // any surviving consumer masks this fault's single conflicting-size input.
+ // Keep file presence, Blob/hash/job identity, private cache-proof validation
+ // and the non-import Blob/decoded-value size checks intact. The import also
+ // converts each imported complete entry to the History state form through
+ // the shared per-root retained-parts check, which observes the same size.
  'skip-import-shared-size':{changes:[
-  {before:'entry.projectReference||entry.projectParts.entries.some(part=>state.files[part.sha256]?.byteSize!==part.byteSize)',after:'entry.projectReference'},
-  {before:'if(value.byteSize!==part.byteSize)',after:'if(false)'}
- ]}
+  {before:'entry.projectReference||historyPartFiles(entry.projectParts).some(part=>state.files[part.sha256]?.byteSize!==part.byteSize)',after:'entry.projectReference||historyPartFiles(entry.projectParts).some(part=>!state.files[part.sha256])'},
+  {before:'if(historyPartFiles(parts).some(part=>state.files[part.sha256]?.byteSize!==part.byteSize))',after:'if(historyPartFiles(parts).some(part=>!state.files[part.sha256]))'},
+  {before:'if(verifiedByteDigests){\n      const file=await readFile(part.sha256);\n      if(!(file?.blob instanceof Blob)||file.blob.size!==part.byteSize||await historyBlobSha256(file.blob,verifiedByteDigests)!==part.sha256)',after:'if(verifiedByteDigests){\n      const file=await readFile(part.sha256);\n      if(!(file?.blob instanceof Blob)||await historyBlobSha256(file.blob,verifiedByteDigests)!==part.sha256)'},
+  {before:'if(value.byteSize!==part.byteSize)',after:'if(!verifiedByteDigests&&value.byteSize!==part.byteSize)'},
+  // The declared sizes are also bound before any restore: a segments entry's
+  // bytes are its segments' bytes, and the version's projectBytes is the
+  // skeleton plus each entry's bytes.
+  {before:"    if(segments&&part.segments.reduce((total,segment)=>total+segment.byteSize-1,1)!==part.byteSize)throw storageError('Saved project content sizes conflict.','HISTORY_VERSION_MISMATCH');\n",after:''},
+  {before:"if(historyEncodedProjectBytes(body,hashedSkeletonBytes(measured,body))!==body.projectBytes)throw storageError('Saved canonical project bytes do not match their checkpoint identity.','HISTORY_VERSION_MISMATCH');}",after:'}'}
+ ]},
+ // One per guard of the cold projectBytes check's reuse of the skeleton
+ // length its read's preimage digest measured; each runs the measured
+ // skeleton cases (test-history-segmented-parts.mjs) on the faulted source.
+ 'measured-skeleton-unchecked-use':{measuredSkeleton:true,before:"measure.skeleton===body.project&&typeof measure.bytes==='number'&&packageDigestNativesUnchanged(measure.baseline)?measure.bytes:undefined",after:"measure.skeleton===body.project&&typeof measure.bytes==='number'?measure.bytes:undefined"},
+ 'measured-skeleton-unchecked-start':{measuredSkeleton:true,changes:[
+  {before:'try{baseline=hash.createCanonicalDigestScope(null);counting=packageDigestNativesUnchanged(baseline);if(counting)encoder=new TextEncoder();}catch{counting=false;}',after:'try{counting=true;encoder=new TextEncoder();}catch{counting=false;}'},
+  {before:'try{if(counting&&packageDigestNativesUnchanged(baseline)){',after:'try{baseline=hash.createCanonicalDigestScope(null);if(counting&&packageDigestNativesUnchanged(baseline)){'}
+ ]},
+ 'measured-skeleton-unchecked-end':{measuredSkeleton:true,before:'try{if(counting&&packageDigestNativesUnchanged(baseline)){measure.skeleton=value;',after:'try{if(counting){measure.skeleton=value;'},
+ // Each confirmation moved off the walk's own step of the digest's stream
+ // to the digest's first or last step, across the digest's awaits.
+ 'measured-skeleton-start-check-at-digest-entry':{measuredSkeleton:true,changes:[
+  {before:"async function* packageJsonChunks(value,fileContents,measure=null){\n",after:"async function* packageJsonChunks(value,fileContents,measure=null){\n  let measureStart=null;if(measure)try{const baseline=hash.createCanonicalDigestScope(null);measureStart={baseline,ok:packageDigestNativesUnchanged(baseline)};}catch{measureStart={baseline:null,ok:false};}\n"},
+  {before:"else if(measure&&key==='project')yield* measuredCanonicalChunks(value[key],measure);",after:"else if(measure&&key==='project')yield* measuredCanonicalChunks(value[key],measure,measureStart);"},
+  {before:"function* measuredCanonicalChunks(value,measure){",after:"function* measuredCanonicalChunks(value,measure,start=null){"},
+  {before:"try{baseline=hash.createCanonicalDigestScope(null);counting=packageDigestNativesUnchanged(baseline);if(counting)encoder=new TextEncoder();}catch{counting=false;}",after:"try{if(start){baseline=start.baseline;counting=start.ok;}else{baseline=hash.createCanonicalDigestScope(null);counting=packageDigestNativesUnchanged(baseline);}if(counting)encoder=new TextEncoder();}catch{counting=false;}"}
+ ]},
+ 'measured-skeleton-end-check-at-digest-exit':{measuredSkeleton:true,changes:[
+  {before:"try{if(counting&&packageDigestNativesUnchanged(baseline)){measure.skeleton=value;measure.bytes=bytes;measure.baseline=baseline;}}catch{/* The skeleton is walked at its check. */}",after:"try{if(counting)measure.pending={skeleton:value,bytes,baseline};}catch{/* The skeleton is walked at its check. */}"},
+  {before:"    else yield* hash.canonicalChunks(value[key]);\n  }\n  yield '}';\n}\nasync function compressPackage(",after:"    else yield* hash.canonicalChunks(value[key]);\n  }\n  yield '}';\n  try{if(measure?.pending&&packageDigestNativesUnchanged(measure.pending.baseline)){measure.skeleton=measure.pending.skeleton;measure.bytes=measure.pending.bytes;measure.baseline=measure.pending.baseline;}}catch{}\n}\nasync function compressPackage("}
+ ]},
+ 'measured-skeleton-any-skeleton':{measuredSkeleton:true,before:'try{return measure&&measure.skeleton===body.project&&typeof measure.bytes',after:'try{return measure&&typeof measure.bytes'},
+ 'measured-skeleton-continuation-read':{measuredSkeleton:true,before:"const hashedSkeleton=!rootContinuation&&!measuredPair&&Object.hasOwn(body,'projectBytes')",after:"const hashedSkeleton=!measuredPair&&Object.hasOwn(body,'projectBytes')"},
+ 'measured-skeleton-pair-read':{measuredSkeleton:true,before:"const hashedSkeleton=!rootContinuation&&!measuredPair&&Object.hasOwn(body,'projectBytes')",after:"const hashedSkeleton=!rootContinuation&&Object.hasOwn(body,'projectBytes')"},
+ 'measured-skeleton-cross-read-memo':{measuredSkeleton:true,before:"function hashedSkeletonBytes(measure,body){\n  try{return measure&&measure.skeleton===body.project&&typeof measure.bytes==='number'&&packageDigestNativesUnchanged(measure.baseline)?measure.bytes:undefined;}",after:"const hashedSkeletonMemo=new Map();\nfunction hashedSkeletonBytes(measure,body){\n  try{const key=body.projectSha256+':'+body.projectBytes;if(measure&&measure.skeleton===body.project&&typeof measure.bytes==='number'&&packageDigestNativesUnchanged(measure.baseline)){hashedSkeletonMemo.set(key,measure.bytes);return measure.bytes;}return hashedSkeletonMemo.get(key);}"}
 };
 const engineFaults={
  'share-custom-recalculation':{before:'const sharedProjection=evaluateGate===installed?.gate&&nextAction===installed?.operationalNextAction;',after:'const sharedProjection=true;'},
@@ -30,6 +72,8 @@ const engineFaults={
  'retain-input-scope':{before:'finally{inputScopeEvaluation=null;}',after:'finally{if(!globalThis.__retainInputScopeFault)inputScopeEvaluation=null;}'}
 };
 if(faultMode&&!faults[faultMode]&&!engineFaults[faultMode])throw new Error('Unknown implementation fault: '+faultMode);
+// A fault in the measured skeleton reuse fails its own guard case first.
+if(faults[faultMode]?.measuredSkeleton){let faulted=source;for(const fault of faults[faultMode].changes||[faults[faultMode]]){assert.equal(faulted.split(fault.before).length-1,1);faulted=faulted.replace(fault.before,fault.after);}await verifyHistoryMeasuredSkeleton({source:faulted});}
 const capacity=2*1024*1024,changes=12;
 const anchor='maxCompressedProjectBytes:512*1024*1024';
 assert.equal(source.split(anchor).length-1,1);
@@ -42,12 +86,12 @@ if(engineFaults[faultMode]){const fault=engineFaults[faultMode];assert.equal(obs
 const adjudicationProbeAnchor='for(const collection of collections)copy.projectData[collection]=safe(project?.projectData?.[collection]).map(record=>clone(record));';
 assert.equal(observedEngineSource.split(adjudicationProbeAnchor).length-1,1);
 observedEngineSource=observedEngineSource.replace(adjudicationProbeAnchor,'globalThis.__historyAdjudication?.(project);'+adjudicationProbeAnchor);
-const stageProbeAnchor='ensure(p);const b=e0.gate(stage,p),';
+const stageProbeAnchor='ensure(p);const supplemental=reasons(p,stage),';
 assert.equal(observedEngineSource.split(stageProbeAnchor).length-1,1);
-observedEngineSource=observedEngineSource.replace(stageProbeAnchor,'ensure(p);globalThis.__historyCompatibilityStage?.(stage,p);const b=e0.gate(stage,p),');
+observedEngineSource=observedEngineSource.replace(stageProbeAnchor,'ensure(p);globalThis.__historyCompatibilityStage?.(stage,p);const supplemental=reasons(p,stage),');
 // Expose the existing base projection only in this disposable verifier realm.
 // Production's public wrapper deliberately owns its installed gate callbacks.
-const projectionProbeAnchor='globalThis.closedLoopWorkflowEngine=Object.freeze({stageContext,';
+const projectionProbeAnchor='globalThis.closedLoopWorkflowEngine=Object.freeze({';
 assert.equal(observedEngineSource.split(projectionProbeAnchor).length-1,1);
 observedEngineSource=observedEngineSource.replace(projectionProbeAnchor,'globalThis.__historyRecalculateKernel=recalculate;'+projectionProbeAnchor);
 const make=()=>{
@@ -55,8 +99,8 @@ const make=()=>{
  if(faults[faultMode])for(const fault of faults[faultMode].changes||[faults[faultMode]]){assert.equal(implementation.split(fault.before).length-1,1);implementation=implementation.replace(fault.before,fault.after);}
  // Observe actual immutable-content decoding during an import, not a source
  // match or elapsed-time guess. No storage or return-value behavior changes.
- assert.equal(implementation.split(parseAnchor).length-1,1);
- implementation=implementation.replace(parseAnchor,"globalThis.__historyDecodedParts?.push({sha256:part.sha256,byteSize:part.byteSize});"+parseAnchor);
+ assert.equal(implementation.split(parseAnchor).length-1,2);
+ implementation=implementation.replaceAll(parseAnchor,"globalThis.__historyDecodedParts?.push({sha256:part.sha256,byteSize:part.byteSize});"+parseAnchor);
  return projectStoreRuntime({sourceOverrides:{'project-store.js':implementation,'workflow-engine.js':observedEngineSource}});
 };
 const r=make(),{store,core,engine,copy}=r;
@@ -211,15 +255,18 @@ cases.push({caseId:'HISTORY-CANONICAL-EXPORTED-BYTES',result:'PASS',versions:ver
 // enclosing checkpoint and archive consistently, leaving one size conflict as
 // the sole violation. The importer must reject before any durable mutation.
 const archive=JSON.parse(gunzipSync(Buffer.from(await backup.arrayBuffer())).toString('utf8'));
+// The shared content is any retained file of a complete version: a value
+// part, or one segment of a segmented (/2) array.
+const partFiles=parts=>(parts?.entries||[]).flatMap(part=>part.segments?part.segments:[part]);
 const referencedRoots=new Set(archive.recovery.entries.map(entry=>entry.projectReference?.checkpointId).filter(Boolean)),seenParts=new Set();let changedEntry,changedPart;
 for(const entry of archive.recovery.entries){
- if(!entry.projectReference&&!referencedRoots.has(entry.id))for(const part of entry.projectParts?.entries||[])if(seenParts.has(part.sha256)){changedEntry=entry;changedPart=part;break;}
- for(const part of entry.projectParts?.entries||[])seenParts.add(part.sha256);
+ if(!entry.projectReference&&!referencedRoots.has(entry.id))for(const part of partFiles(entry.projectParts))if(seenParts.has(part.sha256)){changedEntry=entry;changedPart=part;break;}
+ for(const part of partFiles(entry.projectParts))seenParts.add(part.sha256);
 }
 assert.ok(changedEntry&&changedPart,'The negative control needs a later complete version sharing earlier verified content.');
 const archivedSnapshot=archive.artifacts.find(file=>file.archiveKind==='RECOVERY_SNAPSHOT'&&file.checkpointId===changedEntry.id);
 const snapshot=JSON.parse(gunzipSync(Buffer.from(archivedSnapshot.base64,'base64')).toString('utf8'));
-const snapshotPart=snapshot.projectParts.entries.find(part=>JSON.stringify(part.path)===JSON.stringify(changedPart.path));
+const snapshotPart=partFiles(snapshot.projectParts)[partFiles(changedEntry.projectParts).indexOf(changedPart)];
 assert.equal(snapshotPart.sha256,changedPart.sha256);snapshotPart.byteSize++;changedPart.byteSize++;
 const sign=value=>{delete value.packageSha256;value.packageSha256=r.runtime.closedLoopHash.sha256Value(copy(value));return gzipSync(Buffer.from(JSON.stringify(value)));};
 const snapshotBytes=sign(snapshot),snapshotSha256=createHash('sha256').update(snapshotBytes).digest('hex');
@@ -236,7 +283,9 @@ assert.deepEqual(frozenRows(),beforeRejected,'An invalid retained version cannot
 const corrected=await rejected.store.importPackage(backup);assert.equal(corrected.job.JOB_ID,p.job.JOB_ID);
 cases.push({caseId:'HISTORY-IMPORT-SHARED-SIZE-CONFLICT',result:'PASS',failedImportPreservesAllRows:true,correctedImport:'PASS'});
 
-const state=await store.metaGet('recovery:'+p.job.JOB_ID),part=state.entries.flatMap(entry=>entry.projectParts?.entries||[]).find(part=>JSON.stringify(part.path)===JSON.stringify(['job','EXACT_USER_OBJECTIVE_VERBATIM']));
+// The History state names each complete version's parts by digest; the
+// immutable snapshot record keeps the parts themselves.
+const state=await store.metaGet('recovery:'+p.job.JOB_ID),records=await Promise.all(state.entries.map(entry=>store.metaGet('recovery:'+p.job.JOB_ID+':snapshot:'+entry.id))),part=records.flatMap(record=>record?.projectParts?.entries||[]).find(part=>JSON.stringify(part.path)===JSON.stringify(['job','EXACT_USER_OBJECTIVE_VERBATIM']));
 assert.ok(part,'The retained input must have exact-byte custody.');
 const key='recovery:'+p.job.JOB_ID+':bytes:'+part.sha256,original=r.rows.get('meta').get(key),before=copy(await store.readProject(p.job.JOB_ID)),beforeHistory=copy(await store.historyList(p.job.JOB_ID));
 for(const failure of ['missing','corrupt']){
@@ -253,4 +302,4 @@ const next=copy(p);next.job.JOB_TITLE='Interrupted correction';engine.recordHuma
 await assert.rejects(()=>store.writeProject(next,{expectedProjectRevision:p.revision}),error=>error.code==='INJECTED_STORAGE_FAILURE');
 r.runtime.__closedLoopStorageFault=null;assert.deepEqual(await store.readProject(p.job.JOB_ID),before);assert.deepEqual(await store.historyList(p.job.JOB_ID),beforeHistory);
 cases.push({caseId:'HISTORY-CANONICAL-ATOMIC-FAILURE',result:'PASS'});
-console.log(JSON.stringify({synthetic:true,actualBrowser:false,productionByteCapacityTested:false,implementationFault:faultMode||null,sourceSha256:createHash('sha256').update(source).digest('hex'),disposableCapacity:capacity,cases},null,2));
+console.log(JSON.stringify({smallPartAllocation,segmentedParts,synthetic:true,actualBrowser:false,productionByteCapacityTested:false,implementationFault:faultMode||null,sourceSha256:createHash('sha256').update(source).digest('hex'),disposableCapacity:capacity,cases},null,2));

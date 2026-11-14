@@ -1,0 +1,215 @@
+{
+  "candidate": "cdc4614f86d65d1b278008b60e668ab630f08b86",
+  "sourceReviewDecision": "ACCEPT_UNCHANGED14_COVERAGE_DESIGNS",
+  "bindingCount": 358,
+  "changedDeclarationDigests": 0,
+  "changedOwners": 0,
+  "changedReviewedInputs": [
+    "verification-evidence-catalog.mjs"
+  ],
+  "actualReceiptQualification": {
+    "candidate": "100eb46d637bb1cb27e72eebe0f6840f81f0df1e",
+    "receiptFileSha256": "d51cd73fbe7c4c8b077dfafb15d03c105ca4f1d7d53a7bf87510a21d73879e54",
+    "provenAtoms": 14,
+    "promotedToNewCandidate": false
+  },
+  "newCandidateReceiptsRequired": true,
+  "results": [
+    {
+      "id": "NREQ-47111062e64d0d3b30e6cc9e1826cfc3",
+      "declarationSha256": "2ba1ba90a6409ee850b39aea772723897a9081da5441a140724b566dae9989b6",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-47111062e64d0d3b30e6cc9e1826cfc3-20261014-canonical-expectation-cdc4614f.json",
+        "sha256": "f017fccb20e051bc77b5438e610d4679f8c0ca963a0742e30f56233f6e560e8e"
+      },
+      "disposition": "UNKNOWN",
+      "reasons": [
+        "REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER",
+        "REQUIRED_EVIDENCE_KIND_NOT_OBSERVED",
+        "FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH"
+      ]
+    },
+    {
+      "id": "NREQ-f25aa7572d552a605b446c527f7ffb29",
+      "declarationSha256": "8254ff4cc24c9a7ca29e9da16279162a19bf9a56b207832717b893c7e560367a",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-f25aa7572d552a605b446c527f7ffb29-20261014-canonical-expectation-cdc4614f.json",
+        "sha256": "1e919f3f52cf2479d6537854329e9cec73d6d97c262158a883f1bf19818729eb"
+      },
+      "disposition": "UNKNOWN",
+      "reasons": [
+        "REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER",
+        "REQUIRED_EVIDENCE_KIND_NOT_OBSERVED",
+        "FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH"
+      ]
+    },
+    {
+      "id": "NREQ-51ce4098cc4744b966dc6d89fc7d5621",
+      "declarationSha256": "63fc69a6747c9bf9b421d210d9dd24fb20b21c87766d1010a4585c7711fcaf92",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-51ce4098cc4744b966dc6d89fc7d5621-20261014-canonical-expectation-cdc4614f.json",
+        "sha256": "6aed82f65707ca5870b60bca17b256016fda80371c57f1e40d48b444b73911d3"
+      },
+      "disposition": "UNKNOWN",
+      "reasons": [
+        "REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER",
+        "REQUIRED_EVIDENCE_KIND_NOT_OBSERVED",
+        "FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH"
+      ]
+    },
+    {
+      "id": "NREQ-eb942909863b29d2c26fd0ae5480625f",
+      "declarationSha256": "97f2493a03d2e326fd5e5a1125b744ac0a0ffb96257bcf2628976bfc02f685db",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-eb942909863b29d2c26fd0ae5480625f-20261014-canonical-expectation-cdc4614f.json",
+        "sha256": "7472383bf6d1557964169f524a1f98ddf456824f2082767877aed8bee72ce178"
+      },
+      "disposition": "UNKNOWN",
+      "reasons": [
+        "REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER",
+        "REQUIRED_EVIDENCE_KIND_NOT_OBSERVED",
+        "FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH"
+      ]
+    },
+    {
+      "id": "NREQ-662eca90789c91ae31177173980783dd",
+      "declarationSha256": "4f02eb984b2820303f8b7556a89b5af1c61140b4e7cac97f0db6e4e14a41c8a8",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-662eca90789c91ae31177173980783dd-20261014-canonical-expectation-cdc4614f.json",
+        "sha256": "d3cc62461941a23ecaba6163d995ec9150c0626bc84ee34dacd31032e697d2f4"
+      },
+      "disposition": "UNKNOWN",
+      "reasons": [
+        "REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER",
+        "REQUIRED_EVIDENCE_KIND_NOT_OBSERVED",
+        "FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH"
+      ]
+    },
+    {
+      "id": "NREQ-b7e22bb7fad4a45b444f988e4eabca55",
+      "declarationSha256": "2148a8fb7c99d44e4f994a194ae0b4c6f0fb1a85a2b609598ef4530ba3a82310",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-b7e22bb7fad4a45b444f988e4eabca55-20261014-canonical-expectation-cdc4614f.json",
+        "sha256": "da0a5c1386c91241d3221b4a7a6c484b640919b89b4a4dbcbe6856429f252fc4"
+      },
+      "disposition": "UNKNOWN",
+      "reasons": [
+        "REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER",
+        "REQUIRED_EVIDENCE_KIND_NOT_OBSERVED",
+        "FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH"
+      ]
+    },
+    {
+      "id": "NREQ-5d8520fcb9a6a88eae542e3a1f2fcfb9",
+      "declarationSha256": "347468cd26792052670e7fef3cacae794b9509a854eb4c65eabc387f3d59164f",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-5d8520fcb9a6a88eae542e3a1f2fcfb9-20261014-canonical-expectation-cdc4614f.json",
+        "sha256": "5dc1afe50643377cb45698af85915c2f5592565df42d3f4ad43d530e3fa75da2"
+      },
+      "disposition": "UNKNOWN",
+      "reasons": [
+        "REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER",
+        "REQUIRED_EVIDENCE_KIND_NOT_OBSERVED",
+        "FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH"
+      ]
+    },
+    {
+      "id": "NREQ-046cf426431e0493fe8fc1b75d803617",
+      "declarationSha256": "146332271275bab4ddf0510312235dedcdccf6ccaca9e2e31410b6b3e60abd53",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-046cf426431e0493fe8fc1b75d803617-20261014-canonical-expectation-cdc4614f.json",
+        "sha256": "26684a093ba5879b693cb11d8797a6d1479ea6960fc2070717650b23dd5a0b68"
+      },
+      "disposition": "UNKNOWN",
+      "reasons": [
+        "REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER",
+        "REQUIRED_EVIDENCE_KIND_NOT_OBSERVED",
+        "FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH"
+      ]
+    },
+    {
+      "id": "NREQ-853a934199459ed6bf419687ca08ba34",
+      "declarationSha256": "70c28c4630a8978e55e376073fc20b9966a61f2f7d26d15c21ab6cb9c54cdfcd",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261014-canonical-expectation-cdc4614f.json",
+        "sha256": "04194fcaf57cc37735a33d8ac686443af52d97f8691101104ff73de0d5f53b6a"
+      },
+      "disposition": "UNKNOWN",
+      "reasons": [
+        "REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER",
+        "REQUIRED_EVIDENCE_KIND_NOT_OBSERVED",
+        "FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH"
+      ]
+    },
+    {
+      "id": "NREQ-636ebdfdf26f0c6df9d969321a522f19",
+      "declarationSha256": "5c099f4c61d36cb888e2bffa9bbe881ef0ad2de1452d217af937e70c282bfcfc",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-636ebdfdf26f0c6df9d969321a522f19-20261014-canonical-expectation-cdc4614f.json",
+        "sha256": "d42d4894e10c741794ab9ea21149217715faa22b531f7b6cb46aec91bde68b12"
+      },
+      "disposition": "UNKNOWN",
+      "reasons": [
+        "REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER",
+        "REQUIRED_EVIDENCE_KIND_NOT_OBSERVED",
+        "FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH"
+      ]
+    },
+    {
+      "id": "NREQ-eecb88f846482530ebd5e963183f2711",
+      "declarationSha256": "d7765531d8809d21c48806cdbba634b6633dff8e2aed9795d3115183a5c2c939",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-eecb88f846482530ebd5e963183f2711-20261014-canonical-expectation-cdc4614f.json",
+        "sha256": "2c6b94f735574453f89db0c3f2bca928a620d967aa2af8a13f2aab24971fdd0b"
+      },
+      "disposition": "UNKNOWN",
+      "reasons": [
+        "REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER",
+        "REQUIRED_EVIDENCE_KIND_NOT_OBSERVED",
+        "FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH"
+      ]
+    },
+    {
+      "id": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+      "declarationSha256": "d6b37c1a4222f2548b5d8c94d39c0716c80f304733dd06d29bb597d2d2691853",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261014-canonical-expectation-cdc4614f.json",
+        "sha256": "561e37309421c099373f8613911f6811e48843a25370b868c8e6dc050d29038d"
+      },
+      "disposition": "UNKNOWN",
+      "reasons": [
+        "REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER",
+        "REQUIRED_EVIDENCE_KIND_NOT_OBSERVED",
+        "FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH"
+      ]
+    },
+    {
+      "id": "NREQ-27f437fe3040767de849d06a48cdb3c3",
+      "declarationSha256": "5519ea28e25c6677487cc80f7739d6fde39357a56e14b886cbb7dedb63ba7821",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-27f437fe3040767de849d06a48cdb3c3-20261014-canonical-expectation-cdc4614f.json",
+        "sha256": "af99522d5cb431674b5dd1d69d15e0d6d59e3a26d7ac12133e9e4f0e5b22cbe2"
+      },
+      "disposition": "UNKNOWN",
+      "reasons": [
+        "REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER",
+        "REQUIRED_EVIDENCE_KIND_NOT_OBSERVED",
+        "FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH"
+      ]
+    },
+    {
+      "id": "NREQ-be0ecfa19d607c0df242b048d6ef63bf",
+      "declarationSha256": "8f05274d923940a011ccc9eaa1359b15cfba253238cd0d360b4ffa90ead99487",
+      "review": {
+        "path": "verification/requirement-coverage-NREQ-be0ecfa19d607c0df242b048d6ef63bf-20261014-canonical-expectation-cdc4614f.json",
+        "sha256": "4e1e5a8c9c29c69377a7b4e5404e292d443394f06547bb95062160f36f242f4f"
+      },
+      "disposition": "UNKNOWN",
+      "reasons": [
+        "REQUIRED_CURRENT_ASSERTION_MISSING_OR_WRONG_PRODUCER",
+        "REQUIRED_EVIDENCE_KIND_NOT_OBSERVED",
+        "FULL_COVERAGE_CHECK_UNIVERSE_MISMATCH"
+      ]
+    }
+  ]
+}

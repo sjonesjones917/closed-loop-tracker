@@ -1,0 +1,382 @@
+[
+  {
+    "predecessorIndex": 1527,
+    "predecessorId": "NREQ-5a70aa283a0d53f8e960efbdcb0ce944",
+    "originalStatement": "NEXT_REQUIRED_ACTION has authority contract operationalNextAction() under its Section 15 row and the Section 15 value/nullability rules.",
+    "priorReviewedStatement": "NEXT_REQUIRED_ACTION has authority contract operationalNextAction() under its Section 15 row and the Section 15 value/nullability rules.",
+    "independentMechanismClass": "CURRENT_NEXT_ACTION_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. The exact Section15 operationalNextAction authority evaluates real current action availability, including actual intake dependencies, native readiness and compatible conditional-route receipts. Its unchanged function name is not a static ownership-only declaration.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 fixes the accepted current definition/test/fixture/target/history and phase compatibility for the conditional execution route. Preserve exact independent reviews, reserved current subject, distinct PRE/POST observations and honest restoration; B proofExpressions alone controls availability and missing evidence remains blocking. The exact Section15 operationalNextAction authority evaluates real current action availability, including actual intake dependencies, native readiness and compatible conditional-route receipts. Its unchanged function name is not a static ownership-only declaration.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical33–35 fixes supplied-node SELECT_XML invocation rooting, subtree confinement, explicit element-array extraction and same-execution provenance. Current affected native admission/results/identities must reflect that meaning; no ambient ancestor or old semantic identity may stand in for it. The exact Section15 operationalNextAction authority evaluates real current action availability, including actual intake dependencies, native readiness and compatible conditional-route receipts. Its unchanged function name is not a static ownership-only declaration.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1545,
+    "predecessorId": "NREQ-a27acf5d08da0313bd8dd002a5629d19",
+    "originalStatement": "JOB_RECORD_STATUS has authority contract Stage 01 gate under its Section 15 row and the Section 15 value/nullability rules.",
+    "priorReviewedStatement": "JOB_RECORD_STATUS has authority contract Stage 01 gate under its Section 15 row and the Section 15 value/nullability rules.",
+    "independentMechanismClass": "CURRENT_STAGE01_ACCEPTED_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. These six exact authority facets name the Stage01 gate or accepted proposal, whose admission requires complete available material and raw-unit accounting. Preserve each individual field predicate and the separately retained producer/type/stage facets; no Stage01 XML or later F1 duty is introduced.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1551,
+    "predecessorId": "NREQ-09379acfc68577fcaa70fc56c4b86222",
+    "originalStatement": "STATUS_EVIDENCE has authority contract Stage 01 gate under its Section 15 row and the Section 15 value/nullability rules.",
+    "priorReviewedStatement": "STATUS_EVIDENCE has authority contract Stage 01 gate under its Section 15 row and the Section 15 value/nullability rules.",
+    "independentMechanismClass": "CURRENT_STAGE01_ACCEPTED_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. These six exact authority facets name the Stage01 gate or accepted proposal, whose admission requires complete available material and raw-unit accounting. Preserve each individual field predicate and the separately retained producer/type/stage facets; no Stage01 XML or later F1 duty is introduced.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1557,
+    "predecessorId": "NREQ-84b950e47a713238260e87b77f44c5b3",
+    "originalStatement": "EXACT_DELIVERABLE_REQUESTED has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "priorReviewedStatement": "EXACT_DELIVERABLE_REQUESTED has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "independentMechanismClass": "CURRENT_STAGE01_ACCEPTED_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. These six exact authority facets name the Stage01 gate or accepted proposal, whose admission requires complete available material and raw-unit accounting. Preserve each individual field predicate and the separately retained producer/type/stage facets; no Stage01 XML or later F1 duty is introduced.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1563,
+    "predecessorId": "NREQ-2a57e1c74dbd65d3901ad20467e5d822",
+    "originalStatement": "ASSUMPTIONS has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "priorReviewedStatement": "ASSUMPTIONS has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "independentMechanismClass": "CURRENT_STAGE01_ACCEPTED_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. These six exact authority facets name the Stage01 gate or accepted proposal, whose admission requires complete available material and raw-unit accounting. Preserve each individual field predicate and the separately retained producer/type/stage facets; no Stage01 XML or later F1 duty is introduced.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1569,
+    "predecessorId": "NREQ-22642bf6f064927cf7e14290df9e63cb",
+    "originalStatement": "UNKNOWN_INFORMATION has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "priorReviewedStatement": "UNKNOWN_INFORMATION has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "independentMechanismClass": "CURRENT_STAGE01_ACCEPTED_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. These six exact authority facets name the Stage01 gate or accepted proposal, whose admission requires complete available material and raw-unit accounting. Preserve each individual field predicate and the separately retained producer/type/stage facets; no Stage01 XML or later F1 duty is introduced.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1575,
+    "predecessorId": "NREQ-6e55afd8420e1f97077d9e05c74181d6",
+    "originalStatement": "INPUT_SET_CONTENTS has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "priorReviewedStatement": "INPUT_SET_CONTENTS has authority contract Accepted Stage 01 proposal under its Section 15 row and the Section 15 value/nullability rules.",
+    "independentMechanismClass": "CURRENT_STAGE01_ACCEPTED_AUTHORITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. These six exact authority facets name the Stage01 gate or accepted proposal, whose admission requires complete available material and raw-unit accounting. Preserve each individual field predicate and the separately retained producer/type/stage facets; no Stage01 XML or later F1 duty is introduced.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4534,
+    "predecessorId": "NREQ-1ba6a49f79c535838a7398b3fc6f6d84",
+    "originalStatement": "confirmationRecords: Application must derive completeness.",
+    "priorReviewedStatement": "confirmationRecords: Application must derive completeness.",
+    "independentMechanismClass": "CURRENT_CONFIRMATION_EVALUATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 fixes the accepted current definition/test/fixture/target/history and phase compatibility for the conditional execution route. Preserve exact independent reviews, reserved current subject, distinct PRE/POST observations and honest restoration; B proofExpressions alone controls availability and missing evidence remains blocking. The exact sourceDecision on4534 corrected the historical ownership-only proposal: deriving completeness evaluates the Stage19 due-verification/regression conjunction, as does final determination4536. Current native meaning and compatible conditional execution govern their actual operands. Preserve application ownership, mandatory membership and independent evidence; the stale mechanismClass label has no authority over the corrective sourceDecision.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical33–35 fixes supplied-node SELECT_XML invocation rooting, subtree confinement, explicit element-array extraction and same-execution provenance. Current affected native admission/results/identities must reflect that meaning; no ambient ancestor or old semantic identity may stand in for it. The exact sourceDecision on4534 corrected the historical ownership-only proposal: deriving completeness evaluates the Stage19 due-verification/regression conjunction, as does final determination4536. Current native meaning and compatible conditional execution govern their actual operands. Preserve application ownership, mandatory membership and independent evidence; the stale mechanismClass label has no authority over the corrective sourceDecision.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4536,
+    "predecessorId": "NREQ-df5c11923c1eb1d84e4234af62867d12",
+    "originalStatement": "confirmationRecords: Application must derive final determination.",
+    "priorReviewedStatement": "confirmationRecords: Application must derive final determination.",
+    "independentMechanismClass": "CURRENT_CONFIRMATION_EVALUATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 fixes the accepted current definition/test/fixture/target/history and phase compatibility for the conditional execution route. Preserve exact independent reviews, reserved current subject, distinct PRE/POST observations and honest restoration; B proofExpressions alone controls availability and missing evidence remains blocking. The exact sourceDecision on4534 corrected the historical ownership-only proposal: deriving completeness evaluates the Stage19 due-verification/regression conjunction, as does final determination4536. Current native meaning and compatible conditional execution govern their actual operands. Preserve application ownership, mandatory membership and independent evidence; the stale mechanismClass label has no authority over the corrective sourceDecision.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical33–35 fixes supplied-node SELECT_XML invocation rooting, subtree confinement, explicit element-array extraction and same-execution provenance. Current affected native admission/results/identities must reflect that meaning; no ambient ancestor or old semantic identity may stand in for it. The exact sourceDecision on4534 corrected the historical ownership-only proposal: deriving completeness evaluates the Stage19 due-verification/regression conjunction, as does final determination4536. Current native meaning and compatible conditional execution govern their actual operands. Preserve application ownership, mandatory membership and independent evidence; the stale mechanismClass label has no authority over the corrective sourceDecision.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6122,
+    "predecessorId": "NREQ-a2b6942e825a969ac41d231a9331ee44",
+    "originalStatement": "Browser acceptance must include native Stage 22 worker execution",
+    "priorReviewedStatement": "Browser acceptance must include native Stage 22 worker execution",
+    "independentMechanismClass": "CURRENT_NATIVE_WORKER_ACCEPTANCE",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical33–35 fixes supplied-node SELECT_XML invocation rooting, subtree confinement, explicit element-array extraction and same-execution provenance. Current affected native admission/results/identities must reflect that meaning; no ambient ancestor or old semantic identity may stand in for it. The required browser case proves actual current Stage22 native worker behavior, including supported supplied-node selector semantics. Preserve exact language/operation identity and worker failure boundaries; this source link does not claim a browser result.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6188,
+    "predecessorId": "NREQ-9edfbb4f718e280b00ab026a169d5c82",
+    "originalStatement": "The actual-iPhone path must prove raw file intake",
+    "priorReviewedStatement": "The actual-iPhone path must prove raw file intake",
+    "independentMechanismClass": "PHYSICAL_RAW_INTAKE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical11–19 fixes the exact supported ZIP admission/member-verification/provenance branch of C/C1. The affected current intake value or source-domain result must use those admitted units and retain blocked/unknown remainder, without treating structural validation as exhaustive reading. The actual-iPhone raw-intake path includes C/C1 source admission and complete available-unit/provenance accounting. The original physical Safari/device/build/origin/challenge constraints remain; hash matching or partial intake is no device/reading proof.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6191,
+    "predecessorId": "NREQ-9c8f90564722679a1de53d04271507af",
+    "originalStatement": "The actual-iPhone path must prove direct response JSON file ingestion",
+    "priorReviewedStatement": "The actual-iPhone path must prove direct response JSON file ingestion",
+    "independentMechanismClass": "PHYSICAL_CURRENT_RESPONSE_INGESTION",
+    "edges": [
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical33–35 fixes supplied-node SELECT_XML invocation rooting, subtree confinement, explicit element-array extraction and same-execution provenance. Current affected native admission/results/identities must reflect that meaning; no ambient ancestor or old semantic identity may stand in for it. This atom is complete direct response JSON ingestion and current native-definition semantic admission on the actual device, not the separately retained file-selection action. Only an affected SELECT_XML definition receives the linked semantics; no new transport or authority is added.",
+        "effectiveBranchCondition": "Only the applicable concrete branch in this exact prior reviewed predicate, under its pinned sourceDecision. The candidate fallback label ORIGINAL_ARCHIVE_LIMIT_GUARDS is inventory metadata and supplies no governing meaning.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  }
+]

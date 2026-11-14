@@ -1,0 +1,283 @@
+{
+  "schema": "closed-loop-source-reconciliation-compressed-deliverable/1",
+  "status": "FROZEN_STAGED_AWAITING_PRIVATE_DURABLE_CUSTODY",
+  "logicalRoot": "/workspace/shared/clrt-v4-source-delta-reconciliation",
+  "archive": {
+    "path": "/tmp/clrt-source-final-archives/qualifier-linkage-reconciliation-009-frozen-payloads.tar.gz",
+    "sha256": "a865ee7babf23ccaf31211f08dbd22196f5a7e8c993a6c39d5c62977158a1fa7",
+    "byteLength": 119488
+  },
+  "archivedLogicalFiles": [
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/chain-loader-v3.py",
+      "archiveMember": "qualifier-linkage-reconciliation-009/chain-loader-v3.py",
+      "sha256": "72131d2442792cf472656d9fb36fde1ccb5974a840808f1d734180ec33d9c7c4",
+      "byteLength": 11826
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-1719.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-1719.json",
+      "sha256": "79ffd213504a173835ebf4c0f201bae5304fa4131d2de5ccd4fca46114e220d8",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-1720.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-1720.json",
+      "sha256": "5fab5d6ad120827032922e6f6dcb5302893275bb080982ed98860a246dce7054",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-1895.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-1895.json",
+      "sha256": "bb660d985dd521266fb302af2e3814bc9091754e29c76305865f228023120792",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-1905.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-1905.json",
+      "sha256": "a0f2d329f9949a1cd27fb60281522221eb5981c0b498d4bfedbfb463ba52c88d",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-1948.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-1948.json",
+      "sha256": "e61aaf37368e8c09af7b7ca35bbf69b3a2b689246c5e0001b10382acd589daac",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-1953.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-1953.json",
+      "sha256": "c94054c481c4bcbfcd13785609ca26074f6b46b0193767681c490d535e4212f7",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-2313.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-2313.json",
+      "sha256": "4ebc56b3dd954d310c8c3eba1db35d36a373f36b5c3067f18dcb9096890ed7f8",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-2314.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-2314.json",
+      "sha256": "e8115f2fcc96f0af0cc99fd065b92ff9f3ec167ff8ce99d3669bdec1b32ffc86",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-2367.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-2367.json",
+      "sha256": "5d8ccad6e32d60c1e2b3e0f31aca629f20b52b0b67a22f40363dcd74083610ac",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-5062.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-5062.json",
+      "sha256": "01b7f68983480ede775b0b8a9ebac7b002a48e9a0a02a0213cc116a5f7adfb9c",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-5063.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-5063.json",
+      "sha256": "ae533aa204b95111a05c4fda6c3c5e5217421bb5f30c7bdd87d6a79be703e2b8",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-5964.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-5964.json",
+      "sha256": "8094ff1c58e6a9a9d3dd42ed72c5c5481c6a9756c3e7126f0074dded4a768131",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-5965.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-5965.json",
+      "sha256": "253e4615dc7115eeeca1570aadca5cd556e40b8f27cf711bf933518d4259a59c",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-5966.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-5966.json",
+      "sha256": "e7d6c3efd8a06489425e21d28c99a79c9888db20c3a3b4461bfa130a0fee936f",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-642.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-642.json",
+      "sha256": "84e290c75a451571d8dab3ae138c3a98e407f88197672865b55773aaf7fe4f97",
+      "byteLength": 1858
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-6466.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-6466.json",
+      "sha256": "b93cc2f6d1ba4822369e5b2c2574afd4ca5e8e6a1c621d2815893a9c187382ed",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-6536.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-6536.json",
+      "sha256": "231c5355542103abadfe1d1f79f925b2a08b63eea1a0237e3c2814a467c307c4",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-6719.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-6719.json",
+      "sha256": "2dfe155623c6ae81b441b8b4ed519c039cf2d3a27bac342dee4afe8d8d6410f8",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-6751.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-6751.json",
+      "sha256": "d311b81eac0a13ed8ac1c50355d5576f5043bed63369e2154d13e22409974678",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-6902.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-6902.json",
+      "sha256": "44c3b0cb60c98d6445c6085d43e27bab2d14ac2e120f760b7b23847f8aab3564",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/composite-governor-7132.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/composite-governor-7132.json",
+      "sha256": "6b7ade9efbcfefd6aa99a9728d6ab3123859e17918e49c565f4270ed5a52222c",
+      "byteLength": 1860
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/decoder-effective-governor-link.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/decoder-effective-governor-link.json",
+      "sha256": "1181ceb497b1bfff8bc4dbccf3c51e956660f5333f45667ea62290522f6d57c2",
+      "byteLength": 12470
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/deferred-effective-governor-link.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/deferred-effective-governor-link.json",
+      "sha256": "02e84c411b7e897845ac097872ad45992e0e440f538fcd4c65520a2f22b56312",
+      "byteLength": 11201
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/freeze-manifest.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/freeze-manifest.json",
+      "sha256": "6bb7e110d92294a7dd3943f4c57da410ef17377a05a1f548c7dbb923c417ef12",
+      "byteLength": 8644
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/independent-config.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/independent-config.json",
+      "sha256": "9b8e14b5b3dd61831bf26964de905f3edd9c907f0fdab6a883b70e3febdaa23b",
+      "byteLength": 10884
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/independent-scope-decisions.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/independent-scope-decisions.json",
+      "sha256": "15828a8c735ea5a2d18da2806b667b9d01495072409012957b848876680ac35b",
+      "byteLength": 128374
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/per-entry-reconciliation.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/per-entry-reconciliation.json",
+      "sha256": "00ae1ff33f19724a55ea91d9ad93151f18c2b987db03d2df83277ef5c6e288ad",
+      "byteLength": 327592
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/read-inventory.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/read-inventory.json",
+      "sha256": "b2f86b96a4fb0eed0be7152e602f4d9e4f1082f6eca06b6be3276f2a0bb84237",
+      "byteLength": 104441
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/reconcile.py",
+      "archiveMember": "qualifier-linkage-reconciliation-009/reconcile.py",
+      "sha256": "f78b409910d13414d3d47d76f29b0c64b99903d1ca0642b0e2504436f16c0798",
+      "byteLength": 19271
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/reconciliation.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/reconciliation.json",
+      "sha256": "84c457d827445aa0836209352a2de18fbe5b416794aad99d94cc9c433d00dea2",
+      "byteLength": 10978
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/source-evidence.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/source-evidence.json",
+      "sha256": "a8607ab9ddb085326deb2431261008404f467da7dd6a332a64d4b5718c6ab7b9",
+      "byteLength": 152014
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/validation.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/validation.json",
+      "sha256": "5f384c2b8ebfea90e9cfac7c356de46f6bca85e271abf132c07887d9e794b2b9",
+      "byteLength": 1149
+    },
+    {
+      "logicalPath": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/xml-effective-governor-link.json",
+      "archiveMember": "qualifier-linkage-reconciliation-009/xml-effective-governor-link.json",
+      "sha256": "30b93b60117980915c986ff84a7662749f9e640bd9ee33da3b4dece79e34b9cf",
+      "byteLength": 8442
+    }
+  ],
+  "reconciliation": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/reconciliation.json",
+    "sha256": "84c457d827445aa0836209352a2de18fbe5b416794aad99d94cc9c433d00dea2",
+    "byteLength": 10978
+  },
+  "freeze": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-009/freeze-manifest.json",
+    "sha256": "6bb7e110d92294a7dd3943f4c57da410ef17377a05a1f548c7dbb923c417ef12",
+    "byteLength": 8644
+  },
+  "validation": {
+    "entryCount": 45,
+    "edgeCount": 90,
+    "actualEffectiveEdges": 46,
+    "diagnosticOnlyEdges": 44,
+    "freshCurrentIdentityCount": 25,
+    "retainedCurrentIdentityCount": 20,
+    "proposalAdjudication": {
+      "acceptedEdges": 90,
+      "correctedEdges": 0,
+      "blockedEdges": 0
+    },
+    "verifiedOriginalOccurrenceBindings": 204,
+    "uniqueOriginalOccurrences": 106,
+    "preservedOriginalIndentationQualifications": 0,
+    "currentMechanismCount": 13,
+    "originalPredecessorDenominator": 7486,
+    "predecessorPopulationAfter": {
+      "RETAINED": 5964,
+      "CHANGED": 1522,
+      "BLOCKED": 0
+    },
+    "newDutyPopulation": 712,
+    "remainingQualifierRows": 394,
+    "remainingQualifierEdges": 1162,
+    "remainingEdgesByIssue": {
+      "SRC-GAP-DECODER-SUBSET": 390,
+      "SRC-AMBIGUITY-XML-SUBNODE-ROOT": 387,
+      "SRC-GAP-DEFERRED-BINDING": 385
+    },
+    "explicitCompositeGovernorRows": [
+      642,
+      1719,
+      1720,
+      1895,
+      1905,
+      1948,
+      1953,
+      2313,
+      2314,
+      2367,
+      5062,
+      5063,
+      5964,
+      5965,
+      5966,
+      6466,
+      6536,
+      6719,
+      6751,
+      6902,
+      7132
+    ],
+    "compositeConsumerSupportNotClaimed": true,
+    "proofPromoted": false
+  },
+  "proofPromoted": false
+}

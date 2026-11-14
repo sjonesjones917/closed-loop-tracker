@@ -1,0 +1,15 @@
+{
+  "commit": "638ee980d85ecc6869288edcc0608f3c14514e47",
+  "fixturePath": "/workspace/shared/clrt-iteration-receipt-review-evidence/valid-renewed-baseline-pre21-projection12.adapter.json.gz",
+  "fixtureSha256": "4257d355e643f2e2ef1eb85297729f2f20687ef126f96916c26b41d0ef9e0ef0",
+  "ownerSha256": "af1c0a33d1126a9086e24aebc714ddbb69f0da8b7f6607a9d0b67675028a181c",
+  "promptSourceSha256": "8819b65e1a9ae57270d30b2498702b0bbe4cf64fac29bfedd6d0a48186ed8e86",
+  "dataOriginalSha256": "80f1e46f0a80b3b9670cd2713ae7e26ab1828b3fda5ed9489d63046826316c95",
+  "dataInstrumentedSha256": "b9ed896b592971bd9b5d9c993485e6ec399119b456a6009e057ebd43d35c6ad6",
+  "transforms": [
+    "Declare extracted data helper async and await only added pre-integrity exact-original capture",
+    "Await extracted Stage21/22 calls; no assertions removed"
+  ],
+  "driverSha256": "7793a07182b0555985987bd279e4af7071a8db483f48a4a0341046d38cfff925",
+  "fullJourneyExecution": false
+}

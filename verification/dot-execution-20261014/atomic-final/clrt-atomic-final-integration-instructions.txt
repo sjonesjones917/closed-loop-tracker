@@ -1,0 +1,29 @@
+Final atomic evidence integration handoff
+
+Package root: /workspace/shared/clrt-atomic-evidence-package/
+Descriptor: /workspace/shared/clrt-atomic-extraction-descriptor-final.json
+Exact dependency closure and sizes: /workspace/shared/clrt-atomic-final-evidence-replay.json (files array)
+Validator commit: f62eaac1f0c04d6386147e209a8f8039bcfa237a
+
+Parent-owned integration only:
+1. Verify every listed package file against its exact SHA-256 and byte count in the final replay report. Copy only listed dependencies to the same repository-relative path in the integration repository. If a destination already exists, first verify its identical hash; the controlling source must already match and must not be replaced with different bytes.
+2. In specification/requirement-evidence-bindings.json, assign only evidence.atomicExtraction to the complete final descriptor object. Preserve all other evidence fields. Do not hand-edit either generated manifest.
+3. Run node generate-specification-governance.mjs in the integration repository using its normal exact SOURCE_COMMIT convention, then the source/governance and focused atomic regression controls. Verify that both generated manifests retain all 253 reviewed sections and the reconciled atomic identity crosswalk.
+4. Retain current behavior/proof dispositions produced by the generator; extraction reconciliation establishes no implementation, test execution, human approval, browser/physical proof, application acceptance, or release eligibility.
+5. Confirm all package data is repository-only and excluded from runtime bundles. Parent owns publication and commits.
+
+Minimal descriptor assignment (run only by parent in integration cwd):
+python - <<'PY'
+import json
+from pathlib import Path
+p=Path('specification/requirement-evidence-bindings.json')
+e=json.loads(p.read_text())
+e['atomicExtraction']=json.loads(Path('/workspace/shared/clrt-atomic-extraction-descriptor-final.json').read_text())
+p.write_text(json.dumps(e,ensure_ascii=False,indent=2)+'\n')
+PY
+
+Scope notes:
+- Original frozen author and independent-review files remain byte-identical, including their bounded/incomplete disclosures. Composite completion means the explicitly reconciled full-source union; it does not rewrite constituent history or claim original-pass unanimity.
+- Genuine source-context disagreements remain recorded and resolved in distinct pinned evidence.
+- Six broader contract questions remain explicit and separate from extraction completeness. These do not authorize invented implementation contracts or secret transmission.
+- Historical relocation proves source continuity only; individual reviewed atomic identity decisions, including changed-singleton and component partitions, control retention/retirement. Fresh/split/changed scopes inherit no executed proof.

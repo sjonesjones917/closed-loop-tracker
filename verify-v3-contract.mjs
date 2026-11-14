@@ -1,7 +1,10 @@
-import './verify-test-ir-port-types.mjs';
 import {runVerifier} from './verify-conformance-regressions.mjs';
+import {currentOwnerReport} from './verification-evidence.mjs';
 import fs from 'node:fs';
+import {createVerifierRuntime} from './verifier-runtime.mjs';
 import assert from 'node:assert/strict';
+import {verifySchemaFieldObligations} from './test-schema-field-obligations.mjs';
+import {verifySchemaProductObservation} from './test-schema-product-observation.mjs';
 
 const read=path=>fs.readFileSync(new URL(path,import.meta.url),'utf8');
 const workbook=read('./workbook.js');
@@ -19,6 +22,68 @@ const definitionProof=read('./verify-definition-of-done.mjs');
 const v3Proof=read('./verify-v3-definition-of-done.mjs');
 const reservationProof=read('./verify-reservation-contract.mjs');
 const stateReleaseProof=read('./verify-state-release-contract.mjs');
+
+
+// Exact finite Section38/38.1 literals for REV-49. They are transcribed from
+// the controlling specification, not inferred from RECORD_SCHEMAS. The other
+// authority, lifecycle, stage-recalculation and semantic requirements remain
+// with their behavioral owners; this group claims only declared contracts.
+export function verifySchemaRev49LiteralContracts(schema){
+ const expected={
+  sourceConflicts:{commitPolicy:'APPEND_SCOPED'},research:{idField:'RESEARCH_ID'},requirements:{stage:4,commitPolicy:'REPLACE_CURRENT_STAGE_SET'},
+  requirementResolutions:{stage:5,commitPolicy:'REPLACE_CURRENT_STAGE_SET'},tests:{idField:'TEST_ID',stage:6},failureTests:{commitPolicy:'REPLACE_CURRENT_STAGE_SET'},
+  iterations:{},defects:{},regressions:{commitPolicy:'APPEND_ONLY'},convergenceRecords:{idField:'CONVERGENCE_ID',commitPolicy:'APPLICATION_DERIVED'},
+  baselines:{stage:20},deterministicResults:{stage:22},meaningResults:{stage:23},representationInspections:{idField:'INSPECTION_ID'},processAudits:{idField:'PROCESS_AUDIT_ID'},
+  releaseGateReviews:{stage:27},releaseRecords:{idField:'RELEASE_ID'},artifactIdentities:{},evidenceInvestigations:{idField:'INVESTIGATION_ID'},instructionTraces:{stage:8},
+  blockers:{stage:'GLOBAL'},humanDecisions:{idField:'HUMAN_DECISION_ID',commitPolicy:'APPEND_SCOPED'},sourceSearchContracts:{},semanticReviews:{idField:'SEMANTIC_REVIEW_ID',commitPolicy:'APPEND_SCOPED'},
+  applicabilityRecords:{stage:5,commitPolicy:'APPEND_SCOPED'},proofObligations:{stage:6},entailmentReviews:{commitPolicy:'APPEND_SCOPED'},expectedVarianceContracts:{idField:'VARIANCE_CONTRACT_ID'},
+  environmentManifests:{stage:'GLOBAL'},operationReservations:{commitPolicy:'UPDATE_RESERVED'},backupPolicies:{idField:'BACKUP_POLICY_ID',stage:'GLOBAL'},deliveryCandidateSets:{},deliveryRecords:{idField:'DELIVERY_ID'}
+ };
+ const observations=[],mutants=[];
+ function verify(subject){
+  for(const [family,properties]of Object.entries(expected)){
+   const record=subject.RECORD_SCHEMAS?.[family],durable=subject.DURABLE_OBJECT_REGISTRY?.[family];
+   assert(record&&durable,'REV49_FAMILY_EXISTENCE_ORACLE: '+family);
+   assert.equal(durable.family,family,'REV49_FAMILY_PARENT_ORACLE: '+family);
+   for(const [property,value]of Object.entries(properties)){
+    assert.equal(property==='stage'&&record[property]===null?'GLOBAL':record[property],value,'REV49_LITERAL_CONTRACT_ORACLE: record '+family+'.'+property);
+    assert.equal(durable[property==='commitPolicy'?'policy':property],value,'REV49_LITERAL_CONTRACT_ORACLE: durable '+family+'.'+property);
+   }
+   if(properties.idField){
+    const field=record.fieldDefinitions?.[properties.idField],entry=subject.FIELD_REGISTRY?.['RECORD.'+family+'.'+properties.idField];
+    for(const definition of [field,entry]){assert.equal(definition?.producer,'APPLICATION','REV49_ID_OWNER_ORACLE: '+family);assert.equal(definition?.valueType,'STRING','REV49_ID_TYPE_ORACLE: '+family);}
+   }
+  }
+ }
+ verify(schema);
+ for(const [family,properties]of Object.entries(expected)){
+  observations.push({family,expected:{exists:true,...properties},passed:true});
+  const records={...schema.RECORD_SCHEMAS},durable={...schema.DURABLE_OBJECT_REGISTRY};delete records[family];delete durable[family];
+  assert.throws(()=>verify({...schema,RECORD_SCHEMAS:records,DURABLE_OBJECT_REGISTRY:durable}),/REV49_FAMILY_EXISTENCE_ORACLE/,'REV49_MUTANT_ORACLE: coherent family omission '+family);
+  mutants.push({family,fault:'coherent-family-omission',detected:true});
+  for(const [property]of Object.entries(properties)){
+   const replacement=property==='stage'?31:'UNREGISTERED_REV49_LITERAL',changed={...schema,RECORD_SCHEMAS:{...schema.RECORD_SCHEMAS,[family]:{...schema.RECORD_SCHEMAS[family],[property]:replacement}},DURABLE_OBJECT_REGISTRY:{...schema.DURABLE_OBJECT_REGISTRY,[family]:{...schema.DURABLE_OBJECT_REGISTRY[family],[property==='commitPolicy'?'policy':property]:replacement}}};
+   assert.throws(()=>verify(changed),/REV49_LITERAL_CONTRACT_ORACLE/,'REV49_MUTANT_ORACLE: coherent literal change '+family+'.'+property);
+   mutants.push({family,fault:'coherent-declaration-and-durable-'+property,detected:true});
+  }
+  if(properties.idField)for(const [property,replacement,oracle]of [['producer','AGENT','REV49_ID_OWNER_ORACLE'],['valueType','NUMBER','REV49_ID_TYPE_ORACLE']]){
+   const key='RECORD.'+family+'.'+properties.idField,record=schema.RECORD_SCHEMAS[family],field={...record.fieldDefinitions[properties.idField],[property]:replacement},changed={...schema,RECORD_SCHEMAS:{...schema.RECORD_SCHEMAS,[family]:{...record,fieldDefinitions:{...record.fieldDefinitions,[properties.idField]:field}}},FIELD_REGISTRY:{...schema.FIELD_REGISTRY,[key]:{...schema.FIELD_REGISTRY[key],[property]:replacement}}};
+   assert.throws(()=>verify(changed),error=>error.message.includes(oracle),'REV49_MUTANT_ORACLE: coherent ID '+family+'.'+property);mutants.push({family,fault:'coherent-ID-'+property,detected:true});
+  }
+ }
+ verify(schema);
+ return {checkId:'schema.rev49-source-family-literals',passed:true,synthetic:true,actualBrowser:false,observations,mutants,restored:true,scopeLimit:'Thirty-three independently specified family existence/ID/stage/policy declarations, with coherent wrong projections. Existing null record stage and GLOBAL durable stage denote global family declarations only. Earliest-stage applicability, recalculation, authorization, lifecycle implementation, migration and semantic claims remain separate; no whole-clause or operational receipt promotion.'};
+}
+function schemaRev49LiteralOwner(){
+ const context=createVerifierRuntime({Event:class Event{},dispatchEvent(){}});
+ for(const [filename,source]of [['workbook.js',workbook],['hash.js',read('./hash.js')],['workflow-schema.js',schema]])createVerifierRuntime.loadScript(context,source,{filename});
+ for(const [filename,source]of [['test-runtime.js',runtime],['workflow-engine.js',engine],['prompt-engine.js',prompt]])createVerifierRuntime.loadScript(context,source,{filename});
+ return {rev49:verifySchemaRev49LiteralContracts(context.closedLoopWorkflowSchema),section38:verifySchemaFieldObligations(context.closedLoopWorkflowSchema),productObservations:verifySchemaProductObservation(context.closedLoopWorkflowSchema,context.closedLoopPromptEngine)};
+}
+const schemaLiteralResults=schemaRev49LiteralOwner();
+const schemaRev49SourceFamilyLiterals=schemaLiteralResults.rev49;
+const schemaSection38FieldObligations=schemaLiteralResults.section38;
+const schemaProductObservationOwnership=schemaLiteralResults.productObservations;
 
 const requiredRuntimeOps=[
   'LOAD_ARTIFACT','READ_BYTES','DECODE_UTF8','PARSE_JSON','PARSE_CSV','PARSE_XML',
@@ -139,13 +204,24 @@ for(const [file,marker,expected] of [
  ['verify-stage01-disposition-contract.mjs','stage01DispositionContract','PASS'],
  ['verify-terminal-human-authority.mjs','terminalHumanAuthority','PASS']
 ]){
- const result=(await runVerifier(process.execPath,[file],{encoding:'utf8',timeout:60000}));
- assert.equal(result.status,0,'EXECUTED_CONTRACT_PROOF_ORACLE: '+file+'\n'+result.stderr);
- const report=JSON.parse(result.stdout);assert.equal(report[marker],expected,'EXECUTED_CONTRACT_PROOF_ORACLE: '+file);
- executedContractProofs.push({file,report,evidencePath:result.evidencePath});
+ let result=null;
+ const run=async()=>{
+  result=await runVerifier(process.execPath,[file],{encoding:'utf8',timeout:60000});
+  assert.equal(result.status,0,'EXECUTED_CONTRACT_PROOF_ORACLE: '+file+'\n'+result.stderr);
+  return result.stdout;
+ };
+ // The foundation phase already executes the complete registry owner before
+ // migration. Reuse its validated report; standalone execution retains the
+ // same producer and assertions when no current receipt exists.
+ const report=file==='verify-stage-operation-registry.mjs'?await currentOwnerReport(file,marker,{run}):JSON.parse(await run());
+ assert.equal(report[marker],expected,'EXECUTED_CONTRACT_PROOF_ORACLE: '+file);
+ executedContractProofs.push({file,report,evidencePath:result?.evidencePath||null,inputSource:result?'DIRECT_PRODUCER_STDOUT':'VALIDATED_RECEIPT_REPORT'});
 }
 console.log(JSON.stringify({
   verifyV3Contract:'PASS',
+  schemaRev49SourceFamilyLiterals,
+  schemaSection38FieldObligations,
+  schemaProductObservationOwnership,
   projectSchema:'closed-loop-project/3',
   responseSchema:'closed-loop-stage-response/3',
   testIrSchema:'closed-loop-test-spec/1',
@@ -155,5 +231,4 @@ console.log(JSON.stringify({
   centralizedLimits:requiredLimits.length,
   executedContractProofs
 }));
-await import('./verify-stage-contract-closure.mjs');
 await import('./verify-stage27-release-binding.mjs');

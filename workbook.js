@@ -54,11 +54,11 @@ const STAGE_OWNERSHIP=Object.freeze({
     "humanDecision": [],
     "agent": [
       "AUTHORITY_HIERARCHY",
-      "SOURCE_APPLICABILITY_DETERMINATION",
       "KNOWN_CONTROLLING_SOURCES_EXAMINED"
     ],
     "application": [
       "SOURCE_SET_VERSION",
+      "SOURCE_APPLICABILITY_DETERMINATION",
       "SOURCE_RECORDS",
       "SOURCE_CONFLICT_RECORDS",
       "UNRESOLVED_CONTROLLING_CONFLICTS",
@@ -712,7 +712,7 @@ const sha256Bytes=async v=>bytesToHex(new Uint8Array(await crypto.subtle.digest(
 const sha256Text=async v=>sha256Bytes(new TextEncoder().encode(String(v)).buffer);
 function stageTemplate(s){return [`STAGE ${String(s.number).padStart(2,'0')} — ${s.title}`,...s.fields.map(f=>`${f}: <<ENTER>>`)].join('\n');}
 function blankStage(s){return {number:s.number,status:'NOT STARTED',decision:'',decisionEvidence:'',nextStage:'',decidedBy:'',dateTime:'',draftRecord:stageTemplate(s),responseDraft:'',authorizedFiles:[],humanChecks:{},gateChecks:{},evidenceChecks:{},revisions:[]};}
-function createBlankState(jobId){const id=jobId||`JOB-${new Date().toISOString().replace(/\D/g,'').slice(0,14)}`;return {schema:PROJECT_SCHEMA,workflow:WORKFLOW_ID,stageCount:STAGE_COUNT,revision:0,job:{JOB_ID:id,JOB_TITLE:'New project',JOB_OWNER:'',DATE_OPENED:new Date().toISOString(),EXACT_USER_OBJECTIVE_VERBATIM:'',EXACT_DELIVERABLE_REQUESTED:'',SUPPLIED_MATERIALS_INVENTORY:'',REQUIRED_OUTPUT_FORMAT:'',DEADLINE_OR_TEMPORAL_SCOPE:'',KNOWN_AUTHORITATIVE_SOURCES:'',AVAILABLE_TOOLS:'',PROHIBITED_ACTIONS:'',EXPLICIT_USER_REQUIREMENTS:'',ASSUMPTIONS:'',UNKNOWN_INFORMATION:'',CURRENT_ITERATION:null,CURRENT_STAGE:'STAGE 01',CURRENT_STATE:'AWAITING_HUMAN_INPUT',CURRENT_INPUT_VERSION:'INPUT-v001',CONTRACT_PROFILE_ID,CURRENT_SOURCE_SET_VERSION:null,CURRENT_RESEARCH_VERSION:null,CURRENT_REQUIREMENTS_VERSION:null,CURRENT_TEST_SUITE_VERSION:null,CURRENT_INSTRUCTION_VERSION:null,CURRENT_CANDIDATE_ID:null,CURRENT_BASELINE_ID:null,CURRENT_PRODUCT_ID:null,CURRENT_PRODUCT_VERSION:null,CURRENT_DELIVERY_CANDIDATE_SET_ID:null,CURRENT_REVIEW_VERSION:null,CURRENT_RECONCILED_REVIEW_VERSION:null,CURRENT_RELEASE_ID:null,CURRENT_HASH_REVIEW_ID:null,CURRENT_EVIDENCE_CHAIN_VERSION:null,CURRENT_DELIVERY_ID:null,CURRENT_BLOCKERS:[],NEXT_REQUIRED_ACTION:{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Complete Stage 01',explanation:'Provide the initial human-authority input and continue the Stage 01 intake.',primaryButton:'Continue',secondaryAction:null,filesToSend:[],filesToWithhold:[],expectedReturnFiles:[],blockingReason:null,canonicalStateChanged:false,newPromptRequired:false},LATEST_EVIDENCE_REFERENCE:null,INPUT_SET_CONTENTS:'',INPUT_SET_HASH_OR_MANIFEST:'',JOB_RECORD_STATUS:'INCOMPLETE',STATUS_EVIDENCE:''},stages:Object.fromEntries(STAGES.map(s=>[s.number,blankStage(s)])),appendices:Object.fromEntries(Object.keys(APPENDICES).map(k=>[k,{draft:'',records:[]}])),release:{gateState:'',auditedDraft:[],releaseDraft:[],comparisons:[],authorization:'NOT AUTHORIZED',authorizedArtifactIds:[]},projectData:{userEntered:{},sources:[],research:[],requirements:[],tests:[],failureTests:[],instructions:[],generatedPrompts:[],generatedOutputs:[],outputReceipts:[],freshContexts:[],runs:[],verification:[],comparisons:[],defects:[],regressions:[],changes:[],blockers:[],artifacts:[],reviews:[],releaseRecords:[],evidenceChains:[],history:[],permanentRegistry:{},stageRecords:{},fullProject:{}},activeStage:1,activeView:'Project',jobRevisions:[],snapshots:[]};}
+function createBlankState(jobId){const id=jobId||`JOB-${new Date().toISOString().replace(/\D/g,'').slice(0,14)}`;return {schema:PROJECT_SCHEMA,workflow:WORKFLOW_ID,stageCount:STAGE_COUNT,revision:0,job:{JOB_ID:id,JOB_TITLE:'New project',JOB_OWNER:'',DATE_OPENED:new Date().toISOString(),EXACT_USER_OBJECTIVE_VERBATIM:'',SUPPLIED_MATERIALS_INVENTORY:'',REQUIRED_OUTPUT_FORMAT:'',DEADLINE_OR_TEMPORAL_SCOPE:'',KNOWN_AUTHORITATIVE_SOURCES:'',AVAILABLE_TOOLS:'',PROHIBITED_ACTIONS:'',EXPLICIT_USER_REQUIREMENTS:'',CURRENT_ITERATION:null,CURRENT_STAGE:'STAGE 01',CURRENT_STATE:'AWAITING_HUMAN_INPUT',CURRENT_INPUT_VERSION:'INPUT-v001',CONTRACT_PROFILE_ID,CURRENT_SOURCE_SET_VERSION:null,CURRENT_RESEARCH_VERSION:null,CURRENT_REQUIREMENTS_VERSION:null,CURRENT_TEST_SUITE_VERSION:null,CURRENT_INSTRUCTION_VERSION:null,CURRENT_CANDIDATE_ID:null,CURRENT_BASELINE_ID:null,CURRENT_PRODUCT_ID:null,CURRENT_PRODUCT_VERSION:null,CURRENT_DELIVERY_CANDIDATE_SET_ID:null,CURRENT_REVIEW_VERSION:null,CURRENT_RECONCILED_REVIEW_VERSION:null,CURRENT_RELEASE_ID:null,CURRENT_HASH_REVIEW_ID:null,CURRENT_EVIDENCE_CHAIN_VERSION:null,CURRENT_DELIVERY_ID:null,CURRENT_BLOCKERS:[],NEXT_REQUIRED_ACTION:{actionType:'CONTINUE_AGENT_CONVERSATION',heading:'Complete Stage 01',explanation:'Provide the initial human-authority input and continue the Stage 01 intake.',primaryButton:'Continue',secondaryAction:null,filesToSend:[],filesToWithhold:[],expectedReturnFiles:[],blockingReason:null,canonicalStateChanged:false,newPromptRequired:false},LATEST_EVIDENCE_REFERENCE:null,INPUT_SET_HASH_OR_MANIFEST:'',JOB_RECORD_STATUS:'INCOMPLETE',STATUS_EVIDENCE:''},stages:Object.fromEntries(STAGES.map(s=>[s.number,blankStage(s)])),appendices:Object.fromEntries(Object.keys(APPENDICES).map(k=>[k,{draft:'',records:[]}])),release:{gateState:'',auditedDraft:[],releaseDraft:[],comparisons:[],authorization:'NOT AUTHORIZED',authorizedArtifactIds:[]},projectData:{userEntered:{},sources:[],research:[],requirements:[],tests:[],failureTests:[],instructions:[],generatedPrompts:[],generatedOutputs:[],outputReceipts:[],freshContexts:[],runs:[],verification:[],comparisons:[],defects:[],regressions:[],changes:[],blockers:[],artifacts:[],reviews:[],releaseRecords:[],evidenceChains:[],history:[],permanentRegistry:{},stageRecords:{},fullProject:{}},activeStage:1,activeView:'Project',jobRevisions:[],snapshots:[]};}
 function parseRecordFields(text){const out={};let key='';for(const line of String(text||'').split(/\r?\n/)){const m=line.match(/^([A-Z0-9][A-Z0-9_ -]*):\s*(.*)$/);if(m){key=m[1].trim().replace(/\s+/g,'_');out[key]=m[2].trim();}else if(key&&line.trim())out[key]+=`\n${line}`;}return out;}
 const n=v=>Number(String(v??'').replace(/[^0-9.-]/g,''));const truth=v=>['TRUE','YES','SATISFIED','ACCEPTED','AUTHORIZED','CONFIRMED','CONVERGED'].includes(String(v||'').trim().toUpperCase());
 function validateCriticalFields(stage,record){
@@ -753,25 +753,10 @@ function compareArtifactSets(a=[],r=[],gateState=''){const comparisons=[];for(le
 function restoreLegacyStage01AcceptedCapture(migrated,original){return migrated;}
 function migrateState(p){
   if(!p||typeof p!=='object')return createBlankState();
-  if(p.schema===PROJECT_SCHEMA&&p.workflow===WORKFLOW_ID&&Number(p.stageCount)===STAGE_COUNT){
-    const migrated=JSON.parse(JSON.stringify(p));
-    migrated.projectData=migrated.projectData&&typeof migrated.projectData==='object'?migrated.projectData:{};
-    if(migrated?.job?.CONTRACT_PROFILE_ID!==CONTRACT_PROFILE_ID){
-      migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];
-      const alreadyLegacy=migrated.projectData.contractProfileMigration?.status==='LEGACY_NON_GATING';
-      if(!alreadyLegacy&&!migrated.projectData.migrationArchives.some(x=>x?.kind==='PRE_PROFILE_V3_SOURCE'&&x?.revision===Number(p.revision||0)))migrated.projectData.migrationArchives.push({kind:'PRE_PROFILE_V3_SOURCE',schema:PROJECT_SCHEMA,revision:Number(p.revision||0),payload:JSON.parse(JSON.stringify(p))});
-      migrated.projectData.contractProfileMigration={status:'LEGACY_NON_GATING',sourceSchema:alreadyLegacy?String(migrated.projectData.contractProfileMigration.sourceSchema||PROJECT_SCHEMA):PROJECT_SCHEMA,targetProfile:CONTRACT_PROFILE_ID,semanticProofMigrated:false};
-      migrated.job=migrated.job&&typeof migrated.job==='object'?migrated.job:{};delete migrated.job.CONTRACT_PROFILE_ID;
-      migrated.job.CURRENT_STATE='BLOCKED';migrated.job.JOB_RECORD_STATUS='INCOMPLETE';migrated.job.CURRENT_STAGE='STAGE 01';
-      migrated.job.CURRENT_BLOCKERS=[...new Set([...(Array.isArray(migrated.job.CURRENT_BLOCKERS)?migrated.job.CURRENT_BLOCKERS:[]),'CONTRACT_PROFILE_MIGRATION_REQUIRED'])];
-      const stage01=migrated?.stages?.['1']||migrated?.stages?.[1];if(stage01){stage01.status='NOT STARTED';stage01.decision='';stage01.decisionEvidence='';stage01.agentData={};stage01.acceptedData={};stage01.gate={satisfied:false,reasons:['Legacy/pre-profile data cannot satisfy current-profile Stage 01.']};}
-      migrated.activeStage=1;return migrated;
-    }
-    migrated.projectData.migrationArchives=Array.isArray(migrated.projectData.migrationArchives)?migrated.projectData.migrationArchives:[];
-    migrated.projectData.historicalImportRecords=Array.isArray(migrated.projectData.historicalImportRecords)?migrated.projectData.historicalImportRecords:[];
-    if(migrated.projectData.stageRecords&&Object.keys(migrated.projectData.stageRecords).length){migrated.projectData.historicalImportRecords.push({kind:'LEGACY_STAGE_RECORDS',schema:PROJECT_SCHEMA,records:JSON.parse(JSON.stringify(migrated.projectData.stageRecords))});migrated.projectData.stageRecords={};}
-    if(migrated.projectData.fullProject&&Object.keys(migrated.projectData.fullProject).length){migrated.projectData.migrationArchives.push({kind:'LEGACY_NESTED_PROJECT',schema:PROJECT_SCHEMA,preservedAt:new Date().toISOString(),payload:JSON.parse(JSON.stringify(migrated.projectData.fullProject))});delete migrated.projectData.fullProject;}
-    return migrated;
+  if(p.schema==='closed-loop-project/2'||p.schema===PROJECT_SCHEMA){
+    const migrate=globalThis.closedLoopWorkflowSchema?.migrateProjectToCurrent;
+    if(typeof migrate!=='function')throw new Error(`The current schema migration owner is unavailable for ${p.schema}.`);
+    return migrate(p);
   }
   if(p.schema!=='human-project/30')throw new Error(`Unsupported project schema: ${p.schema||'MISSING'}`);
   const migrated=JSON.parse(JSON.stringify(p));

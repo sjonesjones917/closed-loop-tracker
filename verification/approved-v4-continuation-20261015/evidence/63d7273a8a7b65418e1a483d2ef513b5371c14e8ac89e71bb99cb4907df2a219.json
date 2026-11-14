@@ -1,0 +1,54 @@
+{
+  "schema": "closed-loop-additive-new-duty-technical-reference-resolution/1",
+  "status": "FROZEN_NINETEEN_EXACT_DECODER_DEFERRED_AMENDMENT_EDGES",
+  "records": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/decoder-deferred-amendment-edge-successor-001/per-entry-reconciliation.json",
+    "sha256": "85595dd9f8d3b8b55359bdaad2bbbd28912eef94849033f26352245aefdfd802",
+    "byteLength": 197959
+  },
+  "exactEvidence": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/decoder-deferred-amendment-edge-successor-001/source-evidence.json",
+    "sha256": "307700e9620efe721fa482f02693118bfc39710e31ca7d48bd3c82b26dc4e723",
+    "byteLength": 170181
+  },
+  "validation": {
+    "entryCount": 19,
+    "decoderEntries": 8,
+    "deferredEntries": 11,
+    "freshAttributedIdentityCount": 10,
+    "retainedIdentityCount": 9,
+    "verifiedSourceLocationOccurrences": 521,
+    "uniqueSourcePassages": 83,
+    "verifiedAtomicSourceSpans": 30,
+    "birthIdentityChecks": 19,
+    "postIdAliasDigestChecks": 19,
+    "independentlyReconciledDecoderPreservationTargets": 9,
+    "predecessorDenominatorChange": 0,
+    "newDutyDenominator": 712,
+    "newDutyDenominatorChange": 0,
+    "blanketDependencyClosureClaim": false,
+    "currentIssueEffectsRemovedOnlyForExactNineteenEntries": true,
+    "remainingHistoricalQualifierEdgesRequireIndividualReview": true,
+    "proofPromoted": false
+  },
+  "mergeRule": "Address originalNewDutyIndex/canonicalId and require exact originalEntryEvidence hash plus current originalNewDutyId. Replace only current identity/effective-scope status with the declared successor; preserve historical entries/qualifiers and712-member denominator. Nine retained IDs receive diagnostic edge closure only, with no effectiveGovernorLink. Ten fresh identities include the typed external governor in explicit preimages. Preserve all exact source occurrences and governing context graph edges. No predecessor queue, unresolved implementation disposition or other historical qualifier edge is changed.",
+  "originalFreeze": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/freeze-manifest.json",
+    "sha256": "49580d98e96917aaa6cad169c29930005682fed83beaa0591437f97b5cb5cecc",
+    "byteLength": 12165
+  },
+  "requiredTypedGovernors": [
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/decoder-deferred-amendment-edge-successor-001/decoder-effective-governor-link.json",
+      "sha256": "6d3046bd8c2f6d99086a15b803626d09fe5f3368f2c75b5b6e1bb38f9990d5b4",
+      "byteLength": 11459
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/decoder-deferred-amendment-edge-successor-001/deferred-effective-governor-link.json",
+      "sha256": "75381e46b03c244ee35f7c5c1154b30992070d214557a75bca00a00304d3eb37",
+      "byteLength": 10206
+    }
+  ],
+  "sourceLedgerActivated": false,
+  "proofPromoted": false
+}

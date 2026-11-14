@@ -1,0 +1,80 @@
+{
+  "executionCandidate": "49446c0c7673fa23f0d38068908878f2717eb4d7",
+  "fixtureOrigin": "7083bb05432d7847221e5680c80d87c8026cbd6e",
+  "exitCode": 0,
+  "result": {
+    "candidate": "7083bb05432d7847221e5680c80d87c8026cbd6e",
+    "checks": [
+      {
+        "name": "literal-UTF8-no-BOM-with-interior-FEFF",
+        "passed": true
+      },
+      {
+        "name": "scalar-key-order-prefix-and-supplementary",
+        "passed": true
+      },
+      {
+        "name": "ordered-nested-arrays-and-duplicates",
+        "passed": true
+      },
+      {
+        "name": "all-controls-quote-backslash",
+        "passed": true
+      },
+      {
+        "name": "all-printable-scalars-no-escape-or-normalization",
+        "passed": true
+      },
+      {
+        "name": "all-line-endings-and-combining-scalars",
+        "passed": true
+      },
+      {
+        "name": "signed-safe-boundaries",
+        "passed": true
+      },
+      {
+        "name": "reject-negative-zero-root-array-object",
+        "passed": true
+      },
+      {
+        "name": "reject-nan-root-array-object",
+        "passed": true
+      },
+      {
+        "name": "reject-infinity-root-array-object",
+        "passed": true
+      },
+      {
+        "name": "reject-negative-infinity-root-array-object",
+        "passed": true
+      },
+      {
+        "name": "reject-undefined-root-array-object",
+        "passed": true
+      },
+      {
+        "name": "reject-fraction-root-array-object",
+        "passed": true
+      },
+      {
+        "name": "reject-unsafe-root-array-object",
+        "passed": true
+      },
+      {
+        "name": "reject-sparse-root-array-object",
+        "passed": true
+      },
+      {
+        "name": "reject-cyclic-root-array-object",
+        "passed": true
+      },
+      {
+        "name": "UTF16-order-mutant-detected",
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "scope": "Independent direct serializer/hash challenges; no acceptance receipts or aggregate admission."
+  }
+}

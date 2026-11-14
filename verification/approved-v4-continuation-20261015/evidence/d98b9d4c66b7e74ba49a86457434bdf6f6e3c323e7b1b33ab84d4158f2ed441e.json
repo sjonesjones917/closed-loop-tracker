@@ -1,0 +1,2301 @@
+{
+  "schema": "closed-loop-additive-source-impact-queue-delta/1",
+  "status": "RECONCILED_ALL_BATCH_MEMBERS",
+  "priorQueueDelta": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-006/combined-queue-delta.json",
+    "sha256": "04ac6ea5a093fc3f9183d56254c2cc02c7faafec297625ff35d0d24470f2f953",
+    "byteLength": 134259
+  },
+  "originalLedger": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+    "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+    "byteLength": 20401933
+  },
+  "removedUnexaminedIds": [
+    "NREQ-e4a47520adccad1cc08b71b2fa705896",
+    "NREQ-d4b5dcf4caa03d9ff3fee97458f005dd",
+    "NREQ-ae0748ca85d6d7db5888dd8542b4ed75",
+    "NREQ-e2c2d44505821be52764e2d4cb92d042",
+    "NREQ-105f38f4e466ec66cd3a72d44b416403",
+    "NREQ-954559f7dd21f0fb9eb4acf570ec7f99",
+    "NREQ-59138a3bb24029b6b37e357c5e95d1c3",
+    "NREQ-8fd0afe7f4532d6e019acbed0c8e4b93",
+    "NREQ-a1ffb25f0a4ba2a9acd566612781251a",
+    "NREQ-9d7e21fa75ac3add02166e2eaa93b375",
+    "NREQ-ddd667b3d99418b1550bfc9524d7b3e8",
+    "NREQ-37df80bd04ad51421d6e815bb1f78757",
+    "NREQ-26ba12380c6056f6972a655f01b399e4",
+    "NREQ-706d8ac14016f2305990ff2765ac05b2",
+    "NREQ-54f83be39fa2e174fe0677da4be99a27",
+    "NREQ-a805a5ad6735b69736e0af1b540a7d4f",
+    "NREQ-c1939ee25d4f98a4b58afeeaaaccfbff",
+    "NREQ-dcd53243daf520b075a907f63f498eda",
+    "NREQ-030072b6801e2cc3c35242710f4d13f3",
+    "NREQ-c0e9700ee4a6d978684278da19d492e5",
+    "NREQ-e9be6eab805f5f7ea85270b568aca81d",
+    "NREQ-03d270611f25ce4d5492b2060e72f521",
+    "NREQ-af5887fc81118d4f3447e25e18d6f4cc",
+    "NREQ-6ad173d557aa4e1eb5ce3e8889dd7b81",
+    "NREQ-a8718b004667ac6e23a2dbcefa7751a6",
+    "NREQ-e971a67c2cc426203a6e8c7c9e2e6bc7",
+    "NREQ-cd7f6459a3ebea0ae3a5eff19b315228",
+    "NREQ-264503f90c798054993c6b476be08664",
+    "NREQ-bdd8a3e77dfea178b7ed518ee5fa436a",
+    "NREQ-f3e1960f264472f79c760769947096cb",
+    "NREQ-461638a26969a3d199e7fbd9db0bc984",
+    "NREQ-d2be7e8463d4e36319b68eb74f62ee4a",
+    "NREQ-4dd14b8b270338dce828560f98c44754",
+    "NREQ-5a7f4e8677a3a936364b9bf95625b85b",
+    "NREQ-2fe9a9b1c2570c6ab1cf214e1471f076",
+    "NREQ-5e6481ce86a70888c118be0dd2db334b",
+    "NREQ-b468b9e81a6c97604d09a743a1ec38f9",
+    "NREQ-dba46db8a20eeda1f97a94909b2b52eb",
+    "NREQ-1719cb838cfb1eab91c195742216ceee",
+    "NREQ-6880233c2af876ed5db021df488c9aac",
+    "NREQ-0e7c929561e9bb8e96ac891058479963",
+    "NREQ-c2599389378ce0c59ac2b3e40e5d820a",
+    "NREQ-f915e8d140a5646c34cbd1f66c4178e0",
+    "NREQ-968539988550cf5b95e2a4e6fd5116af",
+    "NREQ-25fad8bdedcc825b38bb756de2d73ced",
+    "NREQ-9304d6e7dcb5e1d2436778fd42fd884c",
+    "NREQ-8d7504386c788cfa3b009cd27a501507",
+    "NREQ-79a79b8f4c8b6f928df3a4b49955e5f9",
+    "NREQ-184e5ea0edde67015a0d467a32642801",
+    "NREQ-60f036459457935a43c9fc33942fb9f5",
+    "NREQ-c87e7ef47f483656a184781a49dd222f",
+    "NREQ-6595666acb5f195b74662d172e539947",
+    "NREQ-46ab50e698d4271f4598ea4e8ef819ee",
+    "NREQ-5f28a155e2aad1807625d8c16b3449bd",
+    "NREQ-d64052227c93a8b0533c5fee5188cc78",
+    "NREQ-d02758e415318abe153b8560e5aae77e",
+    "NREQ-4c0f47377ababce1548ab6a726ef920d",
+    "NREQ-8439f9bcc7de7d46b38d7b71c03c7657",
+    "NREQ-31656b1d6be1f79969ccd575237fb7a8",
+    "NREQ-459cf484106fe6be9d6026c72ff38722",
+    "NREQ-e3672e8a9036a671532ab8edd246e4d4",
+    "NREQ-1fe23f662c48fd99a74ab787942e7b29",
+    "NREQ-b19996cfdedc5702d5f72382c7eaf2dc",
+    "NREQ-0adb71b5d3b2108517390099e2bb69d2",
+    "NREQ-f75608c40ce32a8fe8b6a3f30caea83b",
+    "NREQ-7d9ee92637b9c325be99302e065a7159",
+    "NREQ-fad2f1cac3367455015508ae2dd128b8",
+    "NREQ-031d4f9b87cc90e507052e1fbcc848ee",
+    "NREQ-9999a80c9d5b631bd68e4ff33742e5c0",
+    "NREQ-df81181ed48bc1ebe037df5031bb50e4",
+    "NREQ-d2d75185dc21cb45585cbf68e951e28c",
+    "NREQ-7c8693923e4e0f6555691a57fe597964",
+    "NREQ-d7b2656d2c948817f02ab76d38a551f9",
+    "NREQ-74aa944c1e2537d7c2db582ba578fc1c",
+    "NREQ-b9f7aafe95916637e042dee40f365a9a",
+    "NREQ-ee59f81ac695fcba973d7262590a78ba",
+    "NREQ-3cbd3cc4532513af08996751f737a4a9",
+    "NREQ-5366f07e807573e1d8b44161a803673f",
+    "NREQ-35f65baf8e4c0b475c0347416984938e",
+    "NREQ-669bac45d54a5deb1edada3b7bd72824",
+    "NREQ-2fc08f7f65ce60d53d51e83f58a9a74f",
+    "NREQ-c22802713bc35ec762b88c4fbaf8a549",
+    "NREQ-16e322e5d109c660390d2a83d097b7a2",
+    "NREQ-e49eedefe9d84ed7bac8d4febbd5f302",
+    "NREQ-e59eb45b81ad7fa3acf01f0e899f34d4",
+    "NREQ-69937e3c9bc0214fdc74c5f19bcc9cf9",
+    "NREQ-c2b201d56b8f39ce549c967bdacfd6bc",
+    "NREQ-88695faee54f593592e81376d1b83e03",
+    "NREQ-94aa09d04a74183cd4a79ee99b5e82c9",
+    "NREQ-3ed0d610cf66e06b6808ec2f42621a4e",
+    "NREQ-08847e6d212d13ce8d3e10392e5d46ab",
+    "NREQ-9f5169b25e4ad2496f70746998a078ab",
+    "NREQ-31bb1a75edffb09f976d700c1d034948",
+    "NREQ-30250069d012b98fe5e4565c3462acab",
+    "NREQ-bc44555647dcf13ef8d6a9c30bfea627",
+    "NREQ-939786608132ae1dfa43ecd6b52c8904",
+    "NREQ-6051c9d76ff392bea3f0712cddb00817",
+    "NREQ-ba40a771b611bdc5b199672f0f1dd5e1",
+    "NREQ-11349e222864cfedd2ef5f88be15bdf9",
+    "NREQ-c323c5269f25094fda1ee794ae5c60f5",
+    "NREQ-6035095a10bf0ed05d7465d170587602",
+    "NREQ-7be9f7af0b7913126c7289a30fec2be2",
+    "NREQ-a7a0e65d8ded8515745d3fbc469872cf",
+    "NREQ-f092ff4f0af59f84ce8a67460c8d094a",
+    "NREQ-318da161cc5f30f33449238ba3870773",
+    "NREQ-6570b18b49093c903ebf52690094316a",
+    "NREQ-3e12b5242a7e6e67550c5f2340d8601c",
+    "NREQ-6789a3daa361dd675dbdb42563d1b556",
+    "NREQ-c3f9bb9ae33a3da19ad1491938f3b910",
+    "NREQ-8f4ae94053d0807f1e6b1a90870d0c77",
+    "NREQ-db3a774ed6e4eabc3ea9b70e403d3baa",
+    "NREQ-c5e25518a74be5fa7b70e8de93264c0a",
+    "NREQ-541ed09d346de55f4edb60a3e4730c52",
+    "NREQ-630038943bc0d4bb7a62c84bfb8a83f4",
+    "NREQ-1d062866be29a0d9ceffcf35380f9f0d",
+    "NREQ-77b7d82cd6ff1455643b82d71dd275f9",
+    "NREQ-aab50237cc7f8a5259b3c4064d6753c6",
+    "NREQ-8140a893ff935afc651d00380610d50f",
+    "NREQ-b3125d401fb4ee91d7c8b3befdd7db73",
+    "NREQ-ecd61bb2e571c6e2372e1bd1c23e70d5",
+    "NREQ-384d468ca927b85ed4fcd94de40fa15a",
+    "NREQ-4dbba1e28d2ddfb5632e8379b47133e9",
+    "NREQ-92d4ca217584904bab5bc357cc0735ee",
+    "NREQ-519791a8273abc8b32cf463f70f883b1",
+    "NREQ-b3000c37f095bad8a802198289e26ca0",
+    "NREQ-d67547b5e60d800b35c16ceb55679305",
+    "NREQ-552797b251013c32b33181269120b824",
+    "NREQ-dace94abf4f89ae59986c58e0daae7f5",
+    "NREQ-9696f8c1c937b06f07b2df8e8474e900",
+    "NREQ-4b43697a794f75e3eff1b6fa1cfe9016",
+    "NREQ-8bbe92f484adb59b7bed2ab6f400b091",
+    "NREQ-a92075da1473d25800d43bc86c1886bc",
+    "NREQ-037b0447c8b1f6e604bc147a32a3cf18",
+    "NREQ-576b7c04d0ec282294929d7d3f390169",
+    "NREQ-209ad14f0dfab66322503078671a47d2",
+    "NREQ-fffbb0e8f6cdfddb8482fd02795d7cd0",
+    "NREQ-8b4e4766609f47fbd274a2b126e68ebb",
+    "NREQ-075fd51f95d3df67edd23c51d325154b",
+    "NREQ-800c60fb9e2f47e23e0aa95a4980f329",
+    "NREQ-e4ef6f144b21e433257dd9d9d29c5fc9",
+    "NREQ-1a635b514dc030428c4d3cfa5312036e",
+    "NREQ-bf10319085f016b4c385537f19b582f1",
+    "NREQ-a87106d619a159ce6f81f5b953820b7a",
+    "NREQ-db1cecf5c7c4843f68d260ebb653b693",
+    "NREQ-29b5931587da51c1a0cffac238163cb3",
+    "NREQ-0f7b1d6e1d81d7cc0423afbdbc38028e",
+    "NREQ-2784f1168121c865158035d868fe1973",
+    "NREQ-9a5979ed71eb2d51f45d679cd2df2234",
+    "NREQ-5b184edcae47f2e4aee597b41466765f",
+    "NREQ-254269c09e323496eb4c606ae44cf16e",
+    "NREQ-00b95ee969e57367dea12be87d9bc2f3",
+    "NREQ-72fc7ee345ea2f635811e99995f72fef",
+    "NREQ-88a392ae6e98a8b30bbe1229015d0af5",
+    "NREQ-41bbf77cc2ab669881a67f32e9a66284",
+    "NREQ-ec1dacec7ca53ef658151e265b07908e",
+    "NREQ-2d95768d72a88357a0d9c865b52a2aa5",
+    "NREQ-6ac7c367b33705a6b1f279a6f3752116",
+    "NREQ-1c8922a0015088d625215845e17db5f4",
+    "NREQ-d36e6ab4f476188988e1f493d9a98705",
+    "NREQ-cdb594604feb0eee319868beb23e8c18",
+    "NREQ-56c1f871cf4bedd9dacfffe068284d67",
+    "NREQ-210a90fc03afaa1602a2f298c6fd935c",
+    "NREQ-4b663608232d750fadbd4c3bb4778240",
+    "NREQ-39b7d31f7c66e149c6f4fcde5269c167",
+    "NREQ-6c1e5809750c541ca86bb24bfa857d80",
+    "NREQ-476a300a0ba8d61e4bdfbc48b0d6e46c",
+    "NREQ-a35b7a6076b3def511b585a9e1546660",
+    "NREQ-7e1045cbb8f4826111a6b5c06e6e6c21",
+    "NREQ-3838a9025551b08752837a996a365f46",
+    "NREQ-32de14b2739518505272c65693f355ce",
+    "NREQ-a9b7c8a9f4c77757dce8868f4a7bfc82",
+    "NREQ-c8d41a89797d9b8c5e2829e604e9e2a1",
+    "NREQ-07b8ec532280e0af47b6bfde24e5773b",
+    "NREQ-00a48a2e44f107b06375287dd60bbd52",
+    "NREQ-1df5725609d9828f6fa9f19fe4b140d4",
+    "NREQ-184a3dea66b485149d4e3ab5d1c68e1e",
+    "NREQ-05382c31e17da4ed8db986f2eee343fe",
+    "NREQ-a7f9463f3881e287a9d75ffec58d131b",
+    "NREQ-5c8428916cd8f447dd1e2a6463f84cbe",
+    "NREQ-665db47aa260b58708037baf96789dde",
+    "NREQ-c45c540e9af81c52bbf139bf8efe928e",
+    "NREQ-2f0c32c7338a4607cf311b1adcb98074",
+    "NREQ-fcb8d97674633480ac1ae767d16e1844",
+    "NREQ-43afb42866619856736650fd5e5c169c",
+    "NREQ-f9fdd1cb22efc755d65892bcff8962f8",
+    "NREQ-320b9022b306ad2fd70d2b11b7f7ffb6",
+    "NREQ-c6f99cab049151390cb86ae6a0b320b2",
+    "NREQ-fae5fe9674e74024a962f3aae3d2848d",
+    "NREQ-849bcf78c18c929fba3a81a390cdfac0",
+    "NREQ-e37b45b6b765f1b87a34ee0e70c1f3b0",
+    "NREQ-b251be075843b4e48b4fff00dc893f26",
+    "NREQ-4f004685859d48dcf29b944b21696d18",
+    "NREQ-788ca03644691b82188cca531c7d4198",
+    "NREQ-40fc287b8d0cecf799b4db0fdc0d5871",
+    "NREQ-42a2c6535cadacbb468aebc88d2b0455",
+    "NREQ-b579acddce175ea7050804c9d1a8ba73",
+    "NREQ-aa5dff2312eef678c082ad8349bbc72b",
+    "NREQ-49f343ca56959eb65e524bfc124db3c7",
+    "NREQ-4cf8df66f3e7c29f66e5d4a277c26e1f",
+    "NREQ-efae209e9005aba60e11e6d3dcc4229c",
+    "NREQ-a5ec18af53298cb9399e92a49aff985b",
+    "NREQ-0a014aa598129c3bf2422b97e475660a",
+    "NREQ-e79565dfa6a3e482413467304bcdbdc0",
+    "NREQ-f67dcfd922b922edbb5e181a45635a55",
+    "NREQ-2432bffa8696a6faa2cccab2b8ec4801",
+    "NREQ-7025e3cee64ae1d365296ca6d9876a13",
+    "NREQ-cd8fa43bdc5a5327bdc8aad96693e59a",
+    "NREQ-64791f9ccbe141be0fa1a7c5f793e672",
+    "NREQ-b9cb4756d9d202e9bd18d98f6a4be84c",
+    "NREQ-12d5d3e55675c1d6e534d99a064fed4d",
+    "NREQ-7c18232b44eb0c3240cc6be853b72d32",
+    "NREQ-afad186780326bfab21d7cc9bbb463a4",
+    "NREQ-b9af38a518795436587becf2b124ec0d",
+    "NREQ-ac00bd68aff467c7c548efa1072fd1ed",
+    "NREQ-80ed9c9011b43a00ec1dfd364b53b922",
+    "NREQ-aa67662003992eccc16baa02ceffa655",
+    "NREQ-b05f5c0c6d3e1f2a549cce6f360575d0",
+    "NREQ-1da23d24e876891a02b59820d16ec04e",
+    "NREQ-9570ac0a332f4b31df4c878606e9bc84",
+    "NREQ-131dd06406d731406d3f6fb6584dbf91",
+    "NREQ-80944c6e66dff8a30a2da2c53502c519",
+    "NREQ-7305972a638d7cea42e19dd65566952a",
+    "NREQ-990770f413a9f5ef32c67f4c2cbda6fc",
+    "NREQ-8dc9b9c9851a82e0e76a12341548c630",
+    "NREQ-95a95a148228225d281cddd0359253a9",
+    "NREQ-bc573f0e5234f5ee2a86f4f88529a9d9",
+    "NREQ-b5bb061f63937c5fa32f6ffa2c9b99d3",
+    "NREQ-c1edf3590c0367c56a4f8238ae70c9b9",
+    "NREQ-434562ceb78feba730a22d8448571e2b",
+    "NREQ-a50ad9e246a0e886ecc9ee6f87085d3a",
+    "NREQ-a051cac0690ef506eb67d3c3cda7098c",
+    "NREQ-6ccf5d01c19ef216ce949adb793fae99",
+    "NREQ-cdf4fb788a767a74b31b1e76c6cdbfa5",
+    "NREQ-d80eea323de5241807ccb7a23ad561c2",
+    "NREQ-17939b6832781c1deb7bffd03b49662f",
+    "NREQ-ba18d3c58a04c1a2796751d5a96a86fe",
+    "NREQ-5cbde8665b9076e2411ec9fa1208d894",
+    "NREQ-0cfa33de1f27f3ad24df0c8ddb42a89a",
+    "NREQ-08d21889678a2a60ba8921fcd1876fe2",
+    "NREQ-9ac939eae62af18448913abc7b918156",
+    "NREQ-b93018abdc51f726e3040b6322316326",
+    "NREQ-1f02d42985fa54734443195296ded338",
+    "NREQ-cc4d52b93824f434fcc1d7f86f9c96fc",
+    "NREQ-f5617705b2046aab667a77bdb59d688f",
+    "NREQ-a84ef0bd19d42c914f7dd473967e764c",
+    "NREQ-fbd29abcac9c1bfc1c03556bdfc1a059",
+    "NREQ-acda3fef55336b9fbfe4320e064c29b4",
+    "NREQ-43a11fe0862c5898dc63b055389b243e",
+    "NREQ-3a59cca8e1191ff83120fc83c620b214",
+    "NREQ-7a2d96c47587a97a406c37ae7f991f26",
+    "NREQ-44bac0c6d1c6c499c7ed8234a52531dc",
+    "NREQ-6e510d1cbbe629233417faa751852b9f",
+    "NREQ-634ae9ac30b77df820077fa1b62bdf67",
+    "NREQ-70b8e595df1e2fa9f7a50c9892928d66",
+    "NREQ-808d949326328d77c7c6352252cc97f4",
+    "NREQ-31e1e72a4459901fdeccf8fe439189b5",
+    "NREQ-999145efd23e67b4e4ea73615329e7ca",
+    "NREQ-8ddc77414c44651d3aee814f0042bc0b",
+    "NREQ-ca2c1789f2ab85fbc690c0017884d591",
+    "NREQ-297d281cf351bbd5488f2f3b096f7dc2",
+    "NREQ-426e887a734b930c2276efe20a26f96b",
+    "NREQ-6246f3ee19bff389189fcb218dd4c5a2",
+    "NREQ-beb682dec05830bb9c971cf43bbedf2c",
+    "NREQ-914defde1940fbf32a9b2706f7b673b1",
+    "NREQ-55441e902bffe538bd3cc5f60b63f5a8",
+    "NREQ-0ed46c0973389b8b1a97ff2913e20ead",
+    "NREQ-4063566749ae080b3946a34dde0c7a75",
+    "NREQ-23be890e104f9040f4656e1982871e9a",
+    "NREQ-9bd3715d2b1d3e40a61a99b1cfe14f17",
+    "NREQ-2b1c1064fb51fb6b4fdde9c199c3b4c8",
+    "NREQ-f2796fe3c6ced7088ca0d0d1b60e1816",
+    "NREQ-d81bd1f6edae8d817cd2ceef01c64de5",
+    "NREQ-6d5c687ebe51efa7a476aa8e66b81e06",
+    "NREQ-5ebb2d9c3dd49630af285555c3897c24",
+    "NREQ-b403c2cebee222fddc1b145d1142b27e",
+    "NREQ-3e78f4e2c6e132c515affa814ee00454",
+    "NREQ-e99c12f9bfdc54b8a7166c5aea383696",
+    "NREQ-ba6c8942fc75e938c89fccd229ac6ae2",
+    "NREQ-cb9a20136b25b2550cad0053c82edce5",
+    "NREQ-2b2591c938438921df3c92494818302e",
+    "NREQ-e30d3a855de9eaab20bb6b4b99256ddd",
+    "NREQ-4c719b385ce2a4ac3a1d7f9ade0625b9",
+    "NREQ-69da627da2711417750b1358ddfc61b2",
+    "NREQ-78bf4f2f5537ca81695558cfd4a06a8a",
+    "NREQ-b13542cea0ef5f46fda3ff65d029f3a0",
+    "NREQ-597bc5e4122fc3b1fa6aaf39efd97aaf",
+    "NREQ-8284d0792e5ce17eb0367b65d710e740",
+    "NREQ-95a076f8bbd7f38f12119d8665bd2086",
+    "NREQ-cc89645b48af105f7ae1f28c7f6fd18e",
+    "NREQ-cc5110415d3bbf5331d5c449a62b836b",
+    "NREQ-7f036d4fbfea99f650c9dc6acceb919d",
+    "NREQ-faf66f29fc88d8eadf31221c9b553727",
+    "NREQ-9c8a77957cbbe8a10cf56233d070f70b",
+    "NREQ-b45bace81fc434ac7e91aa0067bdd74b",
+    "NREQ-de611e375f49747d409f3e28848991a1",
+    "NREQ-e82cbc9b93eae814ec6276cdbc6dbe86",
+    "NREQ-01e60dbdd63c072644672ef4f13e7829",
+    "NREQ-1b1e9f68716060620e347e6f09d7acbb",
+    "NREQ-f74e58e334567e0c41a438382449139f",
+    "NREQ-98651ea350e14edac32a39639a4a2df4",
+    "NREQ-8d8c778ab8734fdbb827d3eeedd4af17",
+    "NREQ-e7a22b1750886928c0edc4b87ca7253e",
+    "NREQ-ca135193ffa99a5197874172f80d7af4",
+    "NREQ-ddd4eebbfdf8cca93d5c8c88a5e18f23",
+    "NREQ-a79011a92fb36d7599015215a6ab2baa",
+    "NREQ-7d410c8f42b7926220094d0c1f49b3c5",
+    "NREQ-d9d50a9bc298c8adc8e28ffd335408c0",
+    "NREQ-32ce5483b703951810299669737fe30e",
+    "NREQ-dcfa5990e627f502b7c29caada840127",
+    "NREQ-94b1b411647798673e994cb74f5fdf0f",
+    "NREQ-db15fdbbf65aab45c9379e4d5c35b583",
+    "NREQ-bd85035d3576d0a6e9b159f54105461b",
+    "NREQ-469d84cd86da74c629aa40162dfef9a8",
+    "NREQ-e340f07cbb1b02646a6020a9ef245433",
+    "NREQ-3e86f6d7cacc8ae5c56df7258641dd21",
+    "NREQ-4adfb5c148705c0b28714f6705aa8e23",
+    "NREQ-1b7980229a92c6409369c81eb487d7fa",
+    "NREQ-e2d2f6bc0f0c2791323a039fbe8d702a",
+    "NREQ-136b68306706747299cc3997f43addbd",
+    "NREQ-f456b431024b17dbcd0cfe2ebb0f6be8",
+    "NREQ-91d08986f1ecfd02ba1b2501e8123fa8",
+    "NREQ-a98ff79e5015719a85b59ceea8d5f395",
+    "NREQ-ed69e0a1f3dac8d720ada28144c85b18",
+    "NREQ-6ba092a34685d632a82011560aa4ebea"
+  ],
+  "perMemberNewDisposition": [
+    {
+      "predecessorNormativeRequirementId": "NREQ-e4a47520adccad1cc08b71b2fa705896",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e4a47520adccad1cc08b71b2fa705896",
+      "recordPointer": "/0"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d4b5dcf4caa03d9ff3fee97458f005dd",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d4b5dcf4caa03d9ff3fee97458f005dd",
+      "recordPointer": "/1"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ae0748ca85d6d7db5888dd8542b4ed75",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-424e501291f720e8cbaa14726d810dd2",
+      "recordPointer": "/2"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e2c2d44505821be52764e2d4cb92d042",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e2c2d44505821be52764e2d4cb92d042",
+      "recordPointer": "/3"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-105f38f4e466ec66cd3a72d44b416403",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-534ec468fcca310b222c00e9ed163066",
+      "recordPointer": "/4"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-954559f7dd21f0fb9eb4acf570ec7f99",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-954559f7dd21f0fb9eb4acf570ec7f99",
+      "recordPointer": "/5"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-59138a3bb24029b6b37e357c5e95d1c3",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-59138a3bb24029b6b37e357c5e95d1c3",
+      "recordPointer": "/6"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8fd0afe7f4532d6e019acbed0c8e4b93",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8fd0afe7f4532d6e019acbed0c8e4b93",
+      "recordPointer": "/7"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a1ffb25f0a4ba2a9acd566612781251a",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-3d0499cfac260f94f4a3df77fa47856b",
+      "recordPointer": "/8"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9d7e21fa75ac3add02166e2eaa93b375",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-9d7e21fa75ac3add02166e2eaa93b375",
+      "recordPointer": "/9"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ddd667b3d99418b1550bfc9524d7b3e8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ddd667b3d99418b1550bfc9524d7b3e8",
+      "recordPointer": "/10"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-37df80bd04ad51421d6e815bb1f78757",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-37df80bd04ad51421d6e815bb1f78757",
+      "recordPointer": "/11"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-26ba12380c6056f6972a655f01b399e4",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-af5cf15252e840c981af4dcbc421eb3c",
+      "recordPointer": "/12"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-706d8ac14016f2305990ff2765ac05b2",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-706d8ac14016f2305990ff2765ac05b2",
+      "recordPointer": "/13"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-54f83be39fa2e174fe0677da4be99a27",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-54f83be39fa2e174fe0677da4be99a27",
+      "recordPointer": "/14"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a805a5ad6735b69736e0af1b540a7d4f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a805a5ad6735b69736e0af1b540a7d4f",
+      "recordPointer": "/15"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c1939ee25d4f98a4b58afeeaaaccfbff",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c1939ee25d4f98a4b58afeeaaaccfbff",
+      "recordPointer": "/16"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-dcd53243daf520b075a907f63f498eda",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-dcd53243daf520b075a907f63f498eda",
+      "recordPointer": "/17"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-030072b6801e2cc3c35242710f4d13f3",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-030072b6801e2cc3c35242710f4d13f3",
+      "recordPointer": "/18"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c0e9700ee4a6d978684278da19d492e5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c0e9700ee4a6d978684278da19d492e5",
+      "recordPointer": "/19"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e9be6eab805f5f7ea85270b568aca81d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e9be6eab805f5f7ea85270b568aca81d",
+      "recordPointer": "/20"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-03d270611f25ce4d5492b2060e72f521",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-03d270611f25ce4d5492b2060e72f521",
+      "recordPointer": "/21"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-af5887fc81118d4f3447e25e18d6f4cc",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-af5887fc81118d4f3447e25e18d6f4cc",
+      "recordPointer": "/22"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6ad173d557aa4e1eb5ce3e8889dd7b81",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6ad173d557aa4e1eb5ce3e8889dd7b81",
+      "recordPointer": "/23"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a8718b004667ac6e23a2dbcefa7751a6",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a8718b004667ac6e23a2dbcefa7751a6",
+      "recordPointer": "/24"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e971a67c2cc426203a6e8c7c9e2e6bc7",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e971a67c2cc426203a6e8c7c9e2e6bc7",
+      "recordPointer": "/25"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-cd7f6459a3ebea0ae3a5eff19b315228",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-c02adb4f54b7c8609e7ef452ac0ab638",
+      "recordPointer": "/26"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-264503f90c798054993c6b476be08664",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-264503f90c798054993c6b476be08664",
+      "recordPointer": "/27"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bdd8a3e77dfea178b7ed518ee5fa436a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-bdd8a3e77dfea178b7ed518ee5fa436a",
+      "recordPointer": "/28"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f3e1960f264472f79c760769947096cb",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f3e1960f264472f79c760769947096cb",
+      "recordPointer": "/29"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-461638a26969a3d199e7fbd9db0bc984",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-461638a26969a3d199e7fbd9db0bc984",
+      "recordPointer": "/30"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d2be7e8463d4e36319b68eb74f62ee4a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d2be7e8463d4e36319b68eb74f62ee4a",
+      "recordPointer": "/31"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4dd14b8b270338dce828560f98c44754",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4dd14b8b270338dce828560f98c44754",
+      "recordPointer": "/32"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5a7f4e8677a3a936364b9bf95625b85b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5a7f4e8677a3a936364b9bf95625b85b",
+      "recordPointer": "/33"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-2fe9a9b1c2570c6ab1cf214e1471f076",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-2c380c545ec008ccb2dae3384d107e1a",
+      "recordPointer": "/34"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5e6481ce86a70888c118be0dd2db334b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5e6481ce86a70888c118be0dd2db334b",
+      "recordPointer": "/35"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b468b9e81a6c97604d09a743a1ec38f9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b468b9e81a6c97604d09a743a1ec38f9",
+      "recordPointer": "/36"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-dba46db8a20eeda1f97a94909b2b52eb",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-dba46db8a20eeda1f97a94909b2b52eb",
+      "recordPointer": "/37"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1719cb838cfb1eab91c195742216ceee",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1719cb838cfb1eab91c195742216ceee",
+      "recordPointer": "/38"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6880233c2af876ed5db021df488c9aac",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-1ec3c1a632bce268f577ad658cada8f0",
+      "recordPointer": "/39"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0e7c929561e9bb8e96ac891058479963",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0e7c929561e9bb8e96ac891058479963",
+      "recordPointer": "/40"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c2599389378ce0c59ac2b3e40e5d820a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c2599389378ce0c59ac2b3e40e5d820a",
+      "recordPointer": "/41"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f915e8d140a5646c34cbd1f66c4178e0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f915e8d140a5646c34cbd1f66c4178e0",
+      "recordPointer": "/42"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-968539988550cf5b95e2a4e6fd5116af",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-968539988550cf5b95e2a4e6fd5116af",
+      "recordPointer": "/43"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-25fad8bdedcc825b38bb756de2d73ced",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-25fad8bdedcc825b38bb756de2d73ced",
+      "recordPointer": "/44"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9304d6e7dcb5e1d2436778fd42fd884c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-9304d6e7dcb5e1d2436778fd42fd884c",
+      "recordPointer": "/45"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8d7504386c788cfa3b009cd27a501507",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8d7504386c788cfa3b009cd27a501507",
+      "recordPointer": "/46"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-79a79b8f4c8b6f928df3a4b49955e5f9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-79a79b8f4c8b6f928df3a4b49955e5f9",
+      "recordPointer": "/47"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-184e5ea0edde67015a0d467a32642801",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-184e5ea0edde67015a0d467a32642801",
+      "recordPointer": "/48"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-60f036459457935a43c9fc33942fb9f5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-60f036459457935a43c9fc33942fb9f5",
+      "recordPointer": "/49"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c87e7ef47f483656a184781a49dd222f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c87e7ef47f483656a184781a49dd222f",
+      "recordPointer": "/50"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6595666acb5f195b74662d172e539947",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6595666acb5f195b74662d172e539947",
+      "recordPointer": "/51"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-46ab50e698d4271f4598ea4e8ef819ee",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-8896f0228b84f0614de8a28d84f3f625",
+      "recordPointer": "/52"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5f28a155e2aad1807625d8c16b3449bd",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-911e96b55eb742a280c72cc91c00a65a",
+      "recordPointer": "/53"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d64052227c93a8b0533c5fee5188cc78",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-ed67d0ed9e70d6c320833f642fd7d037",
+      "recordPointer": "/54"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d02758e415318abe153b8560e5aae77e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d02758e415318abe153b8560e5aae77e",
+      "recordPointer": "/55"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4c0f47377ababce1548ab6a726ef920d",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-f9ba28daff360fb46fcffb8501c21f40",
+      "recordPointer": "/56"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8439f9bcc7de7d46b38d7b71c03c7657",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-3f5df53dce9caff1111b35a8c98700ac",
+      "recordPointer": "/57"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-31656b1d6be1f79969ccd575237fb7a8",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-0fa46a5b05a6d569c0a832ae598ba970",
+      "recordPointer": "/58"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-459cf484106fe6be9d6026c72ff38722",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-459cf484106fe6be9d6026c72ff38722",
+      "recordPointer": "/59"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e3672e8a9036a671532ab8edd246e4d4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e3672e8a9036a671532ab8edd246e4d4",
+      "recordPointer": "/60"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1fe23f662c48fd99a74ab787942e7b29",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1fe23f662c48fd99a74ab787942e7b29",
+      "recordPointer": "/61"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b19996cfdedc5702d5f72382c7eaf2dc",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-42e67a759f6c02d3e868ee26c2e8ed8c",
+      "recordPointer": "/62"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0adb71b5d3b2108517390099e2bb69d2",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-004e7705c9e32747282ad7eb85c18674",
+      "recordPointer": "/63"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f75608c40ce32a8fe8b6a3f30caea83b",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-8a4636d8c559ac22572df11c643989f4",
+      "recordPointer": "/64"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7d9ee92637b9c325be99302e065a7159",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7d9ee92637b9c325be99302e065a7159",
+      "recordPointer": "/65"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-fad2f1cac3367455015508ae2dd128b8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-fad2f1cac3367455015508ae2dd128b8",
+      "recordPointer": "/66"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-031d4f9b87cc90e507052e1fbcc848ee",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-031d4f9b87cc90e507052e1fbcc848ee",
+      "recordPointer": "/67"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9999a80c9d5b631bd68e4ff33742e5c0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-9999a80c9d5b631bd68e4ff33742e5c0",
+      "recordPointer": "/68"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-df81181ed48bc1ebe037df5031bb50e4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-df81181ed48bc1ebe037df5031bb50e4",
+      "recordPointer": "/69"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d2d75185dc21cb45585cbf68e951e28c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d2d75185dc21cb45585cbf68e951e28c",
+      "recordPointer": "/70"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7c8693923e4e0f6555691a57fe597964",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7c8693923e4e0f6555691a57fe597964",
+      "recordPointer": "/71"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d7b2656d2c948817f02ab76d38a551f9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d7b2656d2c948817f02ab76d38a551f9",
+      "recordPointer": "/72"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-74aa944c1e2537d7c2db582ba578fc1c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-74aa944c1e2537d7c2db582ba578fc1c",
+      "recordPointer": "/73"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b9f7aafe95916637e042dee40f365a9a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b9f7aafe95916637e042dee40f365a9a",
+      "recordPointer": "/74"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ee59f81ac695fcba973d7262590a78ba",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ee59f81ac695fcba973d7262590a78ba",
+      "recordPointer": "/75"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-3cbd3cc4532513af08996751f737a4a9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-3cbd3cc4532513af08996751f737a4a9",
+      "recordPointer": "/76"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5366f07e807573e1d8b44161a803673f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5366f07e807573e1d8b44161a803673f",
+      "recordPointer": "/77"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-35f65baf8e4c0b475c0347416984938e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-35f65baf8e4c0b475c0347416984938e",
+      "recordPointer": "/78"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-669bac45d54a5deb1edada3b7bd72824",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-669bac45d54a5deb1edada3b7bd72824",
+      "recordPointer": "/79"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-2fc08f7f65ce60d53d51e83f58a9a74f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-2fc08f7f65ce60d53d51e83f58a9a74f",
+      "recordPointer": "/80"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c22802713bc35ec762b88c4fbaf8a549",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c22802713bc35ec762b88c4fbaf8a549",
+      "recordPointer": "/81"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-16e322e5d109c660390d2a83d097b7a2",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-16e322e5d109c660390d2a83d097b7a2",
+      "recordPointer": "/82"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e49eedefe9d84ed7bac8d4febbd5f302",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e49eedefe9d84ed7bac8d4febbd5f302",
+      "recordPointer": "/83"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e59eb45b81ad7fa3acf01f0e899f34d4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e59eb45b81ad7fa3acf01f0e899f34d4",
+      "recordPointer": "/84"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-69937e3c9bc0214fdc74c5f19bcc9cf9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-69937e3c9bc0214fdc74c5f19bcc9cf9",
+      "recordPointer": "/85"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c2b201d56b8f39ce549c967bdacfd6bc",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c2b201d56b8f39ce549c967bdacfd6bc",
+      "recordPointer": "/86"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-88695faee54f593592e81376d1b83e03",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-88695faee54f593592e81376d1b83e03",
+      "recordPointer": "/87"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-94aa09d04a74183cd4a79ee99b5e82c9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-94aa09d04a74183cd4a79ee99b5e82c9",
+      "recordPointer": "/88"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-3ed0d610cf66e06b6808ec2f42621a4e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-3ed0d610cf66e06b6808ec2f42621a4e",
+      "recordPointer": "/89"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-08847e6d212d13ce8d3e10392e5d46ab",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-08847e6d212d13ce8d3e10392e5d46ab",
+      "recordPointer": "/90"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9f5169b25e4ad2496f70746998a078ab",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-9f5169b25e4ad2496f70746998a078ab",
+      "recordPointer": "/91"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-31bb1a75edffb09f976d700c1d034948",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-31bb1a75edffb09f976d700c1d034948",
+      "recordPointer": "/92"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-30250069d012b98fe5e4565c3462acab",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-30250069d012b98fe5e4565c3462acab",
+      "recordPointer": "/93"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bc44555647dcf13ef8d6a9c30bfea627",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-bc44555647dcf13ef8d6a9c30bfea627",
+      "recordPointer": "/94"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-939786608132ae1dfa43ecd6b52c8904",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-939786608132ae1dfa43ecd6b52c8904",
+      "recordPointer": "/95"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6051c9d76ff392bea3f0712cddb00817",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6051c9d76ff392bea3f0712cddb00817",
+      "recordPointer": "/96"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ba40a771b611bdc5b199672f0f1dd5e1",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ba40a771b611bdc5b199672f0f1dd5e1",
+      "recordPointer": "/97"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-11349e222864cfedd2ef5f88be15bdf9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-11349e222864cfedd2ef5f88be15bdf9",
+      "recordPointer": "/98"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c323c5269f25094fda1ee794ae5c60f5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c323c5269f25094fda1ee794ae5c60f5",
+      "recordPointer": "/99"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6035095a10bf0ed05d7465d170587602",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6035095a10bf0ed05d7465d170587602",
+      "recordPointer": "/100"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7be9f7af0b7913126c7289a30fec2be2",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-5dbe94d5b89414e7fd0910572df1866f",
+      "recordPointer": "/101"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a7a0e65d8ded8515745d3fbc469872cf",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a7a0e65d8ded8515745d3fbc469872cf",
+      "recordPointer": "/102"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f092ff4f0af59f84ce8a67460c8d094a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f092ff4f0af59f84ce8a67460c8d094a",
+      "recordPointer": "/103"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-318da161cc5f30f33449238ba3870773",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-318da161cc5f30f33449238ba3870773",
+      "recordPointer": "/104"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6570b18b49093c903ebf52690094316a",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-3fc8b8378db6eba4e67af1045b5e7b42",
+      "recordPointer": "/105"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-3e12b5242a7e6e67550c5f2340d8601c",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-a4478fbcf0e924453ded5b59a18a5c68",
+      "recordPointer": "/106"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6789a3daa361dd675dbdb42563d1b556",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-e6ba11c79023a9540e04bb51e731893f",
+      "recordPointer": "/107"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c3f9bb9ae33a3da19ad1491938f3b910",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-924f767787bc0810d6e7cc3a5721a613",
+      "recordPointer": "/108"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8f4ae94053d0807f1e6b1a90870d0c77",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8f4ae94053d0807f1e6b1a90870d0c77",
+      "recordPointer": "/109"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-db3a774ed6e4eabc3ea9b70e403d3baa",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-db3a774ed6e4eabc3ea9b70e403d3baa",
+      "recordPointer": "/110"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c5e25518a74be5fa7b70e8de93264c0a",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-bea5d976593b5b7aaf29927edc9a7240",
+      "recordPointer": "/111"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-541ed09d346de55f4edb60a3e4730c52",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-22cdddeb9bc082887b845728f422366d",
+      "recordPointer": "/112"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-630038943bc0d4bb7a62c84bfb8a83f4",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-78e4c3297aeb602dae5904c567ce4572",
+      "recordPointer": "/113"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1d062866be29a0d9ceffcf35380f9f0d",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-306a61b7ee5fa65cdcae00b9985a3223",
+      "recordPointer": "/114"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-77b7d82cd6ff1455643b82d71dd275f9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-77b7d82cd6ff1455643b82d71dd275f9",
+      "recordPointer": "/115"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-aab50237cc7f8a5259b3c4064d6753c6",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-aab50237cc7f8a5259b3c4064d6753c6",
+      "recordPointer": "/116"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8140a893ff935afc651d00380610d50f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8140a893ff935afc651d00380610d50f",
+      "recordPointer": "/117"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b3125d401fb4ee91d7c8b3befdd7db73",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b3125d401fb4ee91d7c8b3befdd7db73",
+      "recordPointer": "/118"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ecd61bb2e571c6e2372e1bd1c23e70d5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ecd61bb2e571c6e2372e1bd1c23e70d5",
+      "recordPointer": "/119"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-384d468ca927b85ed4fcd94de40fa15a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-384d468ca927b85ed4fcd94de40fa15a",
+      "recordPointer": "/120"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4dbba1e28d2ddfb5632e8379b47133e9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4dbba1e28d2ddfb5632e8379b47133e9",
+      "recordPointer": "/121"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-92d4ca217584904bab5bc357cc0735ee",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-92d4ca217584904bab5bc357cc0735ee",
+      "recordPointer": "/122"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-519791a8273abc8b32cf463f70f883b1",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-519791a8273abc8b32cf463f70f883b1",
+      "recordPointer": "/123"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b3000c37f095bad8a802198289e26ca0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b3000c37f095bad8a802198289e26ca0",
+      "recordPointer": "/124"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d67547b5e60d800b35c16ceb55679305",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d67547b5e60d800b35c16ceb55679305",
+      "recordPointer": "/125"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-552797b251013c32b33181269120b824",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-552797b251013c32b33181269120b824",
+      "recordPointer": "/126"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-dace94abf4f89ae59986c58e0daae7f5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-dace94abf4f89ae59986c58e0daae7f5",
+      "recordPointer": "/127"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9696f8c1c937b06f07b2df8e8474e900",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-9696f8c1c937b06f07b2df8e8474e900",
+      "recordPointer": "/128"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4b43697a794f75e3eff1b6fa1cfe9016",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4b43697a794f75e3eff1b6fa1cfe9016",
+      "recordPointer": "/129"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8bbe92f484adb59b7bed2ab6f400b091",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8bbe92f484adb59b7bed2ab6f400b091",
+      "recordPointer": "/130"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a92075da1473d25800d43bc86c1886bc",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-803fcf5b42ddc68f923f3ee564af1ced",
+      "recordPointer": "/131"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-037b0447c8b1f6e604bc147a32a3cf18",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-8cf196c5a62f0d404d9a9023b62667cf",
+      "recordPointer": "/132"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-576b7c04d0ec282294929d7d3f390169",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-576b7c04d0ec282294929d7d3f390169",
+      "recordPointer": "/133"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-209ad14f0dfab66322503078671a47d2",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-635a4d486b68774e4ed683a6057394ea",
+      "recordPointer": "/134"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-fffbb0e8f6cdfddb8482fd02795d7cd0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-fffbb0e8f6cdfddb8482fd02795d7cd0",
+      "recordPointer": "/135"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8b4e4766609f47fbd274a2b126e68ebb",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8b4e4766609f47fbd274a2b126e68ebb",
+      "recordPointer": "/136"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-075fd51f95d3df67edd23c51d325154b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-075fd51f95d3df67edd23c51d325154b",
+      "recordPointer": "/137"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-800c60fb9e2f47e23e0aa95a4980f329",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-800c60fb9e2f47e23e0aa95a4980f329",
+      "recordPointer": "/138"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e4ef6f144b21e433257dd9d9d29c5fc9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e4ef6f144b21e433257dd9d9d29c5fc9",
+      "recordPointer": "/139"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1a635b514dc030428c4d3cfa5312036e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1a635b514dc030428c4d3cfa5312036e",
+      "recordPointer": "/140"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bf10319085f016b4c385537f19b582f1",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-93e199b2bd3c5cedf99369a6444e3d28",
+      "recordPointer": "/141"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a87106d619a159ce6f81f5b953820b7a",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-97233a3ed4dcd69c596e01401d48bda3",
+      "recordPointer": "/142"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-db1cecf5c7c4843f68d260ebb653b693",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-a8880a1e8e22bce30309ff1577284ac5",
+      "recordPointer": "/143"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-29b5931587da51c1a0cffac238163cb3",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-8c737d64632bf03707be68f2ce63229f",
+      "recordPointer": "/144"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0f7b1d6e1d81d7cc0423afbdbc38028e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0f7b1d6e1d81d7cc0423afbdbc38028e",
+      "recordPointer": "/145"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-2784f1168121c865158035d868fe1973",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-2784f1168121c865158035d868fe1973",
+      "recordPointer": "/146"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9a5979ed71eb2d51f45d679cd2df2234",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-0be52b1282719a5abd8130836376bd85",
+      "recordPointer": "/147"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5b184edcae47f2e4aee597b41466765f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5b184edcae47f2e4aee597b41466765f",
+      "recordPointer": "/148"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-254269c09e323496eb4c606ae44cf16e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-254269c09e323496eb4c606ae44cf16e",
+      "recordPointer": "/149"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-00b95ee969e57367dea12be87d9bc2f3",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-00b95ee969e57367dea12be87d9bc2f3",
+      "recordPointer": "/150"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-72fc7ee345ea2f635811e99995f72fef",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-72fc7ee345ea2f635811e99995f72fef",
+      "recordPointer": "/151"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-88a392ae6e98a8b30bbe1229015d0af5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-88a392ae6e98a8b30bbe1229015d0af5",
+      "recordPointer": "/152"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-41bbf77cc2ab669881a67f32e9a66284",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-41bbf77cc2ab669881a67f32e9a66284",
+      "recordPointer": "/153"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ec1dacec7ca53ef658151e265b07908e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ec1dacec7ca53ef658151e265b07908e",
+      "recordPointer": "/154"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-2d95768d72a88357a0d9c865b52a2aa5",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-dbc5c9df2c186ad439da784c1b5194cc",
+      "recordPointer": "/155"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6ac7c367b33705a6b1f279a6f3752116",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-3c2124099475e93ec62281f6e4cb71b1",
+      "recordPointer": "/156"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1c8922a0015088d625215845e17db5f4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1c8922a0015088d625215845e17db5f4",
+      "recordPointer": "/157"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d36e6ab4f476188988e1f493d9a98705",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d36e6ab4f476188988e1f493d9a98705",
+      "recordPointer": "/158"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-cdb594604feb0eee319868beb23e8c18",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-cdb594604feb0eee319868beb23e8c18",
+      "recordPointer": "/159"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-56c1f871cf4bedd9dacfffe068284d67",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-56c1f871cf4bedd9dacfffe068284d67",
+      "recordPointer": "/160"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-210a90fc03afaa1602a2f298c6fd935c",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-1c3c4e43804d82f72d112ca50a816436",
+      "recordPointer": "/161"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4b663608232d750fadbd4c3bb4778240",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4b663608232d750fadbd4c3bb4778240",
+      "recordPointer": "/162"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-39b7d31f7c66e149c6f4fcde5269c167",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-39b7d31f7c66e149c6f4fcde5269c167",
+      "recordPointer": "/163"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6c1e5809750c541ca86bb24bfa857d80",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6c1e5809750c541ca86bb24bfa857d80",
+      "recordPointer": "/164"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-476a300a0ba8d61e4bdfbc48b0d6e46c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-476a300a0ba8d61e4bdfbc48b0d6e46c",
+      "recordPointer": "/165"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a35b7a6076b3def511b585a9e1546660",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a35b7a6076b3def511b585a9e1546660",
+      "recordPointer": "/166"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7e1045cbb8f4826111a6b5c06e6e6c21",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7e1045cbb8f4826111a6b5c06e6e6c21",
+      "recordPointer": "/167"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-3838a9025551b08752837a996a365f46",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-3838a9025551b08752837a996a365f46",
+      "recordPointer": "/168"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-32de14b2739518505272c65693f355ce",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-32de14b2739518505272c65693f355ce",
+      "recordPointer": "/169"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a9b7c8a9f4c77757dce8868f4a7bfc82",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a9b7c8a9f4c77757dce8868f4a7bfc82",
+      "recordPointer": "/170"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c8d41a89797d9b8c5e2829e604e9e2a1",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c8d41a89797d9b8c5e2829e604e9e2a1",
+      "recordPointer": "/171"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-07b8ec532280e0af47b6bfde24e5773b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-07b8ec532280e0af47b6bfde24e5773b",
+      "recordPointer": "/172"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-00a48a2e44f107b06375287dd60bbd52",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-00a48a2e44f107b06375287dd60bbd52",
+      "recordPointer": "/173"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1df5725609d9828f6fa9f19fe4b140d4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1df5725609d9828f6fa9f19fe4b140d4",
+      "recordPointer": "/174"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-184a3dea66b485149d4e3ab5d1c68e1e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-184a3dea66b485149d4e3ab5d1c68e1e",
+      "recordPointer": "/175"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-05382c31e17da4ed8db986f2eee343fe",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-05382c31e17da4ed8db986f2eee343fe",
+      "recordPointer": "/176"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a7f9463f3881e287a9d75ffec58d131b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a7f9463f3881e287a9d75ffec58d131b",
+      "recordPointer": "/177"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5c8428916cd8f447dd1e2a6463f84cbe",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5c8428916cd8f447dd1e2a6463f84cbe",
+      "recordPointer": "/178"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-665db47aa260b58708037baf96789dde",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-665db47aa260b58708037baf96789dde",
+      "recordPointer": "/179"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c45c540e9af81c52bbf139bf8efe928e",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-20627ffd85d7426b356dae35cfc17a1a",
+      "recordPointer": "/180"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-2f0c32c7338a4607cf311b1adcb98074",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-2f0c32c7338a4607cf311b1adcb98074",
+      "recordPointer": "/181"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-fcb8d97674633480ac1ae767d16e1844",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-d3c2cb75f161d88cc22969ffc29c107f",
+      "recordPointer": "/182"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-43afb42866619856736650fd5e5c169c",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-a95a9045458dc843cae93ec7c59c4bfa",
+      "recordPointer": "/183"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f9fdd1cb22efc755d65892bcff8962f8",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-4e1c6a3b830896f04f03de46d3f82f5b",
+      "recordPointer": "/184"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-320b9022b306ad2fd70d2b11b7f7ffb6",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-320b9022b306ad2fd70d2b11b7f7ffb6",
+      "recordPointer": "/185"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c6f99cab049151390cb86ae6a0b320b2",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-46be0533e89b6117e1910cb6b2a588af",
+      "recordPointer": "/186"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-fae5fe9674e74024a962f3aae3d2848d",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-8f0aa4c5e319fdf2324ce1ff22cf68a8",
+      "recordPointer": "/187"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-849bcf78c18c929fba3a81a390cdfac0",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-62952a2a8e30c3da8e218b4e911eb633",
+      "recordPointer": "/188"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e37b45b6b765f1b87a34ee0e70c1f3b0",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-2dad78c3d6e1effc478580d48b648c23",
+      "recordPointer": "/189"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b251be075843b4e48b4fff00dc893f26",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b251be075843b4e48b4fff00dc893f26",
+      "recordPointer": "/190"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4f004685859d48dcf29b944b21696d18",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-f9c7c2b381038b34c1684f05db96e549",
+      "recordPointer": "/191"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-788ca03644691b82188cca531c7d4198",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-2a4e355bae6be98863547662403a4b63",
+      "recordPointer": "/192"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-40fc287b8d0cecf799b4db0fdc0d5871",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-e10aa1616ae37e28b7e0218967e831ce",
+      "recordPointer": "/193"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-42a2c6535cadacbb468aebc88d2b0455",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-e7cdfef75374f1f86538e9a66a4370f5",
+      "recordPointer": "/194"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b579acddce175ea7050804c9d1a8ba73",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b579acddce175ea7050804c9d1a8ba73",
+      "recordPointer": "/195"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-aa5dff2312eef678c082ad8349bbc72b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-aa5dff2312eef678c082ad8349bbc72b",
+      "recordPointer": "/196"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-49f343ca56959eb65e524bfc124db3c7",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-49f343ca56959eb65e524bfc124db3c7",
+      "recordPointer": "/197"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4cf8df66f3e7c29f66e5d4a277c26e1f",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-ae7f3df408cc2038d8110dbcbb20844c",
+      "recordPointer": "/198"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-efae209e9005aba60e11e6d3dcc4229c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-efae209e9005aba60e11e6d3dcc4229c",
+      "recordPointer": "/199"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a5ec18af53298cb9399e92a49aff985b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a5ec18af53298cb9399e92a49aff985b",
+      "recordPointer": "/200"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0a014aa598129c3bf2422b97e475660a",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-88b31ddc99ef17cac7557bab1d27bc26",
+      "recordPointer": "/201"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e79565dfa6a3e482413467304bcdbdc0",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-ecab8af3e1a60f1d2326ce16c58be8d3",
+      "recordPointer": "/202"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f67dcfd922b922edbb5e181a45635a55",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f67dcfd922b922edbb5e181a45635a55",
+      "recordPointer": "/203"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-2432bffa8696a6faa2cccab2b8ec4801",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-1c137fa66744676cebfb642df817f1f1",
+      "recordPointer": "/204"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7025e3cee64ae1d365296ca6d9876a13",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-b0bf42814781a76edab07eefca213ca7",
+      "recordPointer": "/205"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-cd8fa43bdc5a5327bdc8aad96693e59a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-cd8fa43bdc5a5327bdc8aad96693e59a",
+      "recordPointer": "/206"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-64791f9ccbe141be0fa1a7c5f793e672",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-64791f9ccbe141be0fa1a7c5f793e672",
+      "recordPointer": "/207"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b9cb4756d9d202e9bd18d98f6a4be84c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b9cb4756d9d202e9bd18d98f6a4be84c",
+      "recordPointer": "/208"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-12d5d3e55675c1d6e534d99a064fed4d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-12d5d3e55675c1d6e534d99a064fed4d",
+      "recordPointer": "/209"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7c18232b44eb0c3240cc6be853b72d32",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7c18232b44eb0c3240cc6be853b72d32",
+      "recordPointer": "/210"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-afad186780326bfab21d7cc9bbb463a4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-afad186780326bfab21d7cc9bbb463a4",
+      "recordPointer": "/211"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b9af38a518795436587becf2b124ec0d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b9af38a518795436587becf2b124ec0d",
+      "recordPointer": "/212"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ac00bd68aff467c7c548efa1072fd1ed",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-bdd860b0e6cc1c05abddb61e828fb826",
+      "recordPointer": "/213"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-80ed9c9011b43a00ec1dfd364b53b922",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-80ed9c9011b43a00ec1dfd364b53b922",
+      "recordPointer": "/214"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-aa67662003992eccc16baa02ceffa655",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-aa67662003992eccc16baa02ceffa655",
+      "recordPointer": "/215"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b05f5c0c6d3e1f2a549cce6f360575d0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b05f5c0c6d3e1f2a549cce6f360575d0",
+      "recordPointer": "/216"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1da23d24e876891a02b59820d16ec04e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1da23d24e876891a02b59820d16ec04e",
+      "recordPointer": "/217"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9570ac0a332f4b31df4c878606e9bc84",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-bb43ea4bb4ef93cb832b1903cb308e52",
+      "recordPointer": "/218"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-131dd06406d731406d3f6fb6584dbf91",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-a6a6d8e7165019a20a9818a75fbaefb7",
+      "recordPointer": "/219"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-80944c6e66dff8a30a2da2c53502c519",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-80944c6e66dff8a30a2da2c53502c519",
+      "recordPointer": "/220"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7305972a638d7cea42e19dd65566952a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7305972a638d7cea42e19dd65566952a",
+      "recordPointer": "/221"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-990770f413a9f5ef32c67f4c2cbda6fc",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-990770f413a9f5ef32c67f4c2cbda6fc",
+      "recordPointer": "/222"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8dc9b9c9851a82e0e76a12341548c630",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-b9eecd93923f627307508b17c87fbc04",
+      "recordPointer": "/223"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-95a95a148228225d281cddd0359253a9",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-d8ebec1ed56a09b5b91dc71c01acc9f2",
+      "recordPointer": "/224"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bc573f0e5234f5ee2a86f4f88529a9d9",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-98f80c536ed6e05fc1649594ce7da449",
+      "recordPointer": "/225"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b5bb061f63937c5fa32f6ffa2c9b99d3",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-fa3d3094d33d206061165ddf9b5874df",
+      "recordPointer": "/226"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c1edf3590c0367c56a4f8238ae70c9b9",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-2cd939b04156414801494dd3552a647f",
+      "recordPointer": "/227"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-434562ceb78feba730a22d8448571e2b",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-ded0774fc6cf8ac678713fc60a2d692e",
+      "recordPointer": "/228"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a50ad9e246a0e886ecc9ee6f87085d3a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a50ad9e246a0e886ecc9ee6f87085d3a",
+      "recordPointer": "/229"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a051cac0690ef506eb67d3c3cda7098c",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-f45b0a3e1c843151554dc01bdef6696d",
+      "recordPointer": "/230"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6ccf5d01c19ef216ce949adb793fae99",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6ccf5d01c19ef216ce949adb793fae99",
+      "recordPointer": "/231"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-cdf4fb788a767a74b31b1e76c6cdbfa5",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-5a404171edd22539b1c97065296d5c19",
+      "recordPointer": "/232"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d80eea323de5241807ccb7a23ad561c2",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d80eea323de5241807ccb7a23ad561c2",
+      "recordPointer": "/233"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-17939b6832781c1deb7bffd03b49662f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-17939b6832781c1deb7bffd03b49662f",
+      "recordPointer": "/234"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ba18d3c58a04c1a2796751d5a96a86fe",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ba18d3c58a04c1a2796751d5a96a86fe",
+      "recordPointer": "/235"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5cbde8665b9076e2411ec9fa1208d894",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5cbde8665b9076e2411ec9fa1208d894",
+      "recordPointer": "/236"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0cfa33de1f27f3ad24df0c8ddb42a89a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0cfa33de1f27f3ad24df0c8ddb42a89a",
+      "recordPointer": "/237"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-08d21889678a2a60ba8921fcd1876fe2",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-08d21889678a2a60ba8921fcd1876fe2",
+      "recordPointer": "/238"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9ac939eae62af18448913abc7b918156",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-28ccfeeb0886b73f5e4cb24e395029ff",
+      "recordPointer": "/239"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b93018abdc51f726e3040b6322316326",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-7b88960b1305da898f1659eee9a74568",
+      "recordPointer": "/240"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1f02d42985fa54734443195296ded338",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-9b81cd883528d2c0194a749550097b2c",
+      "recordPointer": "/241"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-cc4d52b93824f434fcc1d7f86f9c96fc",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-09e0486aa228d87766c2ea8d2141b826",
+      "recordPointer": "/242"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f5617705b2046aab667a77bdb59d688f",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-5a55eb10bb626165cd8d825b6294628b",
+      "recordPointer": "/243"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a84ef0bd19d42c914f7dd473967e764c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a84ef0bd19d42c914f7dd473967e764c",
+      "recordPointer": "/244"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-fbd29abcac9c1bfc1c03556bdfc1a059",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-fbd29abcac9c1bfc1c03556bdfc1a059",
+      "recordPointer": "/245"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-acda3fef55336b9fbfe4320e064c29b4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-acda3fef55336b9fbfe4320e064c29b4",
+      "recordPointer": "/246"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-43a11fe0862c5898dc63b055389b243e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-43a11fe0862c5898dc63b055389b243e",
+      "recordPointer": "/247"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-3a59cca8e1191ff83120fc83c620b214",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-3a59cca8e1191ff83120fc83c620b214",
+      "recordPointer": "/248"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7a2d96c47587a97a406c37ae7f991f26",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7a2d96c47587a97a406c37ae7f991f26",
+      "recordPointer": "/249"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-44bac0c6d1c6c499c7ed8234a52531dc",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-44bac0c6d1c6c499c7ed8234a52531dc",
+      "recordPointer": "/250"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6e510d1cbbe629233417faa751852b9f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6e510d1cbbe629233417faa751852b9f",
+      "recordPointer": "/251"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-634ae9ac30b77df820077fa1b62bdf67",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-634ae9ac30b77df820077fa1b62bdf67",
+      "recordPointer": "/252"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-70b8e595df1e2fa9f7a50c9892928d66",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-70b8e595df1e2fa9f7a50c9892928d66",
+      "recordPointer": "/253"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-808d949326328d77c7c6352252cc97f4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-808d949326328d77c7c6352252cc97f4",
+      "recordPointer": "/254"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-31e1e72a4459901fdeccf8fe439189b5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-31e1e72a4459901fdeccf8fe439189b5",
+      "recordPointer": "/255"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-999145efd23e67b4e4ea73615329e7ca",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-999145efd23e67b4e4ea73615329e7ca",
+      "recordPointer": "/256"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8ddc77414c44651d3aee814f0042bc0b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8ddc77414c44651d3aee814f0042bc0b",
+      "recordPointer": "/257"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ca2c1789f2ab85fbc690c0017884d591",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ca2c1789f2ab85fbc690c0017884d591",
+      "recordPointer": "/258"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-297d281cf351bbd5488f2f3b096f7dc2",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-297d281cf351bbd5488f2f3b096f7dc2",
+      "recordPointer": "/259"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-426e887a734b930c2276efe20a26f96b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-426e887a734b930c2276efe20a26f96b",
+      "recordPointer": "/260"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6246f3ee19bff389189fcb218dd4c5a2",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-6e1a6e771dfad02a5807f4075ffa36d9",
+      "recordPointer": "/261"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-beb682dec05830bb9c971cf43bbedf2c",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-0bf5276a321009711958363fc13178f0",
+      "recordPointer": "/262"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-914defde1940fbf32a9b2706f7b673b1",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-1be8f055c7108a0511a59fc80260d5cd",
+      "recordPointer": "/263"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-55441e902bffe538bd3cc5f60b63f5a8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-55441e902bffe538bd3cc5f60b63f5a8",
+      "recordPointer": "/264"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0ed46c0973389b8b1a97ff2913e20ead",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-6915b74a51caf80cd1cc19f36e4f5012",
+      "recordPointer": "/265"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4063566749ae080b3946a34dde0c7a75",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-21b1beb13c3b5efa416288f89d9a6dbc",
+      "recordPointer": "/266"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-23be890e104f9040f4656e1982871e9a",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-4df88dd275b3bd9ef00f1d821b23790d",
+      "recordPointer": "/267"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9bd3715d2b1d3e40a61a99b1cfe14f17",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-9bd3715d2b1d3e40a61a99b1cfe14f17",
+      "recordPointer": "/268"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-2b1c1064fb51fb6b4fdde9c199c3b4c8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-2b1c1064fb51fb6b4fdde9c199c3b4c8",
+      "recordPointer": "/269"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f2796fe3c6ced7088ca0d0d1b60e1816",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f2796fe3c6ced7088ca0d0d1b60e1816",
+      "recordPointer": "/270"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d81bd1f6edae8d817cd2ceef01c64de5",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-dec0bd5e84f5a9fbec75a0072e81d2b3",
+      "recordPointer": "/271"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6d5c687ebe51efa7a476aa8e66b81e06",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-949c6bf128bb2868d055c3429e7f5c68",
+      "recordPointer": "/272"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5ebb2d9c3dd49630af285555c3897c24",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5ebb2d9c3dd49630af285555c3897c24",
+      "recordPointer": "/273"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b403c2cebee222fddc1b145d1142b27e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b403c2cebee222fddc1b145d1142b27e",
+      "recordPointer": "/274"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-3e78f4e2c6e132c515affa814ee00454",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-3e78f4e2c6e132c515affa814ee00454",
+      "recordPointer": "/275"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e99c12f9bfdc54b8a7166c5aea383696",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e99c12f9bfdc54b8a7166c5aea383696",
+      "recordPointer": "/276"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ba6c8942fc75e938c89fccd229ac6ae2",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ba6c8942fc75e938c89fccd229ac6ae2",
+      "recordPointer": "/277"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-cb9a20136b25b2550cad0053c82edce5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-cb9a20136b25b2550cad0053c82edce5",
+      "recordPointer": "/278"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-2b2591c938438921df3c92494818302e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-2b2591c938438921df3c92494818302e",
+      "recordPointer": "/279"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e30d3a855de9eaab20bb6b4b99256ddd",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e30d3a855de9eaab20bb6b4b99256ddd",
+      "recordPointer": "/280"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4c719b385ce2a4ac3a1d7f9ade0625b9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4c719b385ce2a4ac3a1d7f9ade0625b9",
+      "recordPointer": "/281"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-69da627da2711417750b1358ddfc61b2",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-d216e135725d54b8737efa11414a5e17",
+      "recordPointer": "/282"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-78bf4f2f5537ca81695558cfd4a06a8a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-78bf4f2f5537ca81695558cfd4a06a8a",
+      "recordPointer": "/283"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b13542cea0ef5f46fda3ff65d029f3a0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b13542cea0ef5f46fda3ff65d029f3a0",
+      "recordPointer": "/284"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-597bc5e4122fc3b1fa6aaf39efd97aaf",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-597bc5e4122fc3b1fa6aaf39efd97aaf",
+      "recordPointer": "/285"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8284d0792e5ce17eb0367b65d710e740",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8284d0792e5ce17eb0367b65d710e740",
+      "recordPointer": "/286"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-95a076f8bbd7f38f12119d8665bd2086",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-7dac6ee66ea683e0d91ca732c10287f8",
+      "recordPointer": "/287"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-cc89645b48af105f7ae1f28c7f6fd18e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-cc89645b48af105f7ae1f28c7f6fd18e",
+      "recordPointer": "/288"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-cc5110415d3bbf5331d5c449a62b836b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-cc5110415d3bbf5331d5c449a62b836b",
+      "recordPointer": "/289"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7f036d4fbfea99f650c9dc6acceb919d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7f036d4fbfea99f650c9dc6acceb919d",
+      "recordPointer": "/290"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-faf66f29fc88d8eadf31221c9b553727",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-faf66f29fc88d8eadf31221c9b553727",
+      "recordPointer": "/291"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9c8a77957cbbe8a10cf56233d070f70b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-9c8a77957cbbe8a10cf56233d070f70b",
+      "recordPointer": "/292"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b45bace81fc434ac7e91aa0067bdd74b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b45bace81fc434ac7e91aa0067bdd74b",
+      "recordPointer": "/293"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-de611e375f49747d409f3e28848991a1",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-de611e375f49747d409f3e28848991a1",
+      "recordPointer": "/294"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e82cbc9b93eae814ec6276cdbc6dbe86",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e82cbc9b93eae814ec6276cdbc6dbe86",
+      "recordPointer": "/295"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-01e60dbdd63c072644672ef4f13e7829",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-01e60dbdd63c072644672ef4f13e7829",
+      "recordPointer": "/296"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1b1e9f68716060620e347e6f09d7acbb",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1b1e9f68716060620e347e6f09d7acbb",
+      "recordPointer": "/297"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f74e58e334567e0c41a438382449139f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f74e58e334567e0c41a438382449139f",
+      "recordPointer": "/298"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-98651ea350e14edac32a39639a4a2df4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-98651ea350e14edac32a39639a4a2df4",
+      "recordPointer": "/299"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8d8c778ab8734fdbb827d3eeedd4af17",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8d8c778ab8734fdbb827d3eeedd4af17",
+      "recordPointer": "/300"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e7a22b1750886928c0edc4b87ca7253e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e7a22b1750886928c0edc4b87ca7253e",
+      "recordPointer": "/301"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ca135193ffa99a5197874172f80d7af4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ca135193ffa99a5197874172f80d7af4",
+      "recordPointer": "/302"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ddd4eebbfdf8cca93d5c8c88a5e18f23",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ddd4eebbfdf8cca93d5c8c88a5e18f23",
+      "recordPointer": "/303"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a79011a92fb36d7599015215a6ab2baa",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a79011a92fb36d7599015215a6ab2baa",
+      "recordPointer": "/304"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7d410c8f42b7926220094d0c1f49b3c5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7d410c8f42b7926220094d0c1f49b3c5",
+      "recordPointer": "/305"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d9d50a9bc298c8adc8e28ffd335408c0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d9d50a9bc298c8adc8e28ffd335408c0",
+      "recordPointer": "/306"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-32ce5483b703951810299669737fe30e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-32ce5483b703951810299669737fe30e",
+      "recordPointer": "/307"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-dcfa5990e627f502b7c29caada840127",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-dcfa5990e627f502b7c29caada840127",
+      "recordPointer": "/308"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-94b1b411647798673e994cb74f5fdf0f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-94b1b411647798673e994cb74f5fdf0f",
+      "recordPointer": "/309"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-db15fdbbf65aab45c9379e4d5c35b583",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-db15fdbbf65aab45c9379e4d5c35b583",
+      "recordPointer": "/310"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bd85035d3576d0a6e9b159f54105461b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-bd85035d3576d0a6e9b159f54105461b",
+      "recordPointer": "/311"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-469d84cd86da74c629aa40162dfef9a8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-469d84cd86da74c629aa40162dfef9a8",
+      "recordPointer": "/312"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e340f07cbb1b02646a6020a9ef245433",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e340f07cbb1b02646a6020a9ef245433",
+      "recordPointer": "/313"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-3e86f6d7cacc8ae5c56df7258641dd21",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-3e86f6d7cacc8ae5c56df7258641dd21",
+      "recordPointer": "/314"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4adfb5c148705c0b28714f6705aa8e23",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4adfb5c148705c0b28714f6705aa8e23",
+      "recordPointer": "/315"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1b7980229a92c6409369c81eb487d7fa",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1b7980229a92c6409369c81eb487d7fa",
+      "recordPointer": "/316"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e2d2f6bc0f0c2791323a039fbe8d702a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e2d2f6bc0f0c2791323a039fbe8d702a",
+      "recordPointer": "/317"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-136b68306706747299cc3997f43addbd",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-136b68306706747299cc3997f43addbd",
+      "recordPointer": "/318"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f456b431024b17dbcd0cfe2ebb0f6be8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f456b431024b17dbcd0cfe2ebb0f6be8",
+      "recordPointer": "/319"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-91d08986f1ecfd02ba1b2501e8123fa8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-91d08986f1ecfd02ba1b2501e8123fa8",
+      "recordPointer": "/320"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a98ff79e5015719a85b59ceea8d5f395",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a98ff79e5015719a85b59ceea8d5f395",
+      "recordPointer": "/321"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ed69e0a1f3dac8d720ada28144c85b18",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ed69e0a1f3dac8d720ada28144c85b18",
+      "recordPointer": "/322"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6ba092a34685d632a82011560aa4ebea",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6ba092a34685d632a82011560aa4ebea",
+      "recordPointer": "/323"
+    }
+  ],
+  "deltaCounts": {
+    "RETAINED": 245,
+    "CHANGED": 79
+  },
+  "combinedCounts": {
+    "RETAINED": 2834,
+    "CHANGED": 695,
+    "BLOCKED": 3957
+  },
+  "remainingUnexaminedEntries": 3949,
+  "remainingExaminedStatusFieldDisputes": 1,
+  "remainingOriginalXmlAmbiguityEntries": 7,
+  "denominator": 7486,
+  "denominatorReduced": false,
+  "proofPromoted": false
+}

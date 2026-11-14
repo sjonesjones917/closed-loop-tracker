@@ -1,0 +1,1970 @@
+{
+  "schema": "closed-loop-independent-ci-source-delta-review/1",
+  "reviewedAtUtc": "2026-10-10T06:13:50.965Z",
+  "integrationAuthor": {
+    "actor": "Codex CI repair integrator",
+    "contextId": "/root"
+  },
+  "decision": "SCOPED_SOURCE_DELTA_REVIEW_COMPLETE",
+  "reviewPerformed": true,
+  "source": {
+    "checkoutCommit": "eba2c394b8baf94b99eb33577dba27a26157d46d",
+    "includesUncommittedIntegration": true,
+    "identityAuthority": "Exact independently reviewed input hashes in the retained reports"
+  },
+  "independentReports": [
+    {
+      "originalPath": "/workspace/scratch/action-announcement-independent-review.json",
+      "sha256": "58622adbab6b5cc17a3faf93093e2d6206851eeca31726e88170b90f2a7cbc8a",
+      "report": {
+        "schema": "closed-loop-independent-source-delta-review/1",
+        "reviewer": {
+          "actor": "Codex subagent /root/mobile_controls",
+          "contextId": "action-finalization-announcement-independent-review-20261010",
+          "distinctFromImplementer": true
+        },
+        "status": "REVIEWED_SOURCE_DELTA",
+        "sourceCommit": "63ecce2396b1b16e28318026ebea23f6a697412f",
+        "reviewedInputs": [
+          {
+            "path": "app-core.js",
+            "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+          },
+          {
+            "path": "verify-action-finalization.mjs",
+            "sha256": "ed9136ee29712a1b318d3082fa77d8bcac31ed4a3a2459772ef94eab5f3f0859"
+          }
+        ],
+        "scope": "Only transient action-announcement ordering and its required regression tests. No canonical storage, acceptance, release, browser-suite completion or physical-device claim.",
+        "method": [
+          "Read exact two-file commit diff plus runOperatorAction, announce, reportActionFailure and operation loading/locking/finalization owners.",
+          "Checked per-action announcementMade starts false and records actual announce calls. Delayed generic loading text is suppressed only after newer feedback or a failure, while loading visibility and control lock remain unchanged.",
+          "Verified operation execution, required final checkpoint, known/unknown commit error handling, action unlock, deferred focus and latency outcome paths are unchanged.",
+          "Read all25 required finalization case results and original-production counterexample; only the newly added success-feedback-held case fails on original source.",
+          "Read retained real-browser duplicate-response diagnostic; observed success feedback persists through busy state and exact pending-response identities/bytes remain retained, with no exceptions."
+        ],
+        "findings": [
+          "The patch addresses a presentation race without treating operation completion as final persistence completion.",
+          "Loading indicator and duplicate-activation lock remain until captureCurrentView settles; an action with no newer announcement still emits its generic loading message.",
+          "Failure reporting retains its existing failed guard and recovery behavior; new state is transient action-local controller state, not canonical project data.",
+          "Tests add a success-before-delayed-checkpoint case and strengthen the existing no-new-feedback loading control; no prior assertion or validation is removed."
+        ],
+        "evidence": [
+          {
+            "name": "finalization-fixed.json",
+            "sha256": "3a6b7507e90c238e14d8eeeabf819a1010a01eb89006fa36d54b661677d12170"
+          },
+          {
+            "name": "finalization-original-negative.json",
+            "sha256": "57567a2b408a984939b544dd037483faeb6024a91eda8c90030608caf1ba671c"
+          },
+          {
+            "name": "duplicate-fixed-retained/report.json",
+            "sha256": "7baed101fb135c9a62307e380309c1221653ce3f980b799e63b370f7a375dfb5"
+          }
+        ],
+        "observations": {
+          "requiredFinalizationCases": 25,
+          "requiredFinalizationFailures": 0,
+          "originalSourceFailedOnly": "ACTION-SUCCESS-WHILE-FINALIZATION-HELD",
+          "browserDiagnosticOutcome": "PASS_DIAGNOSTIC_DUPLICATE",
+          "browserStatus": "response already staged; proposal ready",
+          "browserRetained": {
+            "revision": 6,
+            "rawCount": 7,
+            "proposalId": "PARSED-PROPOSAL-nii2v9oafjg0vgo3l3d5imjehfc263j3",
+            "originalStagedBytesReadable": true
+          },
+          "browserExceptions": 0
+        },
+        "unresolved": [],
+        "applicationConformanceEstablished": false,
+        "fullBrowserSuitePassEstablished": false,
+        "fullCiPassEstablished": false,
+        "physicalDeviceAcceptanceEstablished": false
+      }
+    },
+    {
+      "originalPath": "/workspace/scratch/comparison-final-ci-independent-review.json",
+      "sha256": "cd9bd3fd87c85c58684cf549c1820aaf029e574869456276179dae9927d20adc",
+      "report": {
+        "schema": "closed-loop-independent-ci-evidence-delta-review/1",
+        "reviewedAtUtc": "2026-10-10T06:13:30.796026+00:00",
+        "reviewer": {
+          "actor": "Codex independent CI scheduling source reviewer",
+          "contextId": "/root/comparison_failure"
+        },
+        "author": {
+          "actor": "Codex CI integrator and implementation collaborators",
+          "contextId": "/root"
+        },
+        "decision": "SCOPED_SOURCE_DELTA_REVIEW_COMPLETE",
+        "reviewPerformed": true,
+        "findings": [],
+        "resolvedFindings": [
+          {
+            "path": "verify-verified-site.mjs",
+            "issue": "Missing-required-step negative omitted all newly mandatory conformance jobs, failing the wrong oracle.",
+            "resolution": "Retains every other job with ...jobs.slice(1); only the intended test step is absent. Confirmed in frozen source."
+          },
+          {
+            "path": "verify-conformance-regressions.mjs",
+            "issue": "Restored-counterpart budget mutation must target the restored child rather than first fault child.",
+            "resolution": "Frozen mutation now anchors the const restored runVerifier call specifically; all existing journey fault controls remain."
+          }
+        ],
+        "independence": {
+          "reviewedExecutableChangesAuthoredByReviewer": false,
+          "reviewMetadataPreparedByReviewer": true,
+          "boundary": "Separate collaborator source review; no human or external actor acceptance claim."
+        },
+        "source": {
+          "baselineCommit": "eba2c394b8baf94b99eb33577dba27a26157d46d",
+          "includesUncommittedReviewedExecutableChanges": true,
+          "identityAuthority": "Exact reviewedInputs SHA-256 values, not the checkout commit alone."
+        },
+        "reviewedInputs": [
+          {
+            "path": ".github/workflows/pages.yml",
+            "sha256": "672ed097d02700d5c56c694b84cb7a2ff3713a4b926ef7d3cb1d08b9e6ed5cc8"
+          },
+          {
+            "path": "verified-site.mjs",
+            "sha256": "4dbff6083f1bbff50968c6b75d3b771bbc4d7b3fb3d197a8e71657df0e0c7bc3"
+          },
+          {
+            "path": "verify-verified-site.mjs",
+            "sha256": "e074786f8fe89dc42c4ce0bac30b54f403c5830193285d7c54950a5b8c74bd3e"
+          },
+          {
+            "path": "verify-conformance-handoff.mjs",
+            "sha256": "56046fdde03170fb9b13027fab1672b06135809a5b07f550135dfec0452a97cd"
+          },
+          {
+            "path": "verify-conformance-regressions.mjs",
+            "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+          },
+          {
+            "path": "verify-creation-presentation-faults.mjs",
+            "sha256": "6b8209e457b6d3642764fb704ea8e4e3b31eb320fd9387d4f3fa26932cc49565"
+          },
+          {
+            "path": "verify-counterpart-faults.mjs",
+            "sha256": "d597c540293368b27b3ac1188ae33bdcfd1d4efd393728f6f8d5f9148f01806c"
+          }
+        ],
+        "assessment": {
+          "closedPopulation": "The ordered original 88-suite list is byte-equivalent in membership/order to baseline. Immutable groups partition it into 84 core, 2 creation and 2 counterpart owners without overlaps or omissions. Default invocation still executes all 88. Unknown, duplicate and unsupported group arguments fail. Every group runs the full runner contract.",
+          "requiredCi": "The three matrix groups run with fail-fast false. The required test job always runs its explicit success gates for deferred-matrix and conformance before checkout, then requires all group reports and receipts before browser acceptance. Pinned Node 22.23.3 and artifact/source reuse checks remain. PR promotion now requires each of the three passed jobs, execution step, report upload and receipt upload in addition to the prior test/deferred gates.",
+          "handoff": "Current handoff requires exactly the three reports, exact group and original suite population, current commit and source-file identities before/after, clean source, no source drift, complete PASS, no interruption/pending/running work, successful child exits with no signal/reason/error/reportError, exact finite budgets and raw stdout/stderr digests. Every catalogued owner must also supply a current validated execution receipt. No partial or failed group supplies proof.",
+          "budgets": "Changes affect finite verifier/process supervision budgets only: ordinary children remain 20 min, full journey 40 min, specified composed journey owners 90 min, creation aggregate 180 min, counterpart aggregate 280 min and group aggregate 300 min within a 305 min workflow step/360 min job. Creation non-product children retain 10 min; product children use 40 min. No application wait, deadline, semantic assertion, production fault population, specific oracle requirement, exit-status requirement or restored healthy control is relaxed. Timeouts/signals/errors continue failing and cannot count as fault detection. Hosted completion is not established by this source review.",
+          "controls": "Added grouping union/disjointness/budget controls and mutations, required-workflow group/artifact/handoff mutations, per-group run/step rejection controls, and 22 conformance handoff negative controls preserve fail-closed classification. Counterpart matrix retains all current fault tuples and a full 30-stage restored run, bounded by an aggregate abort signal.",
+          "priorScopedReviews": "Previously independently reviewed runtime/factory migration and separately reviewed Stage28 prerequisite consolidation scopes are retained. This review assesses the CI grouping/handoff/budget deltas and does not expand those earlier semantic acceptance claims."
+        },
+        "renewalScope": "Approve exact current source-binding renewal for affected declarations while retaining prior obligation text, check decomposition, expected behavior, negative populations and independent semantic-review boundaries. This is not a fresh whole-clause semantic review of every affected declaration.",
+        "executionEvidenceBoundary": {
+          "newTestsExecutedByReviewer": false,
+          "reportedByIntegrator": [
+            "Conformance handoff 22 negative controls and workflow guard PASS",
+            "Controlled runner base PASS"
+          ],
+          "fullHostedCiPassed": false,
+          "hostedTimeSavingsMeasured": false,
+          "actualDeviceAcceptanceClaimed": false
+        }
+      }
+    },
+    {
+      "originalPath": "/workspace/scratch/lifecycle-budgets-independent-review.json",
+      "sha256": "f6a35945fc0eef40d7389bd507b305e5e3e2179f7c77c9608533173529f89ea5",
+      "report": {
+        "schema": "closed-loop-independent-ci-lifecycle-budget-review/1",
+        "reviewerContext": "/root/downstream_audit/conformance_static",
+        "reviewedAtUtc": "2026-10-10T06:13:35.762932Z",
+        "decision": "SCOPED_SOURCE_DELTA_REVIEW_COMPLETE",
+        "findings": [],
+        "reviewerAuthoredExecutableChanges": false,
+        "reviewedInputs": [
+          {
+            "path": "verify-stage28-artifact-delivery-intent.mjs",
+            "sha256": "5bdfca05af6cf164aed18434c32db641423a762e2a31f64c2616abd23bbf3008"
+          },
+          {
+            "path": "verify-product-attachment-journey.mjs",
+            "sha256": "a64c093555559110668c8f4fedf9b187cfeca2cf86718958976e1feb1090ce98"
+          },
+          {
+            "path": "verify-checkpoint-boundary.mjs",
+            "sha256": "b40a0e0702f2b0d05a1b7cae31fab7c0e933f01487fc6687e08a8de6b4edc0b0"
+          },
+          {
+            "path": "verify-delivery-transfer-boundary.mjs",
+            "sha256": "059ae0d5fb2d55ae38c9ecf0aec0581be46e1312cefd9b3abe21e243ea72256e"
+          }
+        ],
+        "assessment": {
+          "scope": "Combined independent source review of Stage28 fixture-budget commit68c988f and the three nested lifecycle budget literal changes in0bc5b55, bound to exact frozen root bytes.",
+          "stage28Delta": "Stage28 generated full-lifecycle-through-Stage27 child budget changes600000ms to1800000ms plus explanatory comment, matching the existing standalone Stage30 fixture budget. Every other executable statement is unchanged.",
+          "threeNestedDeltas": "Product attachment full-cycle owner invocation, checkpoint fixture child, and delivery-transfer fixture child each change exactly one timeout literal from600000ms to3600000ms; independently compared against parent commit and confirmed all other file bytes are identical.",
+          "preservedValidation": "Actual child commands, arguments, environment and output bounds, source instrumentation, ready/capture boundaries, full lifecycle and negative assertions, application worker/delivery deadlines, result rejection, and finally cleanup are unchanged. Timed-out children still fail the existing supervisors.",
+          "enclosingBudgetsObserved": "At review time root suiteTimeoutMs maps the three full-lifecycle owners to90minutes and Stage28 to40minutes, so the former20minute parent cap no longer undercuts these60minute/30minute fixture-child budgets. This observation is contextual; broader conformance-group/budget-map changes are outside the four-file review scope.",
+          "specificationBoundary": "No application deadline is changed. A targeted controlling-specification search found no matching requirement for these CI fixture600000ms limits. The increased numbers govern harness supervision, and make no claim of measured application latency improvement.",
+          "reviewedFocusedControls": {
+            "stage28": {
+              "basis": "Actual checkedVerifier call and cleanup block executed with recording child adapter; no lifecycle acceptance claim.",
+              "healthy": {
+                "timeoutMs": 1800000,
+                "cleanupPreserved": true
+              },
+              "shortenedBudgetDetected": true,
+              "restored": {
+                "timeoutMs": 1800000,
+                "cleanupPreserved": true
+              },
+              "stage30BudgetMatches": true
+            },
+            "nested": {
+              "basis": "Actual child-call expressions executed with recording adapters; exact source equivalence proves assertions and cleanup unchanged. No full owner acceptance claim.",
+              "cases": [
+                {
+                  "file": "verify-product-attachment-journey.mjs",
+                  "healthy": {
+                    "timeoutMs": 3600000,
+                    "ownerArgumentsPreserved": true
+                  },
+                  "shortenedBudgetDetected": true,
+                  "restored": {
+                    "timeoutMs": 3600000,
+                    "ownerArgumentsPreserved": true
+                  },
+                  "allOtherSourceBytesUnchanged": true
+                },
+                {
+                  "file": "verify-checkpoint-boundary.mjs",
+                  "healthy": {
+                    "timeoutMs": 3600000,
+                    "ownerArgumentsPreserved": true
+                  },
+                  "shortenedBudgetDetected": true,
+                  "restored": {
+                    "timeoutMs": 3600000,
+                    "ownerArgumentsPreserved": true
+                  },
+                  "allOtherSourceBytesUnchanged": true
+                },
+                {
+                  "file": "verify-delivery-transfer-boundary.mjs",
+                  "healthy": {
+                    "timeoutMs": 3600000,
+                    "ownerArgumentsPreserved": true
+                  },
+                  "shortenedBudgetDetected": true,
+                  "restored": {
+                    "timeoutMs": 3600000,
+                    "ownerArgumentsPreserved": true
+                  },
+                  "allOtherSourceBytesUnchanged": true
+                }
+              ]
+            }
+          },
+          "limitations": "Source review and recording-adapter controls only. No full owning suite was rerun for this review. No passing Stage28/product/checkpoint/delivery owner, complete CI, browser/application correctness, human approval, or physical-device acceptance is established."
+        },
+        "renewalScope": {
+          "allowed": "Renew existing source-bound coverage reviews only for these four exact verifier hashes and described finite harness-budget deltas. Retain unchanged requirement/check/assertion bindings and all prior acceptance limitations.",
+          "notEstablished": [
+            "new requirement coverage",
+            "executed passing owner receipts",
+            "overall conformance budget correctness",
+            "complete CI acceptance",
+            "physical or human acceptance"
+          ]
+        },
+        "evidencePaths": [
+          "/workspace/scratch/stage28-budget-selection.json",
+          "/workspace/scratch/nested-lifecycle-budget-selection.json"
+        ],
+        "priorReviewsPreserved": [
+          "/workspace/scratch/stage28-budget-independent-review.json",
+          "/workspace/scratch/stage28-final-independent-review.json"
+        ]
+      }
+    }
+  ],
+  "affectedCoverage": [
+    {
+      "normativeRequirementId": "NREQ-9e0ad66ef878f9e97c909997e976cc13",
+      "reviewPath": "verification/requirement-coverage-NREQ-9e0ad66ef878f9e97c909997e976cc13-20261007-context-c8e259a009f0-54e18bc1f938.json",
+      "previousActiveReviewSha256": "9ce062a7d6788f3a718ae4cca918918a35058d68c9e41e353998dcaac53c14a7",
+      "previousDeclarationSha256": "c8e259a009f02b3f150cb3866d0b086fa64e9d400172dab4c107cf7c5dc644c6",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-606a27b2b9b712e933dda6e0e7b0ce68",
+      "reviewPath": "verification/requirement-coverage-NREQ-606a27b2b9b712e933dda6e0e7b0ce68-20261007-context-c717ae8f5d63-54e18bc1f938.json",
+      "previousActiveReviewSha256": "2291a657611f3797e7a98a2a3f31c214807262f880a9ea3fc34d72da8a5c66ac",
+      "previousDeclarationSha256": "c717ae8f5d63cd76210116d7a4e4e2fc93776d62bad9cc7a8db32df130c58592",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-a99b13aa6aa9c7ffa4b65010951f18ec",
+      "reviewPath": "verification/requirement-coverage-NREQ-a99b13aa6aa9c7ffa4b65010951f18ec-20261007-context-8e1c768bc690-54e18bc1f938.json",
+      "previousActiveReviewSha256": "99bedf588a30dd0241302b75175938c00b7435e386e78b23f155a7077987901c",
+      "previousDeclarationSha256": "8e1c768bc6903e1a065dccb00cc6cd57e1a7bcda8907f40932f4c046f854e74e",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-178819f4c44ad7250656e79d18a8cae3",
+      "reviewPath": "verification/requirement-coverage-NREQ-178819f4c44ad7250656e79d18a8cae3-20261007-context-c1c5855362aa-54e18bc1f938.json",
+      "previousActiveReviewSha256": "e8ddd1977dd341e31fa8ce607952c23157cf21c5ca9f6b7d221a989779d4d83d",
+      "previousDeclarationSha256": "c1c5855362aa13dd7ae9e0a8000cd3f5f8d9835abf555cefa2da437b2e539bdc",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-6a5e773812226552e3448329be3966cd",
+      "reviewPath": "verification/requirement-coverage-NREQ-6a5e773812226552e3448329be3966cd-20261007-context-14f5a52593d0-54e18bc1f938.json",
+      "previousActiveReviewSha256": "770154623136f08ff1ae65c32e66b2214f3cf09cda5c2f5ec87ee6a97f756b95",
+      "previousDeclarationSha256": "14f5a52593d0657d72f3456bbaf8029c95b6e253fa5a58a0d277bdf685d7b859",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-b67c348ca653ff5a19ba01272dfd4262",
+      "reviewPath": "verification/requirement-coverage-NREQ-b67c348ca653ff5a19ba01272dfd4262-20261007-context-d619c471e8d3-54e18bc1f938.json",
+      "previousActiveReviewSha256": "6cd4a09138dd76fc8557400ca7d9cbdca7dee2417dc01d0e11e04a413b269962",
+      "previousDeclarationSha256": "d619c471e8d31273d2f2b6aad000fa42897cd25ec90f1f0c28ff8417915709c2",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-4592c9487837c81077b166abf57bb4a7",
+      "reviewPath": "verification/requirement-coverage-NREQ-4592c9487837c81077b166abf57bb4a7-20261007-context-86ef01f1c3cb-54e18bc1f938.json",
+      "previousActiveReviewSha256": "568f3cb934f38f49496eee4881f530ae21739a876f03bfc0041e54c722b7ca67",
+      "previousDeclarationSha256": "86ef01f1c3cb48d9bc4c074669653b127427ff613c34d90ec5e3c3c61d9a5791",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-c0a2fa84e2aafe674742a0bb98c40e02",
+      "reviewPath": "verification/requirement-coverage-NREQ-c0a2fa84e2aafe674742a0bb98c40e02-20261007-context-949b3819c6b9-54e18bc1f938.json",
+      "previousActiveReviewSha256": "0ed7ff3e0e137437db1e1b93a1c2bc7a64fc6e74bc4cda7ac1e19e56866724f1",
+      "previousDeclarationSha256": "949b3819c6b94621f10c96d87efc180e2748359acde529ea0f61d013ee4bda60",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-f6e1df45974ccc5d32aafbc5f38dd535",
+      "reviewPath": "verification/requirement-coverage-NREQ-f6e1df45974ccc5d32aafbc5f38dd535-20261007-context-b48c49f827aa-54e18bc1f938.json",
+      "previousActiveReviewSha256": "531bf124693e705e6af2ced3c8ff617ecf61a883e220b1d9d441245b64b4b5f5",
+      "previousDeclarationSha256": "b48c49f827aa9184df0216b5d0334bf2fdd6efd1146b7f02a9bb0efac22b38aa",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-012f85cfd2196b3413752b3deb14edf0",
+      "reviewPath": "verification/requirement-coverage-NREQ-012f85cfd2196b3413752b3deb14edf0-20261007-context-faf7fb1b8f5f-54e18bc1f938.json",
+      "previousActiveReviewSha256": "8b44f5c92572117643c3385371faed7fc5294f4360129d31a5942ef14bf5e6ec",
+      "previousDeclarationSha256": "faf7fb1b8f5feb7dcc6db97b8b2f2df40fe1cdaa7b50e8cba264c8db0f1c6472",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-75151f881444015977da6a6d7d86cb1c",
+      "reviewPath": "verification/requirement-coverage-NREQ-75151f881444015977da6a6d7d86cb1c-20261007-context-5c2a016004df-54e18bc1f938.json",
+      "previousActiveReviewSha256": "beb25675874140c2cdcc3d4a73bc044491ddedaa712cb6ecbcf008aa37f41e9c",
+      "previousDeclarationSha256": "5c2a016004df493f253487195b39439daaa03d3a7fa389c289243ce836899edf",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-595ff4d66406e3bd9529e12f036c882b",
+      "reviewPath": "verification/requirement-coverage-NREQ-595ff4d66406e3bd9529e12f036c882b-20261007-context-b22989818f22-54e18bc1f938.json",
+      "previousActiveReviewSha256": "7f0d0604ca3cdaba0fbb9b7848d15b2f51a0bd5237073fccdb26301c8e775ea3",
+      "previousDeclarationSha256": "b22989818f22f6316e702b380fec18e3844a009eedaa0f335adddb55e48397e9",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-d2fa27e805583d3a5c7d281ed7051950",
+      "reviewPath": "verification/requirement-coverage-NREQ-d2fa27e805583d3a5c7d281ed7051950-20261007-context-8e1b30f0d0bb-54e18bc1f938.json",
+      "previousActiveReviewSha256": "5efc3e8def667c09c0e0666a9b89fb16b970ed965afd08ee59a490aad0ce0b45",
+      "previousDeclarationSha256": "8e1b30f0d0bb343e7f0ed109bc4ed32fd96c86c65fbbc58f8d3e2c0381593bd5",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-b366c2ac73e0e846627de23589a5a772",
+      "reviewPath": "verification/requirement-coverage-NREQ-b366c2ac73e0e846627de23589a5a772-20261007-context-a26853843e41-54e18bc1f938.json",
+      "previousActiveReviewSha256": "4c2c111b0ed87684043c6a84d5a12acf5a671d3532f0fce9525f600418b32b02",
+      "previousDeclarationSha256": "a26853843e415b3cbf6d242b8a391f05b66f4caa4a21e2f65590592009e2db30",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-e0b91994f249e0b795ab80a6e3f4a4a2",
+      "reviewPath": "verification/requirement-coverage-NREQ-e0b91994f249e0b795ab80a6e3f4a4a2-20261007-context-b609fa37652f-54e18bc1f938.json",
+      "previousActiveReviewSha256": "625b468ffa2237db4bd687bb5165b57c6a31337dc995a986fca65c7a78579b3f",
+      "previousDeclarationSha256": "b609fa37652f8409c494ec1294a728889119f7fb73a886536fec2a8052684ee9",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-bde18b0504b7485cf77fad020a4a494b",
+      "reviewPath": "verification/requirement-coverage-NREQ-bde18b0504b7485cf77fad020a4a494b-20261007-context-90bbee2744c4-54e18bc1f938.json",
+      "previousActiveReviewSha256": "2561ef0e8b54669426c5860934afc43b5cb6a82c2273d4b24bdcdc2b4b91df10",
+      "previousDeclarationSha256": "90bbee2744c43ec5ca9fdf59fc85ce935ed7ade0ac9aa3cc6e734e0f49fea91b",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-1e002259d64a939cee2f2a41f4bf3515",
+      "reviewPath": "verification/requirement-coverage-NREQ-1e002259d64a939cee2f2a41f4bf3515-20261007-context-19c88e9b3697-54e18bc1f938.json",
+      "previousActiveReviewSha256": "19bd39b33dab72dde7272806e969045697af5b0cfd9e9238058d226d29c5e3b8",
+      "previousDeclarationSha256": "19c88e9b3697575177646a77311d470a3f3ac2eb582ee66fb7dd620f5246df5e",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-55f458162d319bfbb710223b3528ef9f",
+      "reviewPath": "verification/requirement-coverage-NREQ-55f458162d319bfbb710223b3528ef9f-20261007-context-5b104c0b9184-54e18bc1f938.json",
+      "previousActiveReviewSha256": "062074b1e274e5a779bd33af4fc0a011f27f179f9d319da553a3df4431dea567",
+      "previousDeclarationSha256": "5b104c0b9184f8b3293373ceea0c79e4f75daf916a91c63021c6ab503b199ba1",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-d6eeb36f75c6f6f6854a2e3aa9ac2070",
+      "reviewPath": "verification/requirement-coverage-NREQ-d6eeb36f75c6f6f6854a2e3aa9ac2070-20261007-context-e9e30bbb47a8-54e18bc1f938.json",
+      "previousActiveReviewSha256": "b2a3ad4487c6229a231965e09087829d1edb0add9f50c1789a52e265235c5f1b",
+      "previousDeclarationSha256": "e9e30bbb47a89b2ea0a2ab1499bcf56b0c010f0a43ef3e2a205e19fc3e1379ff",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-1543275bf85c6f452bce3c65a31dd691",
+      "reviewPath": "verification/requirement-coverage-NREQ-1543275bf85c6f452bce3c65a31dd691-20261007-context-bc25b407a6a7-54e18bc1f938.json",
+      "previousActiveReviewSha256": "4aa273c100ff148e1f636f9c284e95e1fa60d693cf1e1741fd6728b9f5914c15",
+      "previousDeclarationSha256": "bc25b407a6a78980475092f4d63c42d20e9eb40d8a735c286c04634c249065e2",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-2323c8d363fd8c29f965d8c0e67549ae",
+      "reviewPath": "verification/requirement-coverage-NREQ-2323c8d363fd8c29f965d8c0e67549ae-20261007-context-cb02bb332e42-54e18bc1f938.json",
+      "previousActiveReviewSha256": "03537e2dcf02167e3e2fc7635875d5868b419f1a2cfddba662a05d1652622a65",
+      "previousDeclarationSha256": "cb02bb332e42e85c26ef6321ae44215f09670339659d90b8891144b96d43cf5e",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-7643f1fb351e295ecb8565583cb9a37f",
+      "reviewPath": "verification/requirement-coverage-NREQ-7643f1fb351e295ecb8565583cb9a37f-20261007-context-1fe2c84cf115-54e18bc1f938.json",
+      "previousActiveReviewSha256": "03dda19cc97f71f9c49ee1db30715e62231e8b6be4ba32761d26d57233ad7383",
+      "previousDeclarationSha256": "1fe2c84cf115189909291ed20946788f41d7d4bb1a0385aef82397fd7889a41e",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-b04395198a63faa09666a1bfca300a1e",
+      "reviewPath": "verification/requirement-coverage-NREQ-b04395198a63faa09666a1bfca300a1e-20261007-context-3d6d12bed622-54e18bc1f938.json",
+      "previousActiveReviewSha256": "fc943f345db5275a205349a1a6d3c95b2116fca6688045cc6fca2e0dbeb693e1",
+      "previousDeclarationSha256": "3d6d12bed622ae639c9dd5946b6a31cef6714e9a813d77608c7e1c90ea6920a3",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-bc997511e2328af90b68d1898bcf6ed7",
+      "reviewPath": "verification/requirement-coverage-NREQ-bc997511e2328af90b68d1898bcf6ed7-20261007-context-18574f44b5d8-54e18bc1f938.json",
+      "previousActiveReviewSha256": "6dc823c4a909f73411e9f088c828262169296080cb4cd75d6976e19edc37bad8",
+      "previousDeclarationSha256": "18574f44b5d8e9c19788df3d171b09e9db59014fec887c4eab52e43f138ce730",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-2969c103b4ac33435f1e5d6c258a7b7b",
+      "reviewPath": "verification/requirement-coverage-NREQ-2969c103b4ac33435f1e5d6c258a7b7b-20261007-context-857befb4ca6d-54e18bc1f938.json",
+      "previousActiveReviewSha256": "e133411b491349770979273213ff6e02d45a819697a92545b079c72416195224",
+      "previousDeclarationSha256": "857befb4ca6d8e7c0de26b7d4d181c71f92b7f104d6f25c45489daf8bf419cdf",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-ec756b9a468c4ea50f2d35c578a1a11a",
+      "reviewPath": "verification/requirement-coverage-NREQ-ec756b9a468c4ea50f2d35c578a1a11a-20261007-context-5b0bc69cf0f7-54e18bc1f938.json",
+      "previousActiveReviewSha256": "acb447fbe875f4ea270ebb9b596d5223145be1cd9f33c45ddd1fa6ba8bb2c85d",
+      "previousDeclarationSha256": "5b0bc69cf0f7840056aec2d91d282a49b081c49b0f577b3f8d71ec5adabdc228",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-797b5fe50f9d13ae34d17cc98c7c8f24",
+      "reviewPath": "verification/requirement-coverage-NREQ-797b5fe50f9d13ae34d17cc98c7c8f24-20261007-context-0a94e402d167-54e18bc1f938.json",
+      "previousActiveReviewSha256": "39b218e697280dea2afdb1a8937d43527f555355a7c5dcbf72105792a7d8a027",
+      "previousDeclarationSha256": "0a94e402d1679bf5d83f0b4cf1025d997ac12d111952e2210c01b5cc1346a7d5",
+      "unchangedCheckIds": [
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-1cb8c122e35c6f4e36f01c95ea0d02c9",
+      "reviewPath": "verification/requirement-coverage-NREQ-1cb8c122e35c6f4e36f01c95ea0d02c9-20261007-context-4e1b5cc17d08-54e18bc1f938.json",
+      "previousActiveReviewSha256": "d159c61dfc386d0c879031cdeb2bf109cd85e10a281a540fbde290d9d4d27a6a",
+      "previousDeclarationSha256": "4e1b5cc17d08aa9c16fd37bf9bd4e3339f6280439f4417dd40fb580adf0d2116",
+      "unchangedCheckIds": [
+        "test-ir.unknown-operation",
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-318da161cc5f30f33449238ba3870773",
+      "reviewPath": "verification/requirement-coverage-NREQ-318da161cc5f30f33449238ba3870773-20261007-context-123b97ea9f3d-54e18bc1f938.json",
+      "previousActiveReviewSha256": "93c78739734972e88ebb3b11cec2780bf73f3e296b87637493ffade417a376d9",
+      "previousDeclarationSha256": "123b97ea9f3d6c1f5b3c9908f407b0026dddfb180e4efec387a03805cf6eec73",
+      "unchangedCheckIds": [
+        "test-ir.unknown-operation",
+        "test-ir.operation-registry-admission"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9",
+      "reviewPath": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261007-context-4b6563194ed6-54e18bc1f938.json",
+      "previousActiveReviewSha256": "5eb8a8a7290ef5006a1f37237c07fe94bb1a6294a6b3508bcb9fb50a42c45cbb",
+      "previousDeclarationSha256": "4b6563194ed6451bde37bb95bbb327ce2dfdfb4a713ed404b9dcd6f7514a6275",
+      "unchangedCheckIds": [
+        "migration.unknown-preserved"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-f41a79c58369bd76c58ad7e831e953ce",
+      "reviewPath": "verification/requirement-coverage-NREQ-f41a79c58369bd76c58ad7e831e953ce-20261007-context-a6f639cd6cfc-54e18bc1f938.json",
+      "previousActiveReviewSha256": "97fae23d7103df49efe2bd4eda7c6eda1076ccf2325087e605e26163303d9baf",
+      "previousDeclarationSha256": "a6f639cd6cfc1a143d69a4ea4809ebfdc29f27d13833172cdb220275afd6e453",
+      "unchangedCheckIds": [
+        "migration.current-profile"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-5811c65fa83521ee7afeedd602cec806",
+      "reviewPath": "verification/requirement-coverage-NREQ-5811c65fa83521ee7afeedd602cec806-20261007-context-60e25b364eb4-54e18bc1f938.json",
+      "previousActiveReviewSha256": "43dd4d1b70b8984fbecd63a34a4e373fac71ea9a0ba6fc647f92227921b6cbc3",
+      "previousDeclarationSha256": "60e25b364eb4ac2844630b117f34c0de7fa258e7f7b81d6aed1284368f99c009",
+      "unchangedCheckIds": [
+        "migration.current-profile"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-2046e21dd63ad76f992233d5582c716d",
+      "reviewPath": "verification/requirement-coverage-NREQ-2046e21dd63ad76f992233d5582c716d-20261007-context-8d03363ebd61-54e18bc1f938.json",
+      "previousActiveReviewSha256": "a42c1377ed8a3fa8470a1de2f7b5ae71a4b8c144b38b7a70c9dca67e88651baf",
+      "previousDeclarationSha256": "8d03363ebd6158c54a4bb5c0a312b267b2da8b3478dfeb94b044514aa4a05598",
+      "unchangedCheckIds": [
+        "migration.current-profile"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-1b07d67693ef773b4800dc6e06626b5b",
+      "reviewPath": "verification/requirement-coverage-NREQ-1b07d67693ef773b4800dc6e06626b5b-20261007-context-dcaf72405bbe-54e18bc1f938.json",
+      "previousActiveReviewSha256": "9605d36289bd6cd9a8c5d7c297854013b9f3b29627c27d88a01a0808d14277b8",
+      "previousDeclarationSha256": "dcaf72405bbe5648c82e0177501205afd5d9c74742a8299925a8d4f817355bb9",
+      "unchangedCheckIds": [
+        "migration.current-profile"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-72ba9c97f91e20a56d469fe3d4acf669",
+      "reviewPath": "verification/requirement-coverage-NREQ-72ba9c97f91e20a56d469fe3d4acf669-20261007-context-ce1798099b2f-54e18bc1f938.json",
+      "previousActiveReviewSha256": "0b69c0f7885280f84b14cb42a7bd97383058168fb46addfba24b229da1f3bf34",
+      "previousDeclarationSha256": "29abc4ed9a11b7c558cbe25deb6b2f29c42628ee6dfbaeea9a3ac3a5e1c4a46b",
+      "unchangedCheckIds": [
+        "store.retained-evidence-custody",
+        "store.current-supplied-input-custody"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-d3216139914fb4c3ec1d54819ee18890",
+      "reviewPath": "verification/requirement-coverage-NREQ-d3216139914fb4c3ec1d54819ee18890-20261007-context-4d85dbcad915-54e18bc1f938.json",
+      "previousActiveReviewSha256": "9ac0f524b48ad5218a148bfed9c4fc92a393740e13ed1fa9495a4627b22cc5cf",
+      "previousDeclarationSha256": "355b8eef4f2098c7e3f08b3aedd74f9da59618252116455da3d7ee30b9310dfa",
+      "unchangedCheckIds": [
+        "store.retained-evidence-custody",
+        "store.current-supplied-input-custody"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-949f1919a3c7d66486dd74bbd084b71a",
+      "reviewPath": "verification/requirement-coverage-NREQ-949f1919a3c7d66486dd74bbd084b71a-20261007-context-51d18e6898a2-54e18bc1f938.json",
+      "previousActiveReviewSha256": "1a268bb2ab07b8b7d873813f4b3cf4b4412317657384eb3d836cc265d2fb65e2",
+      "previousDeclarationSha256": "688aa298f91b19a488b66ccaacb98265d3b4848c0f2e20ee18c4c459b73b2ced",
+      "unchangedCheckIds": [
+        "store.retained-evidence-custody",
+        "store.current-supplied-input-custody"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-a7139de247d6263164ddc139ec1fe2ce",
+      "reviewPath": "verification/requirement-coverage-NREQ-a7139de247d6263164ddc139ec1fe2ce-20261007-context-1e402d1c19b7-54e18bc1f938.json",
+      "previousActiveReviewSha256": "9d83c681b71354e2f4d737acc059ea88d6085f380fc7c0507afb790ba01a7de8",
+      "previousDeclarationSha256": "caf0858562a7792744924e1c894c46250e5cfbc5e9bc2f34b8ba84325fc122fb",
+      "unchangedCheckIds": [
+        "store.retained-evidence-custody",
+        "store.current-supplied-input-custody"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-87e7a29563e2235e49d5eea31da7db0c",
+      "reviewPath": "verification/requirement-coverage-NREQ-87e7a29563e2235e49d5eea31da7db0c-20261007-context-04879b11d740-54e18bc1f938.json",
+      "previousActiveReviewSha256": "6c227d9b886b9fef8d0a2a49dd0b466475d5113a85724adfd7b6ad17b6dd4748",
+      "previousDeclarationSha256": "fc38c1836eec74c4acbbd524458d29d9ab9070dc5d639384fc1af1c7dc1c85ca",
+      "unchangedCheckIds": [
+        "store.retained-evidence-custody",
+        "store.current-supplied-input-custody"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-092f78e488e6282f342b533fa7801e3e",
+      "reviewPath": "verification/requirement-coverage-NREQ-092f78e488e6282f342b533fa7801e3e-20261007-context-11d306878126-54e18bc1f938.json",
+      "previousActiveReviewSha256": "d352bf3f46662bba823b208d7e233a01c206aa9b61312c3056261066ac98389e",
+      "previousDeclarationSha256": "11d306878126d8be270e3c3c3ec4dd8161a5fab073c23035491e9705d1c9be2d",
+      "unchangedCheckIds": [
+        "test-ir.exact-integer-boundary-population",
+        "test-ir.exact-integer"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-5003532a6cda7a68c13be508fbf4d723",
+      "reviewPath": "verification/requirement-coverage-NREQ-5003532a6cda7a68c13be508fbf4d723-20261007-context-dccb85cd4973-54e18bc1f938.json",
+      "previousActiveReviewSha256": "d9ca7f8c6fa06fb8875872e3d90a18dc95aebf9d7095b36b399670f78439a0af",
+      "previousDeclarationSha256": "59d6992f76ce3065f6d915b23bc661e5e1c47e59b3ebf68b0cc387c6257ae22a",
+      "unchangedCheckIds": [
+        "store.cas-stale-write-population"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-360281bfdd66bed29237ed7202962808",
+      "reviewPath": "verification/requirement-coverage-NREQ-360281bfdd66bed29237ed7202962808-20261007-context-defd14234c9a-54e18bc1f938.json",
+      "previousActiveReviewSha256": "52d6cc3840183ac2f66241b390a720aea4461166dfbd73f5e50017e71d38f1e2",
+      "previousDeclarationSha256": "defd14234c9a9c9b416d64ba5cefca074d034d50a4eac3bbe906b92160f99453",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-a0db6ddcb33d9af123b08d4d481c8ebd",
+      "reviewPath": "verification/requirement-coverage-NREQ-a0db6ddcb33d9af123b08d4d481c8ebd-20261007-context-6d4092da78f9-54e18bc1f938.json",
+      "previousActiveReviewSha256": "4be14c215cd71574496f3cb595084a096ee1c07af54c722ad4dcde4daf280a7e",
+      "previousDeclarationSha256": "6d4092da78f987aa6b32c9c767cc029af5a923094af2e94404ed227be08b729c",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-baa1c33b2e2490264f91881b06ff9da8",
+      "reviewPath": "verification/requirement-coverage-NREQ-baa1c33b2e2490264f91881b06ff9da8-20261007-context-029f6195f4ba-54e18bc1f938.json",
+      "previousActiveReviewSha256": "3498380bdf1a42c8d31d016b7653cdc5b1e78ef7b13af6cf807e521b581b5325",
+      "previousDeclarationSha256": "029f6195f4ba08d56c5f01c0f4f29576c305c70b406662b0ddece5e41923137c",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-f1919b51ebfc8561d0140c02cbf08abd",
+      "reviewPath": "verification/requirement-coverage-NREQ-f1919b51ebfc8561d0140c02cbf08abd-20261007-context-5b509fd997c1-54e18bc1f938.json",
+      "previousActiveReviewSha256": "0eb2d66df130a4f5da080a477806f1137048bb490e86b7505f76e375a9c7852c",
+      "previousDeclarationSha256": "5b509fd997c1ef8eabdd1c92b94264a665aad59d57bb7d6eaba39e70eb8b0cfa",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-4b27c9f604f44c29404eacc12a59fd68",
+      "reviewPath": "verification/requirement-coverage-NREQ-4b27c9f604f44c29404eacc12a59fd68-20261007-context-0ea535138580-54e18bc1f938.json",
+      "previousActiveReviewSha256": "294fb3c542d170b9e4c52429f4273dc9720dd1b443ae78fd4f0284e35c12b9c8",
+      "previousDeclarationSha256": "0ea535138580657959dce0ddab041deb6c1f6372a06332b96a5be453b11501f1",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-71896faa31bc64e94d98bc976e1e6f1d",
+      "reviewPath": "verification/requirement-coverage-NREQ-71896faa31bc64e94d98bc976e1e6f1d-20261007-context-def6b5edfdba-54e18bc1f938.json",
+      "previousActiveReviewSha256": "324973c79b68e0d13c42a70db410251bc729e2338064b99a793ddfafa5d93deb",
+      "previousDeclarationSha256": "def6b5edfdbafc1815be64676cf2391616b12592afe4128331b924819775684c",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-78fef21919bbd7bb3bafba6f62210631",
+      "reviewPath": "verification/requirement-coverage-NREQ-78fef21919bbd7bb3bafba6f62210631-20261007-context-8f3806190781-54e18bc1f938.json",
+      "previousActiveReviewSha256": "e1c9a1e688bbfabf93afce6b49cb238cb460f2d5325da56b64a4004509632bcf",
+      "previousDeclarationSha256": "8f38061907813c6e79c8d6aa0d41b2a7adb0bb48629f50aff0ce2c337ab53622",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-72aa03a305fb8893a65d384f41d86aeb",
+      "reviewPath": "verification/requirement-coverage-NREQ-72aa03a305fb8893a65d384f41d86aeb-20261007-context-6fb2556fc745-54e18bc1f938.json",
+      "previousActiveReviewSha256": "b0d193c287c0293481f4c2325968f5c50cc4fc1a12d460e9e338414b7f6303da",
+      "previousDeclarationSha256": "6fb2556fc745f970470b2df3327107a4f3d18f28136b4720d7c36b8dda3ea1b3",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-848909d4b95219bdb481803a4b1b91c2",
+      "reviewPath": "verification/requirement-coverage-NREQ-848909d4b95219bdb481803a4b1b91c2-20261007-context-73f60d480258-54e18bc1f938.json",
+      "previousActiveReviewSha256": "0201663a1d6cdaf769f7d31f6d8f36410d9806cbfcfdbc00f784bd923e5e878a",
+      "previousDeclarationSha256": "73f60d480258dd7481836d88dcfc64e4ddb55741b8285bb43bc49768d99ed0df",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-601ec85ffefcffd713520f4067f7529c",
+      "reviewPath": "verification/requirement-coverage-NREQ-601ec85ffefcffd713520f4067f7529c-20261007-context-be7aad854ceb-54e18bc1f938.json",
+      "previousActiveReviewSha256": "fa5350dcdce66168eebd2241c57b895cd3d9df66a09c2863ca6232f718087444",
+      "previousDeclarationSha256": "be7aad854cebaede71197f138c445744a1b2e9f91afaa8a167e3bbaab593c2c9",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-c0080ab56f40757c88225dc35a1f98f0",
+      "reviewPath": "verification/requirement-coverage-NREQ-c0080ab56f40757c88225dc35a1f98f0-20261007-context-79fe3bf8357b-54e18bc1f938.json",
+      "previousActiveReviewSha256": "62b52cc8ad5200dcffc35f7ddc2bf45a803bec1e58cd13e9ae0503517644b079",
+      "previousDeclarationSha256": "79fe3bf8357bedef326de2651ac4a67a7b2d373b73b7723f0ba6ab283641006e",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-a42ec803577aa8ccbe176ed8e20a8595",
+      "reviewPath": "verification/requirement-coverage-NREQ-a42ec803577aa8ccbe176ed8e20a8595-20261007-context-66547fe135c2-54e18bc1f938.json",
+      "previousActiveReviewSha256": "8eb9dd230200418d85427ac98c1d4e8a475c019a646b5b62e9a1e324339ca5f8",
+      "previousDeclarationSha256": "66547fe135c23602740fdffd94a8ac5427c302162d736a02ae16889541a1c601",
+      "unchangedCheckIds": [
+        "ingestion.scope-negative-population"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-928a65a08b403be3edc8b160ef9cc53c",
+      "reviewPath": "verification/requirement-coverage-NREQ-928a65a08b403be3edc8b160ef9cc53c-20261007-context-bc514f8d980c-54e18bc1f938.json",
+      "previousActiveReviewSha256": "dc13654c893d7877a86718c6062cd26d468a184209e3118024424ba7e518d60a",
+      "previousDeclarationSha256": "bc514f8d980c624d1ff130aeacca8ef4175170f3e7069410ec8df26e3f23d35e",
+      "unchangedCheckIds": [
+        "ingestion.foreign-project-response"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-0fe0693c63b640aac77aa7fa2ad3861d",
+      "reviewPath": "verification/requirement-coverage-NREQ-0fe0693c63b640aac77aa7fa2ad3861d-20261007-context-e479a2d67661-54e18bc1f938.json",
+      "previousActiveReviewSha256": "d4368c68a17a58179886b6f31f875f921e8a790dae03ac0196f6b596b4479641",
+      "previousDeclarationSha256": "e479a2d67661b36adf449c64a504f1b504f65a4d44da1f6837f1240bbd4eda96",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-57f8fa829a872f35948a81bd58477291",
+      "reviewPath": "verification/requirement-coverage-NREQ-57f8fa829a872f35948a81bd58477291-20261007-context-fd3ea3b718ef-54e18bc1f938.json",
+      "previousActiveReviewSha256": "d53b68350fb668ed90cc4727539150c4088e06fad426f1ab9c9f81b3d11a3594",
+      "previousDeclarationSha256": "fd3ea3b718ef660484346fe1234e86ae2fbc8316e468b0ce52c754d43adf3d71",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-ebadc5f449d2029613a3af4b31f78c6f",
+      "reviewPath": "verification/requirement-coverage-NREQ-ebadc5f449d2029613a3af4b31f78c6f-20261007-context-4fd7fab953a6-54e18bc1f938.json",
+      "previousActiveReviewSha256": "ea7eaf5b0152c7e2e5c8cdbf310d7156ec683141573bc616a23a040c0df5249f",
+      "previousDeclarationSha256": "4fd7fab953a6616ac007e9ebc0f42f2d8e99a974a60baf7b16ccaf2201302aae",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412",
+      "reviewPath": "verification/requirement-coverage-NREQ-85b110cf9d0bf8e7e2a6ca34dcdee412-20261007-context-80144a03a02d-54e18bc1f938.json",
+      "previousActiveReviewSha256": "efbd279329536ea6c9f0199f4acab568c7306234bd58967be1d4a6bd73a417f6",
+      "previousDeclarationSha256": "80144a03a02d9d4793812d77f1c1f0d270ecd2ed1fb3653ce8d38182bfe8008a",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-b7b9ecdbceaad6aaefc9e55f7d5b3d48",
+      "reviewPath": "verification/requirement-coverage-NREQ-b7b9ecdbceaad6aaefc9e55f7d5b3d48-20261007-context-08a2d1fe5fc7-54e18bc1f938.json",
+      "previousActiveReviewSha256": "07f6a1886abc0da617512b346c2448a21c1e5e1f1a1e97c925fdbbf39a016e1d",
+      "previousDeclarationSha256": "08a2d1fe5fc7acd1a7effaed56dad0452d064dde2bc2114986654d2a71c28f80",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-5dbdcf72dd32a519bb29fbf8250726d3",
+      "reviewPath": "verification/requirement-coverage-NREQ-5dbdcf72dd32a519bb29fbf8250726d3-20261007-context-99eab70395b3-54e18bc1f938.json",
+      "previousActiveReviewSha256": "21ee198072c16466301d0f310349e21a9b5a99164c3da22569d01a1db9b8a74b",
+      "previousDeclarationSha256": "99eab70395b3dd28bbdcfac2f6ff1b5b3069a1c16e904cb17cf6f1e0c3f67ef9",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-f2d6f77dfa27e853d7eb5dab69be388d",
+      "reviewPath": "verification/requirement-coverage-NREQ-f2d6f77dfa27e853d7eb5dab69be388d-20261007-context-e9122d35086e-54e18bc1f938.json",
+      "previousActiveReviewSha256": "b9849b0fa55aaa69f9d50baff8dc659e4cb0f80627fec2396664ecfeac83bb7a",
+      "previousDeclarationSha256": "e9122d35086ec57a13577a660a719895fdab85a7f3f199c52af5dafb8cfcdc40",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-ade9df74bf03ff347d7ae537fbfa738d",
+      "reviewPath": "verification/requirement-coverage-NREQ-ade9df74bf03ff347d7ae537fbfa738d-20261007-context-61a2341f94ae-54e18bc1f938.json",
+      "previousActiveReviewSha256": "ac9b05a82138eae4f13b3bef9d6e4f367558d9522dcbc72b96d66fe1ad78738c",
+      "previousDeclarationSha256": "61a2341f94aed155b3958e35a39611621f153ff35b50c712ba4c99f9bb816134",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-1f578d8524f1af57b280fd03422827f1",
+      "reviewPath": "verification/requirement-coverage-NREQ-1f578d8524f1af57b280fd03422827f1-20261007-context-33c756e92bb7-54e18bc1f938.json",
+      "previousActiveReviewSha256": "9d55ba29711192e2d33a03d318e1c380bee92fb3aafd5fdbcd16668fcc50ebcb",
+      "previousDeclarationSha256": "33c756e92bb7582de4b473947a8a0902218fd7fe24cc8d873188020beeabb66f",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-cf2cbee76666e1f836c4cca046988062",
+      "reviewPath": "verification/requirement-coverage-NREQ-cf2cbee76666e1f836c4cca046988062-20261007-context-ee826876a6b9-54e18bc1f938.json",
+      "previousActiveReviewSha256": "723a56656ef2edb82c13189f2c30490a72c84a0f48fd29dcd57ffd02785fa86f",
+      "previousDeclarationSha256": "ee826876a6b925f84608b3a14dc6775d3caf2d6769105c7ec04cae15acd2e9bd",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-2524a1d9ecc583bbd420778cfb147983",
+      "reviewPath": "verification/requirement-coverage-NREQ-2524a1d9ecc583bbd420778cfb147983-20261007-context-04970fd5ee41-54e18bc1f938.json",
+      "previousActiveReviewSha256": "8fa3920e9a7cfafc0097e220aa0aa38cbf27a9da313bc505d5597f31be3a225c",
+      "previousDeclarationSha256": "04970fd5ee4122fdb53b0d09528f2d271e1f254af4be76c5e9bd79334b1cd757",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-e2c966ff2db0502c8d0f2d40e87f4262",
+      "reviewPath": "verification/requirement-coverage-NREQ-e2c966ff2db0502c8d0f2d40e87f4262-20261007-context-c6d95e2cb2e2-54e18bc1f938.json",
+      "previousActiveReviewSha256": "f34faf705c2aff330e29cd243657cfdb11ed3b8db073ce692b318c2aa29ddd7e",
+      "previousDeclarationSha256": "c6d95e2cb2e2dc9ef85741cac765ba1dbfcdf422a322559a34ab5659d114c501",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-b3e8d9cffdde1f94d9d342ff0ed4f097",
+      "reviewPath": "verification/requirement-coverage-NREQ-b3e8d9cffdde1f94d9d342ff0ed4f097-20261007-context-b36ec8d0d499-54e18bc1f938.json",
+      "previousActiveReviewSha256": "33bd08507cb93a614b48b9c6fbaab79477c822181986db7481f9535dadc5fd5d",
+      "previousDeclarationSha256": "b36ec8d0d499366504ed7fd8b75a213b00e692385845575615ba24b8293f52d0",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-c1d94148ff5023aac7735baefed6c35d",
+      "reviewPath": "verification/requirement-coverage-NREQ-c1d94148ff5023aac7735baefed6c35d-20261007-context-c697349e63e8-54e18bc1f938.json",
+      "previousActiveReviewSha256": "e0ab5339aade8656dd9d6e45e60d7b2888bfd5933235a911f4e94aab1840232b",
+      "previousDeclarationSha256": "c697349e63e860907e81caec06c6f65f6f76aa266f59b355b90cd5a37f71f519",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-7be2bf6dfeab825b0549d41a0151841e",
+      "reviewPath": "verification/requirement-coverage-NREQ-7be2bf6dfeab825b0549d41a0151841e-20261007-context-4d745e4aa672-54e18bc1f938.json",
+      "previousActiveReviewSha256": "7fd28be1c79cee4df47d988ec605ca8d2b6374e7783ecb334bcc9c56628aff33",
+      "previousDeclarationSha256": "4d745e4aa6725b8a07b07a01259369364efae249e48bdbab36741dc728231a22",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-a6fb1ab9c309f702b7cd3d8c7f38cf8f",
+      "reviewPath": "verification/requirement-coverage-NREQ-a6fb1ab9c309f702b7cd3d8c7f38cf8f-20261007-context-683bf6ce202e-54e18bc1f938.json",
+      "previousActiveReviewSha256": "9db890bfa518143cc63be4ed29f4ec5271b55a3bf1373ed1b3f52ee772a8f99f",
+      "previousDeclarationSha256": "683bf6ce202e8e0c6d14829f824a59b3d63105ff069bcb04258cbaa3414e5bc7",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-0b73c99557630a5deeace7e89ea0e28f",
+      "reviewPath": "verification/requirement-coverage-NREQ-0b73c99557630a5deeace7e89ea0e28f-20261007-context-70f6fc73db90-54e18bc1f938.json",
+      "previousActiveReviewSha256": "0a46bbc6e3482132fc4c922dd8f71edab780dd3c32b7df8f8f047f23ca80f5fb",
+      "previousDeclarationSha256": "70f6fc73db90d5e4b26f1072455bedde40359337b27546a34195201da35a219d",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-8bb8790d8dd6c5082d6e0351c032cda5",
+      "reviewPath": "verification/requirement-coverage-NREQ-8bb8790d8dd6c5082d6e0351c032cda5-20261007-context-ebd61b02b8d5-54e18bc1f938.json",
+      "previousActiveReviewSha256": "8415b81af1219b01ea44eafb438ae42cdd3feb2dc5e70f36cf98070ae6e4457f",
+      "previousDeclarationSha256": "ebd61b02b8d552e11fc89c238e305eb0b47ac45983278014ecd589ef6eb95dce",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-a3f1c0440fabe4b988fb5fca68a0487c",
+      "reviewPath": "verification/requirement-coverage-NREQ-a3f1c0440fabe4b988fb5fca68a0487c-20261007-context-eac1ae13e05b-54e18bc1f938.json",
+      "previousActiveReviewSha256": "11909c42f2f3650ae11f5e54d80e8e21e5ebb38383aa161cbd6cd816de091d62",
+      "previousDeclarationSha256": "eac1ae13e05b9dfaf467f056d9b407deae6191dacf0f2225447ee68070e61849",
+      "unchangedCheckIds": [
+        "STAGE01-SPECIFICATION-CONTRACT-CONTROLS"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-bedc4564e47ae7ebf86911eb8426b6f0",
+      "reviewPath": "verification/requirement-coverage-NREQ-bedc4564e47ae7ebf86911eb8426b6f0-20261007-context-303caf90caff-54e18bc1f938.json",
+      "previousActiveReviewSha256": "5adab749ee85155074fa6e95986525887dd0dd0c304e2bc8fa7b7ddd7c1dc208",
+      "previousDeclarationSha256": "9948a464aed87f36c381716ac277310a8ade25366118269993e3e6b3f2b02156",
+      "unchangedCheckIds": [
+        "acceptance.specification-identity"
+      ],
+      "changes": [
+        {
+          "path": ".github/workflows/pages.yml",
+          "beforeSha256": "13abf513018beffb97a8b51b778aae13b5b05b1f5fcced062985a53e22e632bb",
+          "sha256": "672ed097d02700d5c56c694b84cb7a2ff3713a4b926ef7d3cb1d08b9e6ed5cc8"
+        },
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verified-site.mjs",
+          "beforeSha256": "1f4b4178f49a0b82a21e27b5217ed0149e4aac38fb8cb8f717f6c8b55e752608",
+          "sha256": "4dbff6083f1bbff50968c6b75d3b771bbc4d7b3fb3d197a8e71657df0e0c7bc3"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-4b26e20f450b23eb551b2da03e69c9c9",
+      "reviewPath": "verification/requirement-coverage-NREQ-4b26e20f450b23eb551b2da03e69c9c9-20261007-context-07d6150a1321-54e18bc1f938.json",
+      "previousActiveReviewSha256": "dc4f817fab12adb6639ab72aea550ebd9200429e7ebff3983586683b5c495c15",
+      "previousDeclarationSha256": "cf42be2fa15dc2045de8628dd9d79a29d028eee134016716a5bd6b6b1497a112",
+      "unchangedCheckIds": [
+        "acceptance.specification-identity"
+      ],
+      "changes": [
+        {
+          "path": ".github/workflows/pages.yml",
+          "beforeSha256": "13abf513018beffb97a8b51b778aae13b5b05b1f5fcced062985a53e22e632bb",
+          "sha256": "672ed097d02700d5c56c694b84cb7a2ff3713a4b926ef7d3cb1d08b9e6ed5cc8"
+        },
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verified-site.mjs",
+          "beforeSha256": "1f4b4178f49a0b82a21e27b5217ed0149e4aac38fb8cb8f717f6c8b55e752608",
+          "sha256": "4dbff6083f1bbff50968c6b75d3b771bbc4d7b3fb3d197a8e71657df0e0c7bc3"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-befdab6cc6a4121936987a35fc18e1c9",
+      "reviewPath": "verification/requirement-coverage-NREQ-befdab6cc6a4121936987a35fc18e1c9-20261007-context-c8b0b09a87ad-54e18bc1f938.json",
+      "previousActiveReviewSha256": "162dcaa1b2895b017311dc82150b0cc4329055297fa7c8658df660b7183926d3",
+      "previousDeclarationSha256": "dae5da7bcca77edc0b5cf746e2240592e2319b21791141b9cf2f4d0b23fc8581",
+      "unchangedCheckIds": [
+        "acceptance.registry-identity",
+        "deployment.registry-identities"
+      ],
+      "changes": [
+        {
+          "path": ".github/workflows/pages.yml",
+          "beforeSha256": "13abf513018beffb97a8b51b778aae13b5b05b1f5fcced062985a53e22e632bb",
+          "sha256": "672ed097d02700d5c56c694b84cb7a2ff3713a4b926ef7d3cb1d08b9e6ed5cc8"
+        },
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verified-site.mjs",
+          "beforeSha256": "1f4b4178f49a0b82a21e27b5217ed0149e4aac38fb8cb8f717f6c8b55e752608",
+          "sha256": "4dbff6083f1bbff50968c6b75d3b771bbc4d7b3fb3d197a8e71657df0e0c7bc3"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-a011968eff2ed2dc314d58ed27dfad88",
+      "reviewPath": "verification/requirement-coverage-NREQ-a011968eff2ed2dc314d58ed27dfad88-20261007-context-87882d5bae07-54e18bc1f938.json",
+      "previousActiveReviewSha256": "ab8343df9ee6a46cf0465443e3258b8e59ea07b170dbc0d6e96bce3f1f2c2aa6",
+      "previousDeclarationSha256": "0cef1c95e772b1d0dd76332530c3fd530a0d6edaeb1eeaf7dd8ca5463f6acaba",
+      "unchangedCheckIds": [
+        "acceptance.registry-identity",
+        "deployment.registry-identities"
+      ],
+      "changes": [
+        {
+          "path": ".github/workflows/pages.yml",
+          "beforeSha256": "13abf513018beffb97a8b51b778aae13b5b05b1f5fcced062985a53e22e632bb",
+          "sha256": "672ed097d02700d5c56c694b84cb7a2ff3713a4b926ef7d3cb1d08b9e6ed5cc8"
+        },
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verified-site.mjs",
+          "beforeSha256": "1f4b4178f49a0b82a21e27b5217ed0149e4aac38fb8cb8f717f6c8b55e752608",
+          "sha256": "4dbff6083f1bbff50968c6b75d3b771bbc4d7b3fb3d197a8e71657df0e0c7bc3"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-c94c878ef2cf8c6a35b0985da91c0c85",
+      "reviewPath": "verification/requirement-coverage-NREQ-c94c878ef2cf8c6a35b0985da91c0c85-20261007-context-fe6c073ad55f-54e18bc1f938.json",
+      "previousActiveReviewSha256": "c64bb22d64207eede43f5532f7f0ef4a754ad829cf867c7c83890e9082797b78",
+      "previousDeclarationSha256": "ce31f1bd14647fe357571e1f36b9bf96972a9b4c596c4cd4c0d9edbc6061ac3c",
+      "unchangedCheckIds": [
+        "store.hash-mismatch-quarantine",
+        "lifecycle.complete-report-population"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7",
+      "reviewPath": "verification/requirement-coverage-NREQ-ea453611a3a1f48cdd2fbfbe946d7ac7-20261007-context-5fb3beeac070-54e18bc1f938.json",
+      "previousActiveReviewSha256": "b08a6e636dd013e828dc01433515e1ce6ad0be53cdd409668549c45ee11bef50",
+      "previousDeclarationSha256": "79558ee9298ec5b84e15b1f92a9a5f938aa74e31e44a87c6bc5cdf0fa761ebdd",
+      "unchangedCheckIds": [
+        "recovery.quarantine-controlled-deletion",
+        "recovery.quarantine-body-delete-fault"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-7a68fe07ee725cf205dd2102cd997b7f",
+      "reviewPath": "verification/requirement-coverage-NREQ-7a68fe07ee725cf205dd2102cd997b7f-20261007-context-652ecb1fe1af-54e18bc1f938.json",
+      "previousActiveReviewSha256": "30500433900897c1b43d103f1620e0eb8a63b92a6fba96bea58b372890c5d953",
+      "previousDeclarationSha256": "2d6f800b483189834dd1cf87cf1933418345e0d77d793b1961e3deb34bc94aef",
+      "unchangedCheckIds": [
+        "ingestion.syntax.malformed-json"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f",
+      "reviewPath": "verification/requirement-coverage-NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f-20261007-context-6dcc93386d57-54e18bc1f938.json",
+      "previousActiveReviewSha256": "0ecd4baec619ec85447fd4ff01bd5ba44ef54e465cf2ef0c67d6ba5e841a9db1",
+      "previousDeclarationSha256": "450148fc66a3b51f32026eb21614b31445ed391a96e0dd035bad8ce242915915",
+      "unchangedCheckIds": [
+        "ingestion.syntax.truncated-json"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-768d67996244254c83c0d11796f63912",
+      "reviewPath": "verification/requirement-coverage-NREQ-768d67996244254c83c0d11796f63912-20261007-context-291bd5dd0e04-54e18bc1f938.json",
+      "previousActiveReviewSha256": "a67b75809a7de6006c741374f9ef2db57cb10d13d31ebb08df1fb5e962d59d46",
+      "previousDeclarationSha256": "fc341551aade367519721b2f47d3894485dbf2c11b655b389908ae421439dde8",
+      "unchangedCheckIds": [
+        "ingestion.syntax.markdown-wrapper"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-59d5854af99ac5a566eb61e978519b21",
+      "reviewPath": "verification/requirement-coverage-NREQ-59d5854af99ac5a566eb61e978519b21-20261007-context-e53573db3335-54e18bc1f938.json",
+      "previousActiveReviewSha256": "734037d7844f73bfff74ced087b2e5b5dbcba57487c627c350cbbd47c8ea6300",
+      "previousDeclarationSha256": "814099b3bfd6cd8513a4bfe7a0c078067aff2a08843e75e9c7c4e76e3c7f5301",
+      "unchangedCheckIds": [
+        "ingestion.syntax.oversized-json"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-75b670fc6ea047b7452b4148f12a30ba",
+      "reviewPath": "verification/requirement-coverage-NREQ-75b670fc6ea047b7452b4148f12a30ba-20261007-context-dfc64a21a246-54e18bc1f938.json",
+      "previousActiveReviewSha256": "4790b2688207bc4b4ff160c53142442df6085d767bbfab15eddcc79155c40b66",
+      "previousDeclarationSha256": "9605cf8940caf1c92f93ed34ac042d468f81ff5d5c30e299d6fc4c1ae37e7ee8",
+      "unchangedCheckIds": [
+        "ingestion.syntax.duplicate-members"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-86651d173d1583e48cf6c03f9d486f4f",
+      "reviewPath": "verification/requirement-coverage-NREQ-86651d173d1583e48cf6c03f9d486f4f-20261007-context-327d2cc2c990-54e18bc1f938.json",
+      "previousActiveReviewSha256": "6716bd9e36537a33f3e2efb2b76118196275c72d16ce56266239d29530d87128",
+      "previousDeclarationSha256": "a4555d75e99455aa6724f690f838adee2ea1046cc281f25c075abe961d84b7dd",
+      "unchangedCheckIds": [
+        "ingestion.syntax.unsafe-smart-quotes"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-1576e27fba46e1d68631bb2ade2e37f4",
+      "reviewPath": "verification/requirement-coverage-NREQ-1576e27fba46e1d68631bb2ade2e37f4-20261007-context-f03bceab9e8e-54e18bc1f938.json",
+      "previousActiveReviewSha256": "0d2182eefd1e62d63f7b8677a4face6c5f363a9b3a72244fe553cd5d65f18eae",
+      "previousDeclarationSha256": "e299a3b7d2dc8a2e969e5fe62321ffff98aee35ca97b7d5b8d0505462a9a4c61",
+      "unchangedCheckIds": [
+        "ingestion.syntax.root-object"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-cf25cf824db06866df51c0e538fcbc03",
+      "reviewPath": "verification/requirement-coverage-NREQ-cf25cf824db06866df51c0e538fcbc03-20261007-context-fde639603c5f-54e18bc1f938.json",
+      "previousActiveReviewSha256": "c9e15b8ebfa9998dc11dbfbc0461460939fcd23e6246bf5480811819bff62afc",
+      "previousDeclarationSha256": "de981e1a1b27e5506fc54a3db779dcba899c2ca154caedc436371e36f6724324",
+      "unchangedCheckIds": [
+        "ingestion.transport.stage"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-41ab1c200b4ce5c9d1d96613a3e5b264",
+      "reviewPath": "verification/requirement-coverage-NREQ-41ab1c200b4ce5c9d1d96613a3e5b264-20261007-context-867dae61e345-54e18bc1f938.json",
+      "previousActiveReviewSha256": "6b52cc18a3a0b00bf139df6d9510d4707e8f9c7e451ea4478a8846f0984677b1",
+      "previousDeclarationSha256": "311ee4d9d8463f8f6f42a35bc39e4500bbbbdcd95cbbfe98fec4d5efb958f859",
+      "unchangedCheckIds": [
+        "ingestion.transport.operation"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-0c973b955d61ee36887734df0ade5e69",
+      "reviewPath": "verification/requirement-coverage-NREQ-0c973b955d61ee36887734df0ade5e69-20261007-context-aa211674369a-54e18bc1f938.json",
+      "previousActiveReviewSha256": "659ba72170a0373d0870ea458edec3e5734de3ee1275901f47b75583de0ab8f0",
+      "previousDeclarationSha256": "b9292641650fa4c322292d2f257fed437dea49ce7260cbbddd7056747b02c7d6",
+      "unchangedCheckIds": [
+        "ingestion.transport.prompt-identity"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    },
+    {
+      "normativeRequirementId": "NREQ-971af7158d193e9b1d780c13b6c8e0ec",
+      "reviewPath": "verification/requirement-coverage-NREQ-971af7158d193e9b1d780c13b6c8e0ec-20261007-context-3e84d85be560-54e18bc1f938.json",
+      "previousActiveReviewSha256": "1df0aa888bd211b93769f60fac1f280b2b45e1921bf84e9f882df8fddf9fecce",
+      "previousDeclarationSha256": "c699db085b2ec1bfa15dc9b663f8d7ccb75b5106ec4c04db3e71e775ab88b66d",
+      "unchangedCheckIds": [
+        "ingestion.transport.context-signature"
+      ],
+      "changes": [
+        {
+          "path": "app-core.js",
+          "beforeSha256": "172aa7889629f6d775bee095975575a75afe07bd1403055ebdbd38b2ac9f70e8",
+          "sha256": "004671435ed142b937503e1b56a971e8ef7b96c9e3e58ee29a623adc6b7a4460"
+        },
+        {
+          "path": "verify-conformance-regressions.mjs",
+          "beforeSha256": "9608a8ee05b6b01243d52becc33c543ffa2c82793292f3fc9e76cb8f833e58b3",
+          "sha256": "cec69ce4a4eb45ad2c49dccd164852a35cd7386f6b269e22d318d5ed63204a39"
+        }
+      ]
+    }
+  ],
+  "assessment": {
+    "scope": "Renew exact independently reviewed dependency and production-owner source hashes only. Preserve all existing controlling clauses, obligations, check decomposition, original independent semantic assessments and reviewer attribution. CI groups preserve the complete closed suite population and independently bounded children; source-bound group handoff and all producer outcomes remain required. Application feedback sequencing preserves locking, checkpoints and deadlines. Current complete CI remains required.",
+    "integration": "Review metadata prepared by root from the retained independent collaborator records. This is not a new independent semantic review of all156 clauses, an executed receipt, or application acceptance."
+  },
+  "applicationConformanceEstablished": false,
+  "completeCiEstablished": false,
+  "physicalDeviceAcceptanceEstablished": false
+}

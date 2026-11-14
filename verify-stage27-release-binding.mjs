@@ -3,34 +3,38 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
+import {reservedReleasePrerequisiteFixture,acceptReservedSemanticFixture,reviewReleaseAuditsFixture,assertReleaseSemanticPrerequisites} from './test-release-semantic-fixture.mjs';
 
 if(!globalThis.crypto)Object.defineProperty(globalThis,'crypto',{value:webcrypto,configurable:true});
 if(!globalThis.Event)globalThis.Event=class Event{constructor(type){this.type=type;}};
 if(!globalThis.dispatchEvent)globalThis.dispatchEvent=()=>true;
-for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
+for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(file,'utf8'),{filename:file});
 
 const core=globalThis.closedLoopCore;
 const engine=globalThis.closedLoopWorkflowEngine;
 const hash=globalThis.closedLoopHash;
+const schema=globalThis.closedLoopWorkflowSchema,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion;
+const runtime={core,engine,schema,prompts,ingestion};
 
-function fixture(jobId){
-  const p=core.createBlankState(jobId);
-  engine.ensureShape(p);
-  p.activeStage=27;
-  p.job.CURRENT_STAGE='27';
-  for(let stage=1;stage<=26;stage++){
-    p.stages[stage].status='COMPLETE';
-    p.stages[stage].gate={complete:true,blocked:false,reasons:[]};
-  }
-  p.projectData.acceptedChanges.push({
-    changeId:`CHANGE-${jobId}`,
-    stage:27,
-    status:'COMMITTED',
-    responseType:'DATA_PROPOSAL',
-    operation:'ADVISORY_REVIEW',
-    scope:engine.currentScope(p)
-  });
+function fixture(jobId,{semanticPrerequisites=true}={}){
+  const p=semanticPrerequisites?reservedReleasePrerequisiteFixture(runtime,jobId):core.createBlankState(jobId);
+  engine.ensureShape(p);p.activeStage=27;p.job.CURRENT_STAGE='27';
+  if(!semanticPrerequisites)for(let stage=1;stage<=26;stage++){p.stages[stage].status='COMPLETE';p.stages[stage].gate={complete:true,blocked:false,reasons:[]};}
+  // The scope reference is intentionally not a completed product execution.
+  for(const product of engine.recordsForCurrentScope(p,'products'))product.completionState='PENDING';
+  p.projectData.acceptedChanges.push({changeId:`CHANGE-${jobId}`,stage:27,status:'COMMITTED',responseType:'DATA_PROPOSAL',operation:'ADVISORY_REVIEW',scope:engine.currentScope(p)});
   return p;
+}
+const assertSemanticPrerequisites=p=>assertReleaseSemanticPrerequisites(runtime,p);
+const reviewAudits=p=>reviewReleaseAuditsFixture(runtime,p);
+
+// The former fixture cannot manufacture completed prerequisite authority by
+// assigning stage status. This control fails at the actual shared gate reason.
+{
+  const p=fixture('JOB-STAGE27-MISSING-SEMANTIC-PREREQUISITES',{semanticPrerequisites:false});
+  engine.recordReleaseDetermination(p);p.stages[26].status='COMPLETE';p.stages[26].gate={complete:true,blocked:false,reasons:[]};
+  const gate=engine.gate(27,p);assert.equal(gate.complete,false,'RELEASE_SEMANTIC_PREREQUISITE_ORACLE: bare completed flags passed');
+  assert.deepEqual(gate.reasons,['Current semantic author provenance and reviewed targets are required.']);
 }
 
 function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabricated'}={}){
@@ -46,12 +50,26 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
 // calculation must not satisfy Stage 27 merely because its enum is valid.
 {
   const p=fixture('JOB-STAGE27-FABRICATED');
+  assertSemanticPrerequisites(p);
   const binding=engine.releaseBinding(p);
   assert.equal(binding.metrics.productOk,false,'Missing product evidence must normalize to boolean false.');
   assert.equal(binding.determination,'BLOCKED','The intentionally incomplete fixture must calculate BLOCKED.');
-  assert.equal(binding.evidenceDigest,hash.sha256Value({metrics:binding.metrics,inputReferences:binding.metrics.inputReferences}),'Release evidence digest is not the canonical current binding.');
+  // Section34.3 binds actual canonical inputs, not just aggregate counts and
+  // record IDs. The previous ad-hoc digest oracle could not detect a changed
+  // source whose aggregate disposition remained BLOCKED.
+  assert.equal(binding.canonicalInput.calculation,'stage27.release/4');
+  assert.equal(binding.canonicalInput.derivationId,'closed-loop-derivation/stage27-release/4');
+  assert.equal(binding.canonicalInput.sourceBinding.projection,'REGISTERED_RELEASE_SOURCE/1');
+  assert.equal(binding.evidenceDigest,hash.sha256Value(binding.canonicalInput),'Release evidence digest does not bind the retained canonical calculation input.');
+  for(const family of ['processAudits','productAudits'])for(const audit of engine.recordsForCurrentScope(p,family)){
+    const source=binding.canonicalInput.sourceBinding.records.find(row=>row.family===family&&row.id===engine.recordId(audit,family));
+    assert(source,'Release source receipt omitted the actual current '+family+' record.');
+    assert.equal(source.sha256,hash.recordSha256(audit),'Release source receipt used a label instead of the actual canonical '+family+' hash.');
+  }
   injectRelease(p,{determination:'ACCEPTED',releaseEvidenceSha256:binding.evidenceDigest});
   assert.equal(engine.gate(27,p).complete,false,'Stage 27 accepted a release record that contradicts the current application calculation.');
+  assert.deepEqual(engine.gate(27,p).reasons,['The current release determination is not bound to the exact application-calculated release evidence, disposition, product, and baseline identities.']);
+  assertSemanticPrerequisites(p);
   p.projectData.releaseRecords.length=0;
   const calculated=engine.recordReleaseDetermination(p);
   assert.equal(calculated.DETERMINATION,'BLOCKED','CALCULATE_RELEASE must fail closed as BLOCKED instead of throwing on incomplete evidence.');
@@ -64,17 +82,41 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
 // release-evidence dependency changes and must remain rejected until the same mechanism recalculates it.
 {
   const p=fixture('JOB-STAGE27-STALE');
+  assertSemanticPrerequisites(p);
+  const auditInputScope=engine.clone(engine.recordsForCurrentScope(p,'processAudits').at(-1).scope);
   const first=engine.recordReleaseDetermination(p);
   p.stages[26].status='COMPLETE';p.stages[26].gate={complete:true,blocked:false,reasons:[]};
   assert.equal(engine.gate(27,p).complete,true,'Current application-derived release binding failed Stage 27.');
   assert.equal(engine.recordReleaseDetermination(p).RELEASE_ID,first.RELEASE_ID,'Exact release recalculation retry is not idempotent.');
+  const absentReceipt=engine.clone(first);delete absentReceipt.derivationReceipt;
+  assert.equal(engine.releaseRecordMatchesBinding(absentReceipt,engine.releaseBinding(p)),false,'A missing application derivation receipt remained current.');
+  const unrelatedHistory=engine.clone(p);unrelatedHistory.projectData.history.push({eventId:'SYNTHETIC-UNRELATED-HISTORY',type:'SYNTHETIC_REVIEW_NOTE'});unrelatedHistory.revision++;
+  assert.equal(engine.releaseRecordMatchesBinding(first,engine.releaseBinding(unrelatedHistory)),true,'Unrelated History or project revision invalidated the current release calculation.');
+  // This is an isolated canonical-source fault, not a reauthorized audit or a
+  // full release bypass. Unknown extension data is part of CANONICAL_RECORD.
+  const changedSource=engine.clone(p),audit=engine.recordsForCurrentScope(changedSource,'processAudits')[0],beforeSource=engine.releaseBinding(changedSource);
+  audit.syntheticRetainedSourceNote='Changed canonical extension while the release metric values remain identical.';engine.refreshRecordHashes(audit,'processAudits');
+  const afterSource=engine.releaseBinding(changedSource);
+  assert.deepEqual(afterSource.metrics,beforeSource.metrics,'The changed-source control did not hold aggregate release metrics constant.');
+  assert.notEqual(afterSource.evidenceDigest,beforeSource.evidenceDigest,'Changed actual source data was hidden by unchanged aggregate metrics and record IDs.');
+  assert.equal(engine.releaseRecordMatchesBinding(first,afterSource),false,'Changed source data retained a current release receipt.');
   const beforeHash=first.releaseEvidenceSha256;
-  const audit={id:'PROCESS-AUDIT-RELEASE-CHANGE',stage:26,active:true,scope:engine.currentScope(p),fields:{PROCESS_AUDIT_ID:'PROCESS-AUDIT-RELEASE-CHANGE',PROCESS_DETERMINATION:'SATISFIED'},PROCESS_AUDIT_ID:'PROCESS-AUDIT-RELEASE-CHANGE',PROCESS_DETERMINATION:'SATISFIED'};
-  engine.refreshRecordHashes(audit,'processAudits');
-  p.projectData.processAudits.push(audit);
+  // Reauthor/review the current audit through real custody. Reintroduce the
+  // formerly calculated record as a controlled stale-input counterexample;
+  // missing predecessor authority or automatic invalidation cannot mask it.
+  p.stages[25].status='COMPLETE';p.stages[25].gate={complete:true,blocked:false,reasons:[]};
+  for(const[key,field]of Object.entries({baselineId:'CURRENT_BASELINE_ID',productId:'CURRENT_PRODUCT_ID',productVersion:'CURRENT_PRODUCT_VERSION',deliveryCandidateSetId:'CURRENT_DELIVERY_CANDIDATE_SET_ID'}))p.job[field]=auditInputScope[key];
+  for(const product of engine.recordsForCurrentScope(p,'products'))product.completionState='COMPLETED';
+  acceptReservedSemanticFixture(runtime,p,26,'COMPLETE',null,Object.fromEntries(['baselineId','productId','productVersion','deliveryCandidateSetId'].map(key=>[key,auditInputScope[key]])));
+  reviewAudits(p);assertSemanticPrerequisites(p);
+  for(const product of engine.recordsForCurrentScope(p,'products'))product.completionState='PENDING';
   const mutated=engine.releaseBinding(p);
   assert.notEqual(mutated.evidenceDigest,beforeHash,'The dependency mutation did not change release evidence.');
-  assert.equal(engine.gate(27,p).complete,false,'Stale release evidence passed Stage 27 after dependency mutation.');
+  const stale=engine.clone(first);stale.active=true;stale.validity='CURRENT';delete stale.invalidatedBy;delete stale.supersededBy;
+  stale.scope={...engine.currentScope(p),releaseId:first.RELEASE_ID,productId:mutated.productId,baselineId:mutated.baselineId};engine.refreshRecordHashes(stale,'releaseRecords');
+  p.projectData.releaseRecords=p.projectData.releaseRecords.filter(record=>record.id!==stale.id);p.projectData.releaseRecords.push(stale);p.job.CURRENT_RELEASE_ID=stale.id;
+  const staleGate=engine.gate(27,p);assert.equal(staleGate.complete,false,'Stale release evidence passed Stage 27 after dependency mutation.');
+  assert.deepEqual(staleGate.reasons,['The current release determination is not bound to the exact application-calculated release evidence, disposition, product, and baseline identities.']);
   p.stages[26].status='COMPLETE';p.stages[26].gate={complete:true,blocked:false,reasons:[]};
   const repaired=engine.recordReleaseDetermination(p);
   p.stages[26].status='COMPLETE';p.stages[26].gate={complete:true,blocked:false,reasons:[]};
@@ -87,7 +129,8 @@ function injectRelease(p,{determination='ACCEPTED',releaseEvidenceSha256='fabric
 // calculation when no advisory response exists. Pass the exact stage to the real structured-action API.
 {
   const p=fixture('JOB-STAGE27-NO-ADVISORY');
-  p.projectData.acceptedChanges.length=0;
+  p.projectData.acceptedChanges=p.projectData.acceptedChanges.filter(change=>Number(change.stage)!==27);
+  assertSemanticPrerequisites(p);
   const next=engine.operationalNextAction(p,27);
   const explanation=String(next.explanation||'');
   assert.equal(next.actionType,'CALCULATE_RELEASE','Optional Stage 27 advisory review incorrectly gates application release calculation.');
@@ -117,4 +160,17 @@ assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:1,blockingCo
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:0,blockingConditionCount:1}),'BLOCKED');
 assert.equal(engine.selectReleaseDisposition({refutedMandatoryCount:0,blockingConditionCount:0}),'ACCEPTED');
 
-console.log(JSON.stringify({stage27ReleaseBinding:'PASS',invalidFixtures:2,repairedFixtures:2,releasePrecedence:'PASS',idempotency:'PASS',optionalAdvisoryNonGating:'PASS',truthfulOperatorText:'PASS',applicationOwnedActionText:'PASS',structuredActionPurity:'PASS',digest:hash.sha256Value('stage27-release-binding-v5')}));
+// Isolated declaration-shape controls do not manufacture affirmative evidence.
+// The full-cycle owner separately exercises real accepted release proof inputs.
+const releaseProofShapeCases=[];
+for(const normativeClass of ['MANDATORY','CONDITIONAL','UNKNOWN']){
+ const p=core.createBlankState('JOB-RELEASE-PROOF-SHAPE-'+normativeClass);engine.ensureShape(p);
+ const fields={REQ_ID:'REQ-DECLARATION-CONTROL',MANDATORY_OPTIONAL_STATUS:normativeClass},requirement=engine.clone({id:fields.REQ_ID,fields,...fields});
+ const proof=engine.releaseRequirementProof(p,requirement,27);
+ assert.equal(proof.classification,'UNDETERMINED','RELEASE_MISSING_PRIMARY_SHAPE_ORACLE');
+ assert.equal(proof.reasons.some(reason=>reason.includes('normative class')),normativeClass==='UNKNOWN','RELEASE_ACTIVATED_CONDITIONAL_CLASS_ORACLE');
+ assert(proof.reasons.includes('Exactly one current primary proposition is required.'));
+ releaseProofShapeCases.push({caseId:'RELEASE-PROOF-DECLARATION-'+normativeClass,result:'PASS',affirmativeEvidence:false});
+}
+
+console.log(JSON.stringify({stage27ReleaseBinding:'PASS',releaseProofShapeCases,invalidFixtures:2,repairedFixtures:2,releasePrecedence:'PASS',idempotency:'PASS',optionalAdvisoryNonGating:'PASS',truthfulOperatorText:'PASS',applicationOwnedActionText:'PASS',structuredActionPurity:'PASS',registeredDerivationReceipt:'PASS',selectedCanonicalSourceIdentity:'PASS',missingReceiptRejected:'PASS',historyOnlyChangeCurrent:'PASS',sameAggregateSourceChangeStale:'PASS',derivationCases:['registered-contract-and-selected-audits','missing-receipt','history-only-stability','same-aggregate-source-change'],digest:hash.sha256Value('stage27-release-binding-v6')}));

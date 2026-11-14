@@ -1,0 +1,3851 @@
+{
+  "schema": "closed-loop-additive-source-impact-queue-delta/1",
+  "status": "RECONCILED_SOURCE_ONLY",
+  "originalFrozenLedger": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+    "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+    "byteLength": 20401933
+  },
+  "priorQueueDelta": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-001-002/combined-queue-delta.json",
+    "sha256": "c9cb41273fd9cd03583bf414a352d0b4e1a6a867efac2b55c25e1d6737b5e21b",
+    "byteLength": 433425
+  },
+  "priorCounts": {
+    "RETAINED": 1163,
+    "CHANGED": 134,
+    "BLOCKED": 6189
+  },
+  "reconciledMemberCount": 317,
+  "removedUnexaminedIds": [
+    "NREQ-f35f5e08c500a365b190deef7d39bab6",
+    "NREQ-a2af6f728dbfd0b97f4e556b7f6f0308",
+    "NREQ-69e2010ea0efb3ea73a0562dad43b549",
+    "NREQ-9e7251c4b6a6414d44b6cfd1084ffa6d",
+    "NREQ-c619c0d5c14b259032490ccac64ce4fc",
+    "NREQ-78c90561b13730c1d219b5f00abb928b",
+    "NREQ-b1dc29725cced787dcbd4608880b859b",
+    "NREQ-04d735c6af64483fc16d0fd4c4c19d5c",
+    "NREQ-d4a00c2a44ae6fac4be0557f603ccf12",
+    "NREQ-bc626ab0dbb07e104c4cdb44d04572a4",
+    "NREQ-d48a6041f309c2f9cf37c55740009867",
+    "NREQ-b9d90b4bdbf399873a0f8a15ac6fea37",
+    "NREQ-f175f9d03e289f5cc0b48cb062fcc492",
+    "NREQ-0aebdac6eeb95950b4482bcc03440369",
+    "NREQ-889a0185d94022e8785c75fe55abc624",
+    "NREQ-924fb66bc67f90f2ef184b98c3f8e064",
+    "NREQ-201df0f29f71f03983d4e067a21ab666",
+    "NREQ-1118b3312622fd6d93a9072ee0c88554",
+    "NREQ-7c6d88fe311626151dbe36800bbb20c1",
+    "NREQ-4df8df2506480d9344e70e8914aa2e99",
+    "NREQ-4aa8acfae7491def6f648c1370632312",
+    "NREQ-bd06b85e4e4f24b209f70a3f49470efe",
+    "NREQ-4d7bd7923bbfe6d2a7d5885527a14bf8",
+    "NREQ-0fb677bdcd7d72f9375bf311d8cc483d",
+    "NREQ-60de305985d6cd5915281d16a5ea8fb4",
+    "NREQ-6c5dc8e04ee531b292e4a197ab7c471f",
+    "NREQ-f842cdd62720590f94afc86b03abdb78",
+    "NREQ-4e90dc219afb4eeb719167f900661eec",
+    "NREQ-c0d290682345450e2f87eb2ccf2096e6",
+    "NREQ-c8b06ea7b97bdd3c25071a4ab35b89c6",
+    "NREQ-91ebefe10ae828db84025171b58a243c",
+    "NREQ-c876d26a81fb51f9061dda486701b0d5",
+    "NREQ-ec975b55324c333902513b96bc8bf61c",
+    "NREQ-a14f943d92fdbc8445f9c7ee0f502135",
+    "NREQ-992de65f5a0215de78afb0a8c6992b81",
+    "NREQ-72eccbe09cc7b06dcd0378758c6df116",
+    "NREQ-8a97393bd8071753cf5fecaf983ab8ef",
+    "NREQ-a8e9c0b4c078621af32c7cc065d7884a",
+    "NREQ-54403bc057e3aa4ebc1be42b24f3d6a5",
+    "NREQ-e5cc22ee28fb39963751c4b2729c0936",
+    "NREQ-a545ec19bee765dea92d0aee31823cb4",
+    "NREQ-39c2ef338f0553c32aedb992412e9bf8",
+    "NREQ-d605e26705f4fb702633ee789c8c3242",
+    "NREQ-46c6952d9075df3f33b901dafca7c5bb",
+    "NREQ-b95e32bbccfbfed4215bf0ccf5284238",
+    "NREQ-b90623875cbce0cc934ceac1069c3b24",
+    "NREQ-400d6440a63c9b7216d43fc8da9603bc",
+    "NREQ-3a13f889024b734d9a9d196145f771e8",
+    "NREQ-0ac043e2fe608181d1f0aaf500c93048",
+    "NREQ-26ba1becb4f6dd924986519718231504",
+    "NREQ-4dc886b554a8369a873863dd88b2c251",
+    "NREQ-a8f41252c2bdf47158b8ec012009c324",
+    "NREQ-cd7b9659d704e83e9402f0f0e1ac9d84",
+    "NREQ-8971301ae2457cec17426dc7cd01390a",
+    "NREQ-5464a749b32650b37e9c86a68864a385",
+    "NREQ-444c3a58702c2234b4ea239566f205e4",
+    "NREQ-303a209ee62e1bf2fc2a04d21cabd8f9",
+    "NREQ-21f4a484537fda305f32bb3202599165",
+    "NREQ-a28a53360a8626fc623645ec8112c68a",
+    "NREQ-ad0fb0d55b85718a46ec797cd828790a",
+    "NREQ-ad7789bf824839f139607faa1f83b1c0",
+    "NREQ-2bfb01c46856a431ae4d0ced47220ffa",
+    "NREQ-f1a982c6bf08aa95dd475e4f24ce8dfa",
+    "NREQ-297b626bce4edd6ed6c08bb90d6af513",
+    "NREQ-f38fcb288951f3e988b235ee1f10bfda",
+    "NREQ-e1cbbe8944a964a14c47c16fefa0125b",
+    "NREQ-54e1d1ae234545d4da9e7dddd3606b79",
+    "NREQ-e8ffd20476cd4296babe265e53f9194c",
+    "NREQ-1bd38356e74a102b312f1e47f8395418",
+    "NREQ-ae0e9290dee2514cf6ceb3e8a04a9b02",
+    "NREQ-4c7406829a9970071704aa8f1d2aedd3",
+    "NREQ-bb6b2eec737d04b001b123714cd90685",
+    "NREQ-8e31e916642ec7aba9df0636be53a5a0",
+    "NREQ-089b06a528834c90c56cbe2d0730b74f",
+    "NREQ-7195b5ac84760398d415ed205eb6ca1b",
+    "NREQ-ddc83da037c3d8a21fc59594ef980f68",
+    "NREQ-2e905e790d5908f3d38481dc11b92740",
+    "NREQ-893424d74be63610b963aabf4eff3794",
+    "NREQ-b5334cb1d67a97d96d93bcf4255f0680",
+    "NREQ-42bb78927601f61dfe8778bf21bc41c4",
+    "NREQ-648aa7bba577b35558899456bbec19b3",
+    "NREQ-c4f0dd974604a1387741767761818d87",
+    "NREQ-9cfa1e7f94432ba32dac64c09c593409",
+    "NREQ-4e4af8128da52c72d2f6cdd230b014be",
+    "NREQ-416928045029c92d89c66ea429aa1ac2",
+    "NREQ-f271071fba617a5962a31f041da264ad",
+    "NREQ-750c91aac33d627bd95e4826a37ba54f",
+    "NREQ-550a5da760713ffe68d16c3208c29ff8",
+    "NREQ-5cb818c548ae0a4715f39e51f89d7391",
+    "NREQ-ddeafefc5caa358ff6c35264823e4a30",
+    "NREQ-b02893faa6107bfb1c58fe983ef109e7",
+    "NREQ-958140809e4209f407633656b2ff3b68",
+    "NREQ-a07f45f2f8255b1ec90f22145cab4beb",
+    "NREQ-d95d049b7085a194d4cd94693eacb6aa",
+    "NREQ-799bec938a8020a19f406fcbe001ac01",
+    "NREQ-12dfd4fdb9b5167b2f981358b257bf67",
+    "NREQ-0fb3419586a296b20413f74ef2dd4d73",
+    "NREQ-0245d669571dbf92adf567a484c30e26",
+    "NREQ-9e270ba50227b5ea325a3a5e50ea1c8e",
+    "NREQ-0db7b854f960806452234e6fd0cf3f64",
+    "NREQ-d5717d319159b1a471464f3b6083450f",
+    "NREQ-0e5c6514b836643280a5be30d2d8bd0c",
+    "NREQ-6447341fa493242e7582ec02f80fbf71",
+    "NREQ-956f5f15d1a6f4fd36b0525c292e9122",
+    "NREQ-776fc375125b382a4b55dc39cc6e074e",
+    "NREQ-72090356ed56cdd30f776d47c6e7063c",
+    "NREQ-f672c76827cdedcd88f56247e6e81dc3",
+    "NREQ-376724bde9ff55e968a3eb24130dc306",
+    "NREQ-d72a190aa6c5e49cab447621e29f10c0",
+    "NREQ-f734aa1065af4dbdc6f8b09b18499a7d",
+    "NREQ-0b47a70b437098b3d080314eeed8e475",
+    "NREQ-56acb070c8461fafe61623e2b3950d67",
+    "NREQ-9642b5e59c4deb52ab827680b5284d5b",
+    "NREQ-3c2342401866b063b6ccde3255bfe7c4",
+    "NREQ-a31c4930829b9d4ec26bb7184c627a3f",
+    "NREQ-f20a8900acf9f33b2b1276138cb2eabb",
+    "NREQ-a2b6942e825a969ac41d231a9331ee44",
+    "NREQ-d6f7a5de2d34e11a9530c2950bb701b0",
+    "NREQ-e280fc4fc2a0bfd54acc297e16408fb8",
+    "NREQ-0d5b87cba5e8e16b2c94d36688718643",
+    "NREQ-a93a7d2a08f68ae70ee00975904a262f",
+    "NREQ-ef99093bd9e624c4db9587a1f91fa03e",
+    "NREQ-1a19eda7b0ccf12a4509950085f6c327",
+    "NREQ-6e8c4c3cf4ff4fcc8a891f5bdf196c1e",
+    "NREQ-2d61c131be152535a8ff8a1d8f61703d",
+    "NREQ-54e813438ad364b5cd013cff8f5ba46b",
+    "NREQ-03e4715b27bd9888ba640a3abd4155f8",
+    "NREQ-f08275cda1d539cc5cb8818f5b28674c",
+    "NREQ-a40ea7d43246510ed516c7bb44f4ee6a",
+    "NREQ-5fb139243fac0b3abb22620ccff1933c",
+    "NREQ-42431e5f0c58b0523f7975f82c64d269",
+    "NREQ-d0f2b63d0534170e6330cbc80f1ff2f6",
+    "NREQ-b0ebaea8f67e0c91889405bbd39205e5",
+    "NREQ-6ef3b69138d64ec0e9b815453fd70cc3",
+    "NREQ-39403d96d1cdabcc4a5f2cccdd5fed22",
+    "NREQ-079d6f09bfa9eb5afd0f027a39077ada",
+    "NREQ-3102ef1bce73f4fdd24be7126bc6e12c",
+    "NREQ-d5cf2a92e4ad27bf6cd85b67b8f450cb",
+    "NREQ-e35df367c3ab411bc13e30e71a4db767",
+    "NREQ-3cfa5430873a433311566505ccf980f2",
+    "NREQ-05dcfe997ccade7a50cebb9b74904bb9",
+    "NREQ-199d2a59cd78428e891c5104c71b3791",
+    "NREQ-9d6f4c32813024803c7dfd02bcc88201",
+    "NREQ-7dd4be3631d1b429bc29e3efb1b9b3f7",
+    "NREQ-afb932a32334c788359a43f4344ccc2f",
+    "NREQ-e242a71d58bfaf151a6488d456a733af",
+    "NREQ-5ea3e8779756af3a62e12cdd2a2bbc4a",
+    "NREQ-85d0651639b88fff949a74e8cde0c29f",
+    "NREQ-5d1f81a44d8af281153e55a38c4fe16f",
+    "NREQ-c21efa04c067eb92cefba1c6ef2c5803",
+    "NREQ-02da50c7388cd8f8c76336ecea9a1b47",
+    "NREQ-24635dda1f07f96c2b59ac2e01399f8e",
+    "NREQ-10e0b7c080f523b63d43ad63076d976a",
+    "NREQ-97b24115a1976172847819c108edbd9b",
+    "NREQ-126e9ca54992672736a726c05dbc8fc7",
+    "NREQ-327d1eedd9060111a49c61f867d23f5c",
+    "NREQ-bf148a519e953f5b7c0e8c338db1c8f7",
+    "NREQ-72e90b9087ef64176a9b266002564ef3",
+    "NREQ-b667165db963df027d15d3c1e3cdc26e",
+    "NREQ-8dbb1358ba8f68941910f7b8f8acbc97",
+    "NREQ-c87cbb920606b84f714d71f568e7251a",
+    "NREQ-eda0687b24b63d21aec02534e0e2b72c",
+    "NREQ-ef716118f4c4ac1c560e6275acf26653",
+    "NREQ-fcaf9b9600ec7205f643ac375e83f678",
+    "NREQ-35e0c1754d0383413861859f15f8ec64",
+    "NREQ-c85d9ff9c7164829cb747473fbeb76aa",
+    "NREQ-7929a876816c5e03098b5e45ff357218",
+    "NREQ-c32dea39cacd2499a873447beb03568b",
+    "NREQ-924dc9157641c9c21e7a591b6cc0a5a1",
+    "NREQ-d8e8715c0652ea88664c2a84409fe403",
+    "NREQ-08bb174f9f82b83d857d916b655647be",
+    "NREQ-4bb0c70e53aff20a4eaf7cd68b84b201",
+    "NREQ-239fd2e7a33caf835f538d9e2b37e2a6",
+    "NREQ-385be662d5b3878907d6cc5f2b97d390",
+    "NREQ-009a75378a19c9a9fe4779d635033661",
+    "NREQ-815987da44d885d9b26e344c19f91ec4",
+    "NREQ-9fa2cc71648c5dc6b9108e11fa30a907",
+    "NREQ-f452d6d9747c360cd32bcf10c0621004",
+    "NREQ-0dcdea2d24dd89cf1766c56a526475fe",
+    "NREQ-199b209533de77b95a20b0eb1643cf16",
+    "NREQ-0b21f88ea46121f4ee2e31a60a42c89d",
+    "NREQ-2d4b9b2884094cd29baf608ec7add34a",
+    "NREQ-f8a8cd3ec06ae477be4f81c76839853c",
+    "NREQ-9edfbb4f718e280b00ab026a169d5c82",
+    "NREQ-41d41d17b3c1ff77cd97a8c67612f649",
+    "NREQ-fce94d81254ef46d99185fc4479154ab",
+    "NREQ-9c8f90564722679a1de53d04271507af",
+    "NREQ-ebcc866ebe300ce7fa364aa3aab26399",
+    "NREQ-27b8f090a04eed9f7f2e985f6a522a77",
+    "NREQ-d44f2261b88b15c605415d30a5a6808c",
+    "NREQ-d142c7fdc28fca89cc0808ac4f139a88",
+    "NREQ-bdc4e76f58401f8446bab7870726484d",
+    "NREQ-d39653df3215b90a8c99baf9a1bd9159",
+    "NREQ-48f19763b4e316f2dcfa35798d6fd2c8",
+    "NREQ-bc9a7686dd025e1be45f74dc3be3d409",
+    "NREQ-66aefd8933efadd842d1c534294f80c7",
+    "NREQ-dc4092b553690c6ff536092b678f1429",
+    "NREQ-49747514c9ee074f33a1da51e05ffc5d",
+    "NREQ-8c1e3ffde81018134c6c87e26703cd26",
+    "NREQ-74e6ea08a4d4b4f80c7cbbd9ecbba2da",
+    "NREQ-b9de47eca50dc7fe1dc168ddb8750ee8",
+    "NREQ-b41edbc43345f47c69194d9548ef2e67",
+    "NREQ-25e800aeb4c35e85c6fae222c6c45e29",
+    "NREQ-52a7ff25697aacf0198c066a88dcd6e3",
+    "NREQ-ca2892c71475f28255f2cffa15f78a22",
+    "NREQ-012a241d9bcd419ffc4a0f74aeaae96d",
+    "NREQ-6de9c9204d6c216cc37788696ac64f0a",
+    "NREQ-580bc3c7004a6727b39845b331e55226",
+    "NREQ-6a1b2825cec61581f1f256e72e4168a0",
+    "NREQ-e2d95d6496d83bb4eea0ab4dda803f7e",
+    "NREQ-14d0ea5d1b35fc6772e5aaeaa5be5017",
+    "NREQ-6fcbb974fcb2645f39670b0653b66ec3",
+    "NREQ-fcb023774621ff36164e43552abdc620",
+    "NREQ-5b43ed23d7abe87d71a9ea9157bdb6be",
+    "NREQ-1af7dadea67edf9d176723b7111f5f2b",
+    "NREQ-26d42a163fdde1031ee3b0f197324877",
+    "NREQ-6862050b55b925f563ada54022d289f0",
+    "NREQ-0b0e8a790af8ec641a0d3c0f258b5513",
+    "NREQ-4f12a8976536b556d87ec9cf15abcc35",
+    "NREQ-134d5917727cba8158d3bde46efffde6",
+    "NREQ-22ec4aefcb0880f49839941f8ad6afe4",
+    "NREQ-a9a0a4a0af893f9eae3879caca3890c0",
+    "NREQ-e96085ec87686e587036e736292d8371",
+    "NREQ-d2894dcb74fa33bb5545dca371f4ba31",
+    "NREQ-d586e65bdcff4e900c4f6cc8bca54ace",
+    "NREQ-5448ce2cf55a24405800260c8708d6a2",
+    "NREQ-572d742d97ae4971179b7a5bc68dbec8",
+    "NREQ-90fbbc72368f6cd340a7abfbcf106d26",
+    "NREQ-76ca76506d7eaaa3b56a35de879ee30d",
+    "NREQ-702197e9cbeae283aa499d214a0cc939",
+    "NREQ-ccc5b98ba26af8a94acf26fd2dbf874c",
+    "NREQ-39e6a162af218603577073a60baf6d63",
+    "NREQ-c33004189cb05d134d6481f762d663e8",
+    "NREQ-000c6bb0c8a8e4b2c3c3927b4ef38268",
+    "NREQ-19907173e8abd8ef650f6a15c59242ac",
+    "NREQ-877203feb1322e01a40a06bd93448408",
+    "NREQ-48f185c16c6115df56a4fb1923637b91",
+    "NREQ-df1a22ece1e616aece53667635b587ba",
+    "NREQ-85e6f418700e2e34a88b5b675e0c809d",
+    "NREQ-37c189bad194fc00976f2098cb577340",
+    "NREQ-11e7a90aac91edca695b0bb96f62b8d9",
+    "NREQ-f7715ff50064d88b1c09f4ab59a44667",
+    "NREQ-375edb6c718e950546986ffc2dab975e",
+    "NREQ-8b3b5d32c03e53ecdfd89ef62cdaddc0",
+    "NREQ-0a39a20ba9136ac21290e0c0d59e6687",
+    "NREQ-dfacb25b7a9b7d85c7d33f4f00f85142",
+    "NREQ-59b17b753c7368f689a749a91d5429fd",
+    "NREQ-6314a5cf24ac091496ca2b9ddc2161c4",
+    "NREQ-84a6053224fabf0dfbe7b10a2f8c34d0",
+    "NREQ-c1b9da6347d95bff8353ba71a09c06f3",
+    "NREQ-75da8fceaa3befc844b115da0b3a6c96",
+    "NREQ-22cba036622fb7acf602b64749da437c",
+    "NREQ-16e77e21d7ead64b3d45e289e7ba197b",
+    "NREQ-b9c0624d0d195c1856a0f6ad8d0a23f4",
+    "NREQ-ef447cc63de40b1f96fb2b724eb3500c",
+    "NREQ-6e8f7136233726a24a1a93348ace13f9",
+    "NREQ-203770d3b531a7c7ccce1a1fdcf10971",
+    "NREQ-66428f46e9cec84715936d7edde40543",
+    "NREQ-17312122bf767d43c5f94c040fcbe60a",
+    "NREQ-a529bccd54dd65cae18fe1cd669a993f",
+    "NREQ-6253fbb7c9c510c25ff583f323bc80ae",
+    "NREQ-1e508103a9c979606c010a86205f8cd2",
+    "NREQ-4d7e6db563cee845914d3af534675aa6",
+    "NREQ-e45a814f3be0fad3f3aa491c46f945e4",
+    "NREQ-bc304efbebe90c59a845aa824fa1fa46",
+    "NREQ-7bab72450f02353f0a7c018dda6e90d1",
+    "NREQ-12e724e5ebf5bf7c92f8155c554cdd62",
+    "NREQ-fa08ca005ef551a6293cb74a64605e32",
+    "NREQ-fb7327201b8189f393bb09f22f78ccff",
+    "NREQ-87764a5ce895d518843b28e293f15b5c",
+    "NREQ-4067beaa08d4b29594067f66b6c3967d",
+    "NREQ-d65f07e024b35fc8f1ee696920e99323",
+    "NREQ-ef39db1dcfa049e931184486988e05d1",
+    "NREQ-7e7da33f5f90a27a2c0272338cd2fd1a",
+    "NREQ-1cd33b283075cbf77189c90af689e662",
+    "NREQ-b42338a15b35d6bfed972cf88a0779c5",
+    "NREQ-ada1754a2c2ff6349f551f69c7abb990",
+    "NREQ-e92606ccbe876cab242c84024c1b98c6",
+    "NREQ-bee91c84a54a9c97f50f66662c0cf3de",
+    "NREQ-d4e8bda6bbf0e63761b66a1569af9edc",
+    "NREQ-185837f667e7b7c9444db61fcdfbbeb2",
+    "NREQ-236ad01b5850deede1efc274b908e454",
+    "NREQ-50ac3b407f2bc0593dc046cbfb4bc7fb",
+    "NREQ-9fed9cd18ff06f0cae47a5783a07e9d3",
+    "NREQ-5da60c7e3155d948c2a92ee0b145a4cc",
+    "NREQ-064d05787f3a309601db4b76962ce9c2",
+    "NREQ-ff8608e0e1a3dd843841364d317109dc",
+    "NREQ-759019edfbe16efc6e87a2c28fa92696",
+    "NREQ-6fba805af6e68a9ee52d32a8c2e7d180",
+    "NREQ-36bb5b0034b3fc179a70b4507c2e6fae",
+    "NREQ-55bb86c89648db3c5886f53e05eaf2c9",
+    "NREQ-7c8e4409c5ea6fb4d104929316a7b75f",
+    "NREQ-1aa9a4ad7ec0a8a7c87d1486e34e7ded",
+    "NREQ-fa6c97be613ce3bf8943a0934a6bf6ac",
+    "NREQ-97ad94b4b17c9b5b83e33654bb7a4622",
+    "NREQ-0c9bb08e6a88ccb2edaa4e1f2bfcc7fe",
+    "NREQ-4b1d3549718d5a89a8982b66cc267956",
+    "NREQ-bfa92839e41f60e1e0c74b5785bdb725",
+    "NREQ-6e19f07a23e457d5728f4904501fd8fc",
+    "NREQ-1c568aa27de187bc735648a2037c7680",
+    "NREQ-79e5696b66602617b9a30fa15a94c2d5",
+    "NREQ-5021ffc7477b792d9818ed8b484e3324",
+    "NREQ-ecb01fc1efddfa6e21ba2fd019ea6cfd",
+    "NREQ-a525c5aa57e2331e7176580de204c63a",
+    "NREQ-707484810e805693543128eb1efcd0a5",
+    "NREQ-16668283d88b852d9e2b5e24c3a3a189",
+    "NREQ-87cf8d15f46d36038d8eb9d31013693a",
+    "NREQ-65398c314b5da32ce6706d679105b8c4",
+    "NREQ-194d79584395cdf89385a316fe7208bc",
+    "NREQ-147b5b6812e469b79d4c6d584a49ae6f",
+    "NREQ-12b7c6720057d5ddf693caffc6942b82",
+    "NREQ-61022f043e6b023076be8c192425d92d",
+    "NREQ-7b8c21b4aaa9bcfa538a626e2e0ea60f",
+    "NREQ-d14f0c90af78c02262354688d2ca659b",
+    "NREQ-aa192edd9c61d34cf37ed8fc14da0702",
+    "NREQ-69fdf25edd5d89574b4c6e07f698eee0",
+    "NREQ-1d9ffb50545c7298ad02eb7d1371da0e"
+  ],
+  "perMemberNewDisposition": [
+    {
+      "predecessorNormativeRequirementId": "NREQ-f35f5e08c500a365b190deef7d39bab6",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f35f5e08c500a365b190deef7d39bab6",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/0"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a2af6f728dbfd0b97f4e556b7f6f0308",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a2af6f728dbfd0b97f4e556b7f6f0308",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/1"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-69e2010ea0efb3ea73a0562dad43b549",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-69e2010ea0efb3ea73a0562dad43b549",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/2"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9e7251c4b6a6414d44b6cfd1084ffa6d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-9e7251c4b6a6414d44b6cfd1084ffa6d",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/3"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c619c0d5c14b259032490ccac64ce4fc",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c619c0d5c14b259032490ccac64ce4fc",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/4"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-78c90561b13730c1d219b5f00abb928b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-78c90561b13730c1d219b5f00abb928b",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/5"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b1dc29725cced787dcbd4608880b859b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b1dc29725cced787dcbd4608880b859b",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/6"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-04d735c6af64483fc16d0fd4c4c19d5c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-04d735c6af64483fc16d0fd4c4c19d5c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/7"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d4a00c2a44ae6fac4be0557f603ccf12",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d4a00c2a44ae6fac4be0557f603ccf12",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/8"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bc626ab0dbb07e104c4cdb44d04572a4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-bc626ab0dbb07e104c4cdb44d04572a4",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/9"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d48a6041f309c2f9cf37c55740009867",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d48a6041f309c2f9cf37c55740009867",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/10"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b9d90b4bdbf399873a0f8a15ac6fea37",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b9d90b4bdbf399873a0f8a15ac6fea37",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/11"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f175f9d03e289f5cc0b48cb062fcc492",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f175f9d03e289f5cc0b48cb062fcc492",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/12"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0aebdac6eeb95950b4482bcc03440369",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0aebdac6eeb95950b4482bcc03440369",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/13"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-889a0185d94022e8785c75fe55abc624",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-889a0185d94022e8785c75fe55abc624",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/14"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-924fb66bc67f90f2ef184b98c3f8e064",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-924fb66bc67f90f2ef184b98c3f8e064",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/15"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-201df0f29f71f03983d4e067a21ab666",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-201df0f29f71f03983d4e067a21ab666",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/16"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1118b3312622fd6d93a9072ee0c88554",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1118b3312622fd6d93a9072ee0c88554",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/17"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7c6d88fe311626151dbe36800bbb20c1",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-6b7dc28edab882e75c8bf68a56a2d997",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/18"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4df8df2506480d9344e70e8914aa2e99",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4df8df2506480d9344e70e8914aa2e99",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/19"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4aa8acfae7491def6f648c1370632312",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4aa8acfae7491def6f648c1370632312",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/20"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bd06b85e4e4f24b209f70a3f49470efe",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-bd06b85e4e4f24b209f70a3f49470efe",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/21"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4d7bd7923bbfe6d2a7d5885527a14bf8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4d7bd7923bbfe6d2a7d5885527a14bf8",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/22"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0fb677bdcd7d72f9375bf311d8cc483d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0fb677bdcd7d72f9375bf311d8cc483d",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/23"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-60de305985d6cd5915281d16a5ea8fb4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-60de305985d6cd5915281d16a5ea8fb4",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/24"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6c5dc8e04ee531b292e4a197ab7c471f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6c5dc8e04ee531b292e4a197ab7c471f",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/25"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f842cdd62720590f94afc86b03abdb78",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f842cdd62720590f94afc86b03abdb78",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/26"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4e90dc219afb4eeb719167f900661eec",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4e90dc219afb4eeb719167f900661eec",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/27"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c0d290682345450e2f87eb2ccf2096e6",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c0d290682345450e2f87eb2ccf2096e6",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/28"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c8b06ea7b97bdd3c25071a4ab35b89c6",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c8b06ea7b97bdd3c25071a4ab35b89c6",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/29"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-91ebefe10ae828db84025171b58a243c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-91ebefe10ae828db84025171b58a243c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/30"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c876d26a81fb51f9061dda486701b0d5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c876d26a81fb51f9061dda486701b0d5",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/31"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ec975b55324c333902513b96bc8bf61c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ec975b55324c333902513b96bc8bf61c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/32"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a14f943d92fdbc8445f9c7ee0f502135",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a14f943d92fdbc8445f9c7ee0f502135",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/33"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-992de65f5a0215de78afb0a8c6992b81",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-992de65f5a0215de78afb0a8c6992b81",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/34"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-72eccbe09cc7b06dcd0378758c6df116",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-72eccbe09cc7b06dcd0378758c6df116",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/35"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8a97393bd8071753cf5fecaf983ab8ef",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8a97393bd8071753cf5fecaf983ab8ef",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/36"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a8e9c0b4c078621af32c7cc065d7884a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a8e9c0b4c078621af32c7cc065d7884a",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/37"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-54403bc057e3aa4ebc1be42b24f3d6a5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-54403bc057e3aa4ebc1be42b24f3d6a5",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/38"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e5cc22ee28fb39963751c4b2729c0936",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e5cc22ee28fb39963751c4b2729c0936",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/39"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a545ec19bee765dea92d0aee31823cb4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a545ec19bee765dea92d0aee31823cb4",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/40"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-39c2ef338f0553c32aedb992412e9bf8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-39c2ef338f0553c32aedb992412e9bf8",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/41"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d605e26705f4fb702633ee789c8c3242",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d605e26705f4fb702633ee789c8c3242",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/42"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-46c6952d9075df3f33b901dafca7c5bb",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-46c6952d9075df3f33b901dafca7c5bb",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/43"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b95e32bbccfbfed4215bf0ccf5284238",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b95e32bbccfbfed4215bf0ccf5284238",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/44"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b90623875cbce0cc934ceac1069c3b24",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b90623875cbce0cc934ceac1069c3b24",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/45"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-400d6440a63c9b7216d43fc8da9603bc",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-400d6440a63c9b7216d43fc8da9603bc",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/46"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-3a13f889024b734d9a9d196145f771e8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-3a13f889024b734d9a9d196145f771e8",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/47"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0ac043e2fe608181d1f0aaf500c93048",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0ac043e2fe608181d1f0aaf500c93048",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/48"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-26ba1becb4f6dd924986519718231504",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-26ba1becb4f6dd924986519718231504",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/49"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4dc886b554a8369a873863dd88b2c251",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4dc886b554a8369a873863dd88b2c251",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/50"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a8f41252c2bdf47158b8ec012009c324",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a8f41252c2bdf47158b8ec012009c324",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/51"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-cd7b9659d704e83e9402f0f0e1ac9d84",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-cd7b9659d704e83e9402f0f0e1ac9d84",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/52"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8971301ae2457cec17426dc7cd01390a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8971301ae2457cec17426dc7cd01390a",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/53"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5464a749b32650b37e9c86a68864a385",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5464a749b32650b37e9c86a68864a385",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/54"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-444c3a58702c2234b4ea239566f205e4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-444c3a58702c2234b4ea239566f205e4",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/55"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-303a209ee62e1bf2fc2a04d21cabd8f9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-303a209ee62e1bf2fc2a04d21cabd8f9",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/56"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-21f4a484537fda305f32bb3202599165",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-21f4a484537fda305f32bb3202599165",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/57"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a28a53360a8626fc623645ec8112c68a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a28a53360a8626fc623645ec8112c68a",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/58"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ad0fb0d55b85718a46ec797cd828790a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ad0fb0d55b85718a46ec797cd828790a",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/59"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ad7789bf824839f139607faa1f83b1c0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ad7789bf824839f139607faa1f83b1c0",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/60"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-2bfb01c46856a431ae4d0ced47220ffa",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-2bfb01c46856a431ae4d0ced47220ffa",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/61"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f1a982c6bf08aa95dd475e4f24ce8dfa",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f1a982c6bf08aa95dd475e4f24ce8dfa",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/62"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-297b626bce4edd6ed6c08bb90d6af513",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-297b626bce4edd6ed6c08bb90d6af513",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/63"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f38fcb288951f3e988b235ee1f10bfda",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f38fcb288951f3e988b235ee1f10bfda",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/64"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e1cbbe8944a964a14c47c16fefa0125b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e1cbbe8944a964a14c47c16fefa0125b",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/65"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-54e1d1ae234545d4da9e7dddd3606b79",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-54e1d1ae234545d4da9e7dddd3606b79",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/66"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e8ffd20476cd4296babe265e53f9194c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e8ffd20476cd4296babe265e53f9194c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/67"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1bd38356e74a102b312f1e47f8395418",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1bd38356e74a102b312f1e47f8395418",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/68"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ae0e9290dee2514cf6ceb3e8a04a9b02",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ae0e9290dee2514cf6ceb3e8a04a9b02",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/69"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4c7406829a9970071704aa8f1d2aedd3",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4c7406829a9970071704aa8f1d2aedd3",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/70"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bb6b2eec737d04b001b123714cd90685",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-bb6b2eec737d04b001b123714cd90685",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/71"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8e31e916642ec7aba9df0636be53a5a0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8e31e916642ec7aba9df0636be53a5a0",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/72"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-089b06a528834c90c56cbe2d0730b74f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-089b06a528834c90c56cbe2d0730b74f",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/73"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7195b5ac84760398d415ed205eb6ca1b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7195b5ac84760398d415ed205eb6ca1b",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/74"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ddc83da037c3d8a21fc59594ef980f68",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ddc83da037c3d8a21fc59594ef980f68",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/75"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-2e905e790d5908f3d38481dc11b92740",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-2e905e790d5908f3d38481dc11b92740",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/76"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-893424d74be63610b963aabf4eff3794",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-893424d74be63610b963aabf4eff3794",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/77"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b5334cb1d67a97d96d93bcf4255f0680",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b5334cb1d67a97d96d93bcf4255f0680",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/78"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-42bb78927601f61dfe8778bf21bc41c4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-42bb78927601f61dfe8778bf21bc41c4",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/79"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-648aa7bba577b35558899456bbec19b3",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-648aa7bba577b35558899456bbec19b3",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/80"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c4f0dd974604a1387741767761818d87",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c4f0dd974604a1387741767761818d87",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/81"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9cfa1e7f94432ba32dac64c09c593409",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-9cfa1e7f94432ba32dac64c09c593409",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/82"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4e4af8128da52c72d2f6cdd230b014be",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4e4af8128da52c72d2f6cdd230b014be",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/83"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-416928045029c92d89c66ea429aa1ac2",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-416928045029c92d89c66ea429aa1ac2",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/84"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f271071fba617a5962a31f041da264ad",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f271071fba617a5962a31f041da264ad",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/85"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-750c91aac33d627bd95e4826a37ba54f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-750c91aac33d627bd95e4826a37ba54f",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/86"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-550a5da760713ffe68d16c3208c29ff8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-550a5da760713ffe68d16c3208c29ff8",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/87"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5cb818c548ae0a4715f39e51f89d7391",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5cb818c548ae0a4715f39e51f89d7391",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/88"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ddeafefc5caa358ff6c35264823e4a30",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ddeafefc5caa358ff6c35264823e4a30",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/89"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b02893faa6107bfb1c58fe983ef109e7",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b02893faa6107bfb1c58fe983ef109e7",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/90"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-958140809e4209f407633656b2ff3b68",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-958140809e4209f407633656b2ff3b68",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/91"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a07f45f2f8255b1ec90f22145cab4beb",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-69d796b8b4c5039f431e0467e48901a6",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/92"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d95d049b7085a194d4cd94693eacb6aa",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d95d049b7085a194d4cd94693eacb6aa",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/93"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-799bec938a8020a19f406fcbe001ac01",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-799bec938a8020a19f406fcbe001ac01",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/94"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-12dfd4fdb9b5167b2f981358b257bf67",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-12dfd4fdb9b5167b2f981358b257bf67",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/95"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0fb3419586a296b20413f74ef2dd4d73",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-f0effa970d6dd72d4e3dca698392cb83",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/96"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0245d669571dbf92adf567a484c30e26",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0245d669571dbf92adf567a484c30e26",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/97"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9e270ba50227b5ea325a3a5e50ea1c8e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-9e270ba50227b5ea325a3a5e50ea1c8e",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/98"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0db7b854f960806452234e6fd0cf3f64",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-548a14dd3e232917b59b0b0c7b919ac1",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/99"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d5717d319159b1a471464f3b6083450f",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-e7317b8c61b1e1904aea5c79c28184f2",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/100"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0e5c6514b836643280a5be30d2d8bd0c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0e5c6514b836643280a5be30d2d8bd0c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/101"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6447341fa493242e7582ec02f80fbf71",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6447341fa493242e7582ec02f80fbf71",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/102"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-956f5f15d1a6f4fd36b0525c292e9122",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-956f5f15d1a6f4fd36b0525c292e9122",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/103"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-776fc375125b382a4b55dc39cc6e074e",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-fc65cf823b215d59f837184e9f1eff8d",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/104"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-72090356ed56cdd30f776d47c6e7063c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-72090356ed56cdd30f776d47c6e7063c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/105"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f672c76827cdedcd88f56247e6e81dc3",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f672c76827cdedcd88f56247e6e81dc3",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/106"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-376724bde9ff55e968a3eb24130dc306",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-376724bde9ff55e968a3eb24130dc306",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/107"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d72a190aa6c5e49cab447621e29f10c0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d72a190aa6c5e49cab447621e29f10c0",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/108"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f734aa1065af4dbdc6f8b09b18499a7d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f734aa1065af4dbdc6f8b09b18499a7d",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/109"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0b47a70b437098b3d080314eeed8e475",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0b47a70b437098b3d080314eeed8e475",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/110"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-56acb070c8461fafe61623e2b3950d67",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-56acb070c8461fafe61623e2b3950d67",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/111"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9642b5e59c4deb52ab827680b5284d5b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-9642b5e59c4deb52ab827680b5284d5b",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/112"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-3c2342401866b063b6ccde3255bfe7c4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-3c2342401866b063b6ccde3255bfe7c4",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/113"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a31c4930829b9d4ec26bb7184c627a3f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a31c4930829b9d4ec26bb7184c627a3f",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/114"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f20a8900acf9f33b2b1276138cb2eabb",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f20a8900acf9f33b2b1276138cb2eabb",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/115"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a2b6942e825a969ac41d231a9331ee44",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-8ba2a2bfa27f404acd3ac238b0166ea5",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [
+        "SRC-AMBIGUITY-XML-SUBNODE-ROOT"
+      ],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/116"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d6f7a5de2d34e11a9530c2950bb701b0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d6f7a5de2d34e11a9530c2950bb701b0",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/117"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e280fc4fc2a0bfd54acc297e16408fb8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e280fc4fc2a0bfd54acc297e16408fb8",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/118"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0d5b87cba5e8e16b2c94d36688718643",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0d5b87cba5e8e16b2c94d36688718643",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/119"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a93a7d2a08f68ae70ee00975904a262f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a93a7d2a08f68ae70ee00975904a262f",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/120"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ef99093bd9e624c4db9587a1f91fa03e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ef99093bd9e624c4db9587a1f91fa03e",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/121"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1a19eda7b0ccf12a4509950085f6c327",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1a19eda7b0ccf12a4509950085f6c327",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/122"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6e8c4c3cf4ff4fcc8a891f5bdf196c1e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6e8c4c3cf4ff4fcc8a891f5bdf196c1e",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/123"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-2d61c131be152535a8ff8a1d8f61703d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-2d61c131be152535a8ff8a1d8f61703d",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/124"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-54e813438ad364b5cd013cff8f5ba46b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-54e813438ad364b5cd013cff8f5ba46b",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/125"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-03e4715b27bd9888ba640a3abd4155f8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-03e4715b27bd9888ba640a3abd4155f8",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/126"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f08275cda1d539cc5cb8818f5b28674c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f08275cda1d539cc5cb8818f5b28674c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/127"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a40ea7d43246510ed516c7bb44f4ee6a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a40ea7d43246510ed516c7bb44f4ee6a",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/128"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5fb139243fac0b3abb22620ccff1933c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5fb139243fac0b3abb22620ccff1933c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/129"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-42431e5f0c58b0523f7975f82c64d269",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-42431e5f0c58b0523f7975f82c64d269",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/130"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d0f2b63d0534170e6330cbc80f1ff2f6",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d0f2b63d0534170e6330cbc80f1ff2f6",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/131"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b0ebaea8f67e0c91889405bbd39205e5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b0ebaea8f67e0c91889405bbd39205e5",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/132"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6ef3b69138d64ec0e9b815453fd70cc3",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6ef3b69138d64ec0e9b815453fd70cc3",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/133"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-39403d96d1cdabcc4a5f2cccdd5fed22",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-39403d96d1cdabcc4a5f2cccdd5fed22",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/134"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-079d6f09bfa9eb5afd0f027a39077ada",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-079d6f09bfa9eb5afd0f027a39077ada",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/135"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-3102ef1bce73f4fdd24be7126bc6e12c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-3102ef1bce73f4fdd24be7126bc6e12c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/136"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d5cf2a92e4ad27bf6cd85b67b8f450cb",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d5cf2a92e4ad27bf6cd85b67b8f450cb",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/137"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e35df367c3ab411bc13e30e71a4db767",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e35df367c3ab411bc13e30e71a4db767",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/138"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-3cfa5430873a433311566505ccf980f2",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-3cfa5430873a433311566505ccf980f2",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/139"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-05dcfe997ccade7a50cebb9b74904bb9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-05dcfe997ccade7a50cebb9b74904bb9",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/140"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-199d2a59cd78428e891c5104c71b3791",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-199d2a59cd78428e891c5104c71b3791",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/141"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9d6f4c32813024803c7dfd02bcc88201",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-9d6f4c32813024803c7dfd02bcc88201",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/142"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7dd4be3631d1b429bc29e3efb1b9b3f7",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7dd4be3631d1b429bc29e3efb1b9b3f7",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/143"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-afb932a32334c788359a43f4344ccc2f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-afb932a32334c788359a43f4344ccc2f",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/144"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e242a71d58bfaf151a6488d456a733af",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e242a71d58bfaf151a6488d456a733af",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/145"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5ea3e8779756af3a62e12cdd2a2bbc4a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5ea3e8779756af3a62e12cdd2a2bbc4a",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/146"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-85d0651639b88fff949a74e8cde0c29f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-85d0651639b88fff949a74e8cde0c29f",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/147"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5d1f81a44d8af281153e55a38c4fe16f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5d1f81a44d8af281153e55a38c4fe16f",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/148"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c21efa04c067eb92cefba1c6ef2c5803",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c21efa04c067eb92cefba1c6ef2c5803",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/149"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-02da50c7388cd8f8c76336ecea9a1b47",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-02da50c7388cd8f8c76336ecea9a1b47",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/150"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-24635dda1f07f96c2b59ac2e01399f8e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-24635dda1f07f96c2b59ac2e01399f8e",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/151"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-10e0b7c080f523b63d43ad63076d976a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-10e0b7c080f523b63d43ad63076d976a",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/152"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-97b24115a1976172847819c108edbd9b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-97b24115a1976172847819c108edbd9b",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/153"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-126e9ca54992672736a726c05dbc8fc7",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-126e9ca54992672736a726c05dbc8fc7",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/154"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-327d1eedd9060111a49c61f867d23f5c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-327d1eedd9060111a49c61f867d23f5c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/155"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bf148a519e953f5b7c0e8c338db1c8f7",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-bf148a519e953f5b7c0e8c338db1c8f7",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/156"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-72e90b9087ef64176a9b266002564ef3",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-72e90b9087ef64176a9b266002564ef3",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/157"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b667165db963df027d15d3c1e3cdc26e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b667165db963df027d15d3c1e3cdc26e",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/158"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8dbb1358ba8f68941910f7b8f8acbc97",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8dbb1358ba8f68941910f7b8f8acbc97",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/159"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c87cbb920606b84f714d71f568e7251a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c87cbb920606b84f714d71f568e7251a",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/160"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-eda0687b24b63d21aec02534e0e2b72c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-eda0687b24b63d21aec02534e0e2b72c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/161"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ef716118f4c4ac1c560e6275acf26653",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ef716118f4c4ac1c560e6275acf26653",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/162"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-fcaf9b9600ec7205f643ac375e83f678",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-fcaf9b9600ec7205f643ac375e83f678",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/163"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-35e0c1754d0383413861859f15f8ec64",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-35e0c1754d0383413861859f15f8ec64",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/164"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c85d9ff9c7164829cb747473fbeb76aa",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c85d9ff9c7164829cb747473fbeb76aa",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/165"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7929a876816c5e03098b5e45ff357218",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7929a876816c5e03098b5e45ff357218",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/166"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c32dea39cacd2499a873447beb03568b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c32dea39cacd2499a873447beb03568b",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/167"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-924dc9157641c9c21e7a591b6cc0a5a1",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-924dc9157641c9c21e7a591b6cc0a5a1",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/168"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d8e8715c0652ea88664c2a84409fe403",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d8e8715c0652ea88664c2a84409fe403",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/169"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-08bb174f9f82b83d857d916b655647be",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-08bb174f9f82b83d857d916b655647be",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/170"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4bb0c70e53aff20a4eaf7cd68b84b201",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4bb0c70e53aff20a4eaf7cd68b84b201",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/171"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-239fd2e7a33caf835f538d9e2b37e2a6",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-239fd2e7a33caf835f538d9e2b37e2a6",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/172"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-385be662d5b3878907d6cc5f2b97d390",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-385be662d5b3878907d6cc5f2b97d390",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/173"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-009a75378a19c9a9fe4779d635033661",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-009a75378a19c9a9fe4779d635033661",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/174"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-815987da44d885d9b26e344c19f91ec4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-815987da44d885d9b26e344c19f91ec4",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/175"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9fa2cc71648c5dc6b9108e11fa30a907",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-9fa2cc71648c5dc6b9108e11fa30a907",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/176"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f452d6d9747c360cd32bcf10c0621004",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f452d6d9747c360cd32bcf10c0621004",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/177"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0dcdea2d24dd89cf1766c56a526475fe",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0dcdea2d24dd89cf1766c56a526475fe",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/178"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-199b209533de77b95a20b0eb1643cf16",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-199b209533de77b95a20b0eb1643cf16",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/179"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0b21f88ea46121f4ee2e31a60a42c89d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0b21f88ea46121f4ee2e31a60a42c89d",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/180"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-2d4b9b2884094cd29baf608ec7add34a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-2d4b9b2884094cd29baf608ec7add34a",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/181"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f8a8cd3ec06ae477be4f81c76839853c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f8a8cd3ec06ae477be4f81c76839853c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/182"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9edfbb4f718e280b00ab026a169d5c82",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-5d28378f215f0d6609d19c1851da994c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [
+        "SRC-GAP-DECODER-SUBSET"
+      ],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/183"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-41d41d17b3c1ff77cd97a8c67612f649",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-41d41d17b3c1ff77cd97a8c67612f649",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/184"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-fce94d81254ef46d99185fc4479154ab",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-fce94d81254ef46d99185fc4479154ab",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/185"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9c8f90564722679a1de53d04271507af",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-c374a9e1b6d74a722851ec7563d10419",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [
+        "SRC-AMBIGUITY-XML-SUBNODE-ROOT"
+      ],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/186"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ebcc866ebe300ce7fa364aa3aab26399",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ebcc866ebe300ce7fa364aa3aab26399",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/187"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-27b8f090a04eed9f7f2e985f6a522a77",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-27b8f090a04eed9f7f2e985f6a522a77",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/188"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d44f2261b88b15c605415d30a5a6808c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d44f2261b88b15c605415d30a5a6808c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/189"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d142c7fdc28fca89cc0808ac4f139a88",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d142c7fdc28fca89cc0808ac4f139a88",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/190"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bdc4e76f58401f8446bab7870726484d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-bdc4e76f58401f8446bab7870726484d",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/191"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d39653df3215b90a8c99baf9a1bd9159",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d39653df3215b90a8c99baf9a1bd9159",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/192"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-48f19763b4e316f2dcfa35798d6fd2c8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-48f19763b4e316f2dcfa35798d6fd2c8",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/193"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bc9a7686dd025e1be45f74dc3be3d409",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-bc9a7686dd025e1be45f74dc3be3d409",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/194"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-66aefd8933efadd842d1c534294f80c7",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-66aefd8933efadd842d1c534294f80c7",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/195"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-dc4092b553690c6ff536092b678f1429",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-dc4092b553690c6ff536092b678f1429",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/196"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-49747514c9ee074f33a1da51e05ffc5d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-49747514c9ee074f33a1da51e05ffc5d",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/197"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8c1e3ffde81018134c6c87e26703cd26",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8c1e3ffde81018134c6c87e26703cd26",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/198"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-74e6ea08a4d4b4f80c7cbbd9ecbba2da",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-a6947137fa8596574689aef71503ccf5",
+      "proposalAdjudication": "REJECTED_AS_PROPOSED_CORRECTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/199"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b9de47eca50dc7fe1dc168ddb8750ee8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b9de47eca50dc7fe1dc168ddb8750ee8",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/200"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b41edbc43345f47c69194d9548ef2e67",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b41edbc43345f47c69194d9548ef2e67",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/201"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-25e800aeb4c35e85c6fae222c6c45e29",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-25e800aeb4c35e85c6fae222c6c45e29",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/202"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-52a7ff25697aacf0198c066a88dcd6e3",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-52a7ff25697aacf0198c066a88dcd6e3",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/203"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ca2892c71475f28255f2cffa15f78a22",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ca2892c71475f28255f2cffa15f78a22",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/204"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-012a241d9bcd419ffc4a0f74aeaae96d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-012a241d9bcd419ffc4a0f74aeaae96d",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/205"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6de9c9204d6c216cc37788696ac64f0a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6de9c9204d6c216cc37788696ac64f0a",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/206"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-580bc3c7004a6727b39845b331e55226",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-580bc3c7004a6727b39845b331e55226",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/207"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6a1b2825cec61581f1f256e72e4168a0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6a1b2825cec61581f1f256e72e4168a0",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/208"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e2d95d6496d83bb4eea0ab4dda803f7e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e2d95d6496d83bb4eea0ab4dda803f7e",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/209"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-14d0ea5d1b35fc6772e5aaeaa5be5017",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-14d0ea5d1b35fc6772e5aaeaa5be5017",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/210"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6fcbb974fcb2645f39670b0653b66ec3",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6fcbb974fcb2645f39670b0653b66ec3",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/211"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-fcb023774621ff36164e43552abdc620",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-fcb023774621ff36164e43552abdc620",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/212"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5b43ed23d7abe87d71a9ea9157bdb6be",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5b43ed23d7abe87d71a9ea9157bdb6be",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/213"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1af7dadea67edf9d176723b7111f5f2b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1af7dadea67edf9d176723b7111f5f2b",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/214"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-26d42a163fdde1031ee3b0f197324877",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-26d42a163fdde1031ee3b0f197324877",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/215"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6862050b55b925f563ada54022d289f0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6862050b55b925f563ada54022d289f0",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/216"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0b0e8a790af8ec641a0d3c0f258b5513",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0b0e8a790af8ec641a0d3c0f258b5513",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/217"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4f12a8976536b556d87ec9cf15abcc35",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4f12a8976536b556d87ec9cf15abcc35",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/218"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-134d5917727cba8158d3bde46efffde6",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-134d5917727cba8158d3bde46efffde6",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/219"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-22ec4aefcb0880f49839941f8ad6afe4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-22ec4aefcb0880f49839941f8ad6afe4",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/220"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a9a0a4a0af893f9eae3879caca3890c0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a9a0a4a0af893f9eae3879caca3890c0",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/221"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e96085ec87686e587036e736292d8371",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e96085ec87686e587036e736292d8371",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/222"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d2894dcb74fa33bb5545dca371f4ba31",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d2894dcb74fa33bb5545dca371f4ba31",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/223"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d586e65bdcff4e900c4f6cc8bca54ace",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d586e65bdcff4e900c4f6cc8bca54ace",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/224"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5448ce2cf55a24405800260c8708d6a2",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5448ce2cf55a24405800260c8708d6a2",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/225"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-572d742d97ae4971179b7a5bc68dbec8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-572d742d97ae4971179b7a5bc68dbec8",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/226"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-90fbbc72368f6cd340a7abfbcf106d26",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-90fbbc72368f6cd340a7abfbcf106d26",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/227"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-76ca76506d7eaaa3b56a35de879ee30d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-76ca76506d7eaaa3b56a35de879ee30d",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/228"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-702197e9cbeae283aa499d214a0cc939",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-702197e9cbeae283aa499d214a0cc939",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/229"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ccc5b98ba26af8a94acf26fd2dbf874c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ccc5b98ba26af8a94acf26fd2dbf874c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/230"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-39e6a162af218603577073a60baf6d63",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-39e6a162af218603577073a60baf6d63",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/231"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c33004189cb05d134d6481f762d663e8",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c33004189cb05d134d6481f762d663e8",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/232"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-000c6bb0c8a8e4b2c3c3927b4ef38268",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-000c6bb0c8a8e4b2c3c3927b4ef38268",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/233"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-19907173e8abd8ef650f6a15c59242ac",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-19907173e8abd8ef650f6a15c59242ac",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/234"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-877203feb1322e01a40a06bd93448408",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-877203feb1322e01a40a06bd93448408",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/235"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-48f185c16c6115df56a4fb1923637b91",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-48f185c16c6115df56a4fb1923637b91",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/236"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-df1a22ece1e616aece53667635b587ba",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-df1a22ece1e616aece53667635b587ba",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/237"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-85e6f418700e2e34a88b5b675e0c809d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-85e6f418700e2e34a88b5b675e0c809d",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/238"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-37c189bad194fc00976f2098cb577340",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-37c189bad194fc00976f2098cb577340",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/239"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-11e7a90aac91edca695b0bb96f62b8d9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-11e7a90aac91edca695b0bb96f62b8d9",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/240"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-f7715ff50064d88b1c09f4ab59a44667",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-f7715ff50064d88b1c09f4ab59a44667",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/241"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-375edb6c718e950546986ffc2dab975e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-375edb6c718e950546986ffc2dab975e",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/242"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-8b3b5d32c03e53ecdfd89ef62cdaddc0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-8b3b5d32c03e53ecdfd89ef62cdaddc0",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/243"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0a39a20ba9136ac21290e0c0d59e6687",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0a39a20ba9136ac21290e0c0d59e6687",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/244"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-dfacb25b7a9b7d85c7d33f4f00f85142",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-dfacb25b7a9b7d85c7d33f4f00f85142",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/245"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-59b17b753c7368f689a749a91d5429fd",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-59b17b753c7368f689a749a91d5429fd",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/246"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6314a5cf24ac091496ca2b9ddc2161c4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6314a5cf24ac091496ca2b9ddc2161c4",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/247"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-84a6053224fabf0dfbe7b10a2f8c34d0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-84a6053224fabf0dfbe7b10a2f8c34d0",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/248"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-c1b9da6347d95bff8353ba71a09c06f3",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-c1b9da6347d95bff8353ba71a09c06f3",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/249"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-75da8fceaa3befc844b115da0b3a6c96",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-75da8fceaa3befc844b115da0b3a6c96",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/250"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-22cba036622fb7acf602b64749da437c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-22cba036622fb7acf602b64749da437c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/251"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-16e77e21d7ead64b3d45e289e7ba197b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-16e77e21d7ead64b3d45e289e7ba197b",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/252"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b9c0624d0d195c1856a0f6ad8d0a23f4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b9c0624d0d195c1856a0f6ad8d0a23f4",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/253"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ef447cc63de40b1f96fb2b724eb3500c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ef447cc63de40b1f96fb2b724eb3500c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/254"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6e8f7136233726a24a1a93348ace13f9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6e8f7136233726a24a1a93348ace13f9",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/255"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-203770d3b531a7c7ccce1a1fdcf10971",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-203770d3b531a7c7ccce1a1fdcf10971",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/256"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-66428f46e9cec84715936d7edde40543",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-66428f46e9cec84715936d7edde40543",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/257"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-17312122bf767d43c5f94c040fcbe60a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-17312122bf767d43c5f94c040fcbe60a",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/258"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a529bccd54dd65cae18fe1cd669a993f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a529bccd54dd65cae18fe1cd669a993f",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/259"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6253fbb7c9c510c25ff583f323bc80ae",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6253fbb7c9c510c25ff583f323bc80ae",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/260"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1e508103a9c979606c010a86205f8cd2",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1e508103a9c979606c010a86205f8cd2",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/261"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4d7e6db563cee845914d3af534675aa6",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4d7e6db563cee845914d3af534675aa6",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/262"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e45a814f3be0fad3f3aa491c46f945e4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e45a814f3be0fad3f3aa491c46f945e4",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/263"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bc304efbebe90c59a845aa824fa1fa46",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-bc304efbebe90c59a845aa824fa1fa46",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/264"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7bab72450f02353f0a7c018dda6e90d1",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7bab72450f02353f0a7c018dda6e90d1",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/265"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-12e724e5ebf5bf7c92f8155c554cdd62",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-12e724e5ebf5bf7c92f8155c554cdd62",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/266"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-fa08ca005ef551a6293cb74a64605e32",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-fa08ca005ef551a6293cb74a64605e32",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/267"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-fb7327201b8189f393bb09f22f78ccff",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-fb7327201b8189f393bb09f22f78ccff",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/268"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-87764a5ce895d518843b28e293f15b5c",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-87764a5ce895d518843b28e293f15b5c",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/269"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4067beaa08d4b29594067f66b6c3967d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4067beaa08d4b29594067f66b6c3967d",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/270"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d65f07e024b35fc8f1ee696920e99323",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d65f07e024b35fc8f1ee696920e99323",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/271"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ef39db1dcfa049e931184486988e05d1",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ef39db1dcfa049e931184486988e05d1",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/272"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7e7da33f5f90a27a2c0272338cd2fd1a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7e7da33f5f90a27a2c0272338cd2fd1a",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/273"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1cd33b283075cbf77189c90af689e662",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1cd33b283075cbf77189c90af689e662",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/274"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-b42338a15b35d6bfed972cf88a0779c5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-b42338a15b35d6bfed972cf88a0779c5",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/275"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ada1754a2c2ff6349f551f69c7abb990",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ada1754a2c2ff6349f551f69c7abb990",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/276"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e92606ccbe876cab242c84024c1b98c6",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-e92606ccbe876cab242c84024c1b98c6",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/277"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bee91c84a54a9c97f50f66662c0cf3de",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-bee91c84a54a9c97f50f66662c0cf3de",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/278"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d4e8bda6bbf0e63761b66a1569af9edc",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d4e8bda6bbf0e63761b66a1569af9edc",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/279"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-185837f667e7b7c9444db61fcdfbbeb2",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-185837f667e7b7c9444db61fcdfbbeb2",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/280"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-236ad01b5850deede1efc274b908e454",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-236ad01b5850deede1efc274b908e454",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/281"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-50ac3b407f2bc0593dc046cbfb4bc7fb",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-50ac3b407f2bc0593dc046cbfb4bc7fb",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/282"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-9fed9cd18ff06f0cae47a5783a07e9d3",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-9fed9cd18ff06f0cae47a5783a07e9d3",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/283"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5da60c7e3155d948c2a92ee0b145a4cc",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5da60c7e3155d948c2a92ee0b145a4cc",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/284"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-064d05787f3a309601db4b76962ce9c2",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-064d05787f3a309601db4b76962ce9c2",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/285"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ff8608e0e1a3dd843841364d317109dc",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ff8608e0e1a3dd843841364d317109dc",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/286"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-759019edfbe16efc6e87a2c28fa92696",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-759019edfbe16efc6e87a2c28fa92696",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/287"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6fba805af6e68a9ee52d32a8c2e7d180",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6fba805af6e68a9ee52d32a8c2e7d180",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/288"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-36bb5b0034b3fc179a70b4507c2e6fae",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-36bb5b0034b3fc179a70b4507c2e6fae",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/289"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-55bb86c89648db3c5886f53e05eaf2c9",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-55bb86c89648db3c5886f53e05eaf2c9",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/290"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7c8e4409c5ea6fb4d104929316a7b75f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7c8e4409c5ea6fb4d104929316a7b75f",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/291"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1aa9a4ad7ec0a8a7c87d1486e34e7ded",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1aa9a4ad7ec0a8a7c87d1486e34e7ded",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/292"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-fa6c97be613ce3bf8943a0934a6bf6ac",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-fa6c97be613ce3bf8943a0934a6bf6ac",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/293"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-97ad94b4b17c9b5b83e33654bb7a4622",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-97ad94b4b17c9b5b83e33654bb7a4622",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/294"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-0c9bb08e6a88ccb2edaa4e1f2bfcc7fe",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-0c9bb08e6a88ccb2edaa4e1f2bfcc7fe",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/295"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-4b1d3549718d5a89a8982b66cc267956",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-4b1d3549718d5a89a8982b66cc267956",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/296"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bfa92839e41f60e1e0c74b5785bdb725",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-bfa92839e41f60e1e0c74b5785bdb725",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/297"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-6e19f07a23e457d5728f4904501fd8fc",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-6e19f07a23e457d5728f4904501fd8fc",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/298"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1c568aa27de187bc735648a2037c7680",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1c568aa27de187bc735648a2037c7680",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/299"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-79e5696b66602617b9a30fa15a94c2d5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-79e5696b66602617b9a30fa15a94c2d5",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/300"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-5021ffc7477b792d9818ed8b484e3324",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-5021ffc7477b792d9818ed8b484e3324",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/301"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ecb01fc1efddfa6e21ba2fd019ea6cfd",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-ecb01fc1efddfa6e21ba2fd019ea6cfd",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/302"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a525c5aa57e2331e7176580de204c63a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-a525c5aa57e2331e7176580de204c63a",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/303"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-707484810e805693543128eb1efcd0a5",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-707484810e805693543128eb1efcd0a5",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/304"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-16668283d88b852d9e2b5e24c3a3a189",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-16668283d88b852d9e2b5e24c3a3a189",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/305"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-87cf8d15f46d36038d8eb9d31013693a",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-87cf8d15f46d36038d8eb9d31013693a",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/306"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-65398c314b5da32ce6706d679105b8c4",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-65398c314b5da32ce6706d679105b8c4",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/307"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-194d79584395cdf89385a316fe7208bc",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-194d79584395cdf89385a316fe7208bc",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/308"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-147b5b6812e469b79d4c6d584a49ae6f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-147b5b6812e469b79d4c6d584a49ae6f",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/309"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-12b7c6720057d5ddf693caffc6942b82",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-12b7c6720057d5ddf693caffc6942b82",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/310"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-61022f043e6b023076be8c192425d92d",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-61022f043e6b023076be8c192425d92d",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/311"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-7b8c21b4aaa9bcfa538a626e2e0ea60f",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-7b8c21b4aaa9bcfa538a626e2e0ea60f",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/312"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d14f0c90af78c02262354688d2ca659b",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-d14f0c90af78c02262354688d2ca659b",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/313"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-aa192edd9c61d34cf37ed8fc14da0702",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-aa192edd9c61d34cf37ed8fc14da0702",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/314"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-69fdf25edd5d89574b4c6e07f698eee0",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-69fdf25edd5d89574b4c6e07f698eee0",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/315"
+      }
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1d9ffb50545c7298ad02eb7d1371da0e",
+      "successorDisposition": "RETAINED",
+      "successorNormativeRequirementId": "NREQ-1d9ffb50545c7298ad02eb7d1371da0e",
+      "proposalAdjudication": "ACCEPTED",
+      "blockedInheritedReferenceDetails": [],
+      "sourceRecord": {
+        "artifact": "batch-003-reconciliation.json",
+        "jsonPointer": "/316"
+      }
+    }
+  ],
+  "deltaCounts": {
+    "RETAINED": 307,
+    "CHANGED": 10
+  },
+  "combinedCounts": {
+    "RETAINED": 1470,
+    "CHANGED": 144,
+    "BLOCKED": 5872
+  },
+  "cumulativeReconciledFormerUnexaminedEntries": 1238,
+  "remainingUnexaminedEntries": 5865,
+  "remainingOriginalXmlAmbiguityEntries": 7,
+  "blockedInheritedDetailsOnNewChangedEntries": 3,
+  "denominator": 7486,
+  "denominatorReduced": false,
+  "originalArtifactRewritten": false,
+  "proofPromoted": false
+}

@@ -1,0 +1,81 @@
+(node:59) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+file:///workspace/shared/clrt-spec-adoption/verify-specification-governance.mjs:91
+  if(validation.result.status!==0)throw new Error(`Independent governance validation failed:\n${validation.result.stdout||''}\n${validation.result.stderr||''}`);
+                                        ^
+
+Error: Independent governance validation failed:
+{
+  "specificationSourcePresent": true,
+  "sourceCommit": "ebf6a930d1e5ef2f9afaaf68631a318facee5181",
+  "sourceByteLength": 309482,
+  "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+  "topLevelSectionCount": 53,
+  "sectionCount": 253,
+  "normativeRequirementCount": 4198,
+  "dispositionCounts": {
+    "CONFORMANT_PROVEN": 0,
+    "IMPLEMENTED_UNPROVEN": 3847,
+    "MISSING": 0,
+    "CONTRADICTED": 0,
+    "BLOCKED_HUMAN": 0,
+    "BLOCKED_ENVIRONMENT": 0,
+    "UNKNOWN": 351
+  },
+  "independentMechanicalOmissionPass": true,
+  "independentOmissionChallenge": true,
+  "independentSemanticSourceReviewPath": "verification/independent-source-review-20261014.json",
+  "independentSemanticSourceReviewSha256": "e5821fbce9dc82ebf31cfde0767bb869c26c6ecd30c86fbd55d543eb8a94f429",
+  "independentSemanticReconciliationPath": "verification/independent-source-reconciliation-20261014.json",
+  "independentSemanticReconciliationSha256": "b3addac3e66cf726d842a675de83ad640f872e8da6ccc22510c6aac6b5352264",
+  "sourceReviewAddedRequirementCount": 351,
+  "reconciliationComplete": true,
+  "runtimeSpecificationCopies": 0,
+  "runtimeControllerCopies": 0,
+  "mutationCount": 19,
+  "mutations": [
+    "uncovered-section",
+    "missing-requirement",
+    "source-reviewed-clause-omission",
+    "duplicate-id",
+    "missing-test-trace",
+    "source-conflict",
+    "runtime-copy",
+    "unresolved-source-contract-findings-omission",
+    "independent-semantic-review-omission",
+    "independent-semantic-review-basis",
+    "independent-semantic-addition-omission",
+    "reviewed-exclusion-omission",
+    "reviewed-exclusion-overbroad",
+    "reviewed-exclusion-mandatory-substitution",
+    "reviewed-exclusion-classification-loss",
+    "reviewed-mandatory-limitation-omission",
+    "atomic-completeness-overclaim",
+    "independent-semantic-context-omission",
+    "independent-semantic-unproven-conformance"
+  ],
+  "intentionalUncoveredSectionMutationRejected": true,
+  "allNormativeRequirementsConformant": false,
+  "semanticSourceCoverageEstablished": true,
+  "unresolvedSourceContractFindingCount": 5,
+  "atomicRequirementCompletenessEstablished": false,
+  "specificationTraceIntegrity": "BLOCKED_ATOMIC_REQUIREMENT_COMPLETENESS"
+}
+
+(node:115) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+file:///tmp/closed-loop-governance-validation-A5quDf/specification-governance-core.mjs:4
+await import('./hash.js');const H=globalThis.closedLoopHash,SP='specification/closed-loop-reliability-controlling-implementation-specification.txt',SMP='specification/closed-loop-specification-manifest.json',NMP='specification/closed-loop-normative-requirements.json',RP='review-specification-coverage.mjs',allowed=new Set(['CONFORMANT_PROVEN','IMPLEMENTED_UNPROVEN','MISSING','CONTRADICTED','BLOCKED_HUMAN','BLOCKED_ENVIRONMENT','UNKNOWN']),A=(x,m)=>{if(!x)throw Error(m)},sh=b=>crypto.createHash('sha256').update(b).digest('hex');
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ^
+
+Error: Atomic normative-requirement completeness remains unproven: source-line coverage is not distinct-obligation coverage under Section 2.2.
+    at A (file:///tmp/closed-loop-governance-validation-A5quDf/specification-governance-core.mjs:4:465)
+    at file:///tmp/closed-loop-governance-validation-A5quDf/specification-governance-core.mjs:91:1
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+Node.js v22.23.3
+
+    at file:///workspace/shared/clrt-spec-adoption/verify-specification-governance.mjs:91:41
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+Node.js v22.23.3

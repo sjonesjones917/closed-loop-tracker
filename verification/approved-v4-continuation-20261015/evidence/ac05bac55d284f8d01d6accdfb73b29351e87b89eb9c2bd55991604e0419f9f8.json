@@ -1,0 +1,97 @@
+[
+  {
+    "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+    "batch": "016-scope-successor-001",
+    "candidateIndex": 67,
+    "predecessorIndex": 312,
+    "predecessorNormativeRequirementId": "NREQ-a043dd6dde7e1d69ad055437613aa134",
+    "predecessorEntrySha256": "d1400eb3c39efbad672fe48e34927483d964dddc084c20e528d95c0bc526f9f6",
+    "candidateSha256": "8637d36a20cc015a001bcad754d8965069ae0051632fe32c8465b7ab196afcf8",
+    "proposalDisposition": "CHANGED",
+    "proposalAdjudication": "ADDITIVE_EFFECTIVE_SCOPE_CORRECTION",
+    "successorDisposition": "CHANGED",
+    "statement": "Exact confirmation may be atomically co-accepted with the dependent proposal under Section 14.10.",
+    "statementSha256": "25cdcbbef96eb0c9c6a94590e811d3e2a85e4a57b632c614aed4a62078e14fa3",
+    "originalLedgerPointer": "/entries/312",
+    "primarySourcePassageId": "BASE_SOURCE:21128:21806",
+    "verifiedOriginalOccurrenceBindingCount": 8,
+    "exactOriginalOccurrenceSetReference": "ORIGINAL_LEDGER#/entries/312/originalOccurrenceBindings",
+    "exactTransportedSourceBindingReference": {
+      "proposalJsonPointer": "/67/orderedTransportReferenceIds",
+      "sharedReferenceTable": {
+        "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-016/source-reference-table.json",
+        "sha256": "372e0e065a736022df234622c1f6e02d500d29b84c0816483c41a55c4ed7518b",
+        "byteLength": 561165,
+        "archiveCustody": {
+          "archive": {
+            "path": "/workspace/shared/clrt-v4-retained-impact-review/batch-016-frozen-payloads.tar.gz",
+            "sha256": "9a13c1a5b654ca9d39f28e86e5d4cc628bb8d61a14a982453e578695c5d5d312",
+            "byteLength": 213950
+          },
+          "archiveMember": "batch-016/source-reference-table.json",
+          "deliverableManifest": {
+            "path": "/workspace/shared/clrt-v4-retained-impact-review/deliverable-manifest-016.json",
+            "sha256": "6255c037d2f499e4e9dfd20f3b3ed75b989c2be20e7219aaf957106f776d3a2d",
+            "byteLength": 5764
+          }
+        }
+      }
+    },
+    "sourceDecisionKey": "EXACT_COACCEPTANCE_DEPENDENT_RESPONSE_A_AND_F2",
+    "contextProfileId": 17,
+    "addedGoverningPassageIds": [
+      "SUCCESSOR_SOURCE:122801:126361",
+      "SUCCESSOR_SOURCE:181854:185546"
+    ],
+    "blockedInheritedReferenceDetails": [],
+    "historicalReferenceQualifierPreserved": null,
+    "addedReferenceQualifier": null,
+    "sourceRepresentationQualifications": [],
+    "inheritedReferenceCurrentStatus": null,
+    "proofInheritance": false,
+    "implementationAcceptance": false,
+    "successorNormativeRequirementId": "NREQ-5c2935f786eb2efc9595b4d82b81e7f4",
+    "identityPreimageSha256": "5c2935f786eb2efc9595b4d82b81e7f47c0eb4de67d8649a3ce8f682c917a76c",
+    "identityStatus": "FRESH_SOURCE_ONLY_PENDING_ADOPTION",
+    "priorCurrentNormativeRequirementId": "NREQ-6330939269a7f2309bd4045c823c3ba9",
+    "priorCurrentEntryEvidence": {
+      "artifact": {
+        "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-016/batch-016-reconciliation.json",
+        "sha256": "d0580c1c564a506bcc8e79fb2e0508b70154fe36a1b68b088a83bb94444566b7",
+        "byteLength": 562106
+      },
+      "jsonPointer": "/67",
+      "entrySha256": "4a9f129c1466642d28b0b844cf54de2de3e993c4bcedbfc8c484454002aa7ddd"
+    },
+    "scopeCorrection": "ADD_OMITTED_F2_GOVERNOR_ONLY; prior A and separate human confirmation authority preserved",
+    "identityPreimage": {
+      "schema": "closed-loop-additive-source-impact-identity/1",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "predecessorId": "NREQ-a043dd6dde7e1d69ad055437613aa134",
+      "predecessorEntrySha256": "d1400eb3c39efbad672fe48e34927483d964dddc084c20e528d95c0bc526f9f6",
+      "statement": "Exact confirmation may be atomically co-accepted with the dependent proposal under Section 14.10.",
+      "sourceDecision": "Exact humanAuthorityCandidates confirmation retains its separate HUMAN/HUMAN_DECISION writer and atomic all-or-neither transaction under §14.10. The dependent external response must satisfy A's required current humanInputRequests array contract and F2's applicable EXTERNALLY_SUPPORTED input-basis minimum, with stronger evidence/review/independence rules preserved. Neither governor turns external human-origin confirmation into SAVE_HUMAN_INPUT typed fallback or supplies human authority. Missing/mismatched required echoes prevent accepting the dependent response; no native or unrelated command receives this external minimum.",
+      "addedGovernors": [
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 1637,
+          "endLine": 1651,
+          "startByte": 122801,
+          "endByte": 126361,
+          "sha256": "1f02226ccf6e99fe0c9d31d773dd69ef747d08978cbf7a7a6b5cbcf3730bb190"
+        },
+        {
+          "role": "SUCCESSOR_SOURCE",
+          "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+          "startLine": 2524,
+          "endLine": 2551,
+          "startByte": 181854,
+          "endByte": 185546,
+          "sha256": "2d28f71a5572a03779b269dfdcafa7de20dee38d32791a334a3522247c697762"
+        }
+      ],
+      "blockedDetails": []
+    }
+  }
+]

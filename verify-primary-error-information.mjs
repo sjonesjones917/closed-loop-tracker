@@ -3,8 +3,49 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,bindProjectActivationUi} from './test-project-store-runtime.mjs';
 import {createVerifierRuntime} from './verifier-runtime.mjs';
+
+async function verifyRejectedInstructionMarkup(){
+ const sourceNames=['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js','project-store.js','app-core.js'],sourceOverrides=Object.fromEntries(sourceNames.map(file=>[file,fs.readFileSync(file==='app-core.js'?process.env.APP_SOURCE||file:file,'utf8')])),sourceHashes=Object.fromEntries(sourceNames.map(file=>[file,createHash('sha256').update(sourceOverrides[file]).digest('hex')]));
+ for(const file of sourceNames)assert.equal(createHash('sha256').update(fs.readFileSync(file==='app-core.js'?process.env.APP_SOURCE||file:file)).digest('hex'),sourceHashes[file],'REJECTION_MARKUP_SOURCE_IDENTITY_ORACLE: source changed during tuple capture.');
+ const r=projectStoreRuntime({sourceOverrides}),app=sourceOverrides['app-core.js'];
+ let p=await r.store.createProject({commandId:'REJECTION-MARKUP-PROJECT'}),draft=r.copy(p);
+ const first=r.prompts.reserveAndBuildPromptRecord(draft,1,{operation:'COMPLETE'},{owningTabInstance:'SYNTHETIC-MARKUP'}).prompt;
+ p=await r.store.writeProject(draft,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
+ const identity=r.copy(r.prompts.promptFileManifest(first).promptIdentity),text='{}',staged=await r.store.stageResponseFile({jobId:p.job.JOB_ID,stage:1,blob:new Blob([text],{type:'application/json'}),rawFilename:'response.json',mediaType:'application/json',promptIdentity:identity,packageId:first.packageId,operationReservationId:first.operationReservationId,challengeNonce:first.challengeNonce}),received=await r.store.readStagedResponseFile({jobId:p.job.JOB_ID,stagingId:staged.stagingId});
+ const captured=r.ingestion.captureRaw(p,{stage:1,text,promptRecord:r.copy(first),transport:r.copy({authority:'AUTHORITATIVE_RESPONSE_FILE',stagingId:staged.stagingId,rawFilename:'response.json',mediaType:'application/json',status:received.status,sha256:received.sha256,byteSize:received.byteSize,promptIdentity:identity,packageId:first.packageId,operationReservationId:first.operationReservationId,challengeNonce:first.challengeNonce})});
+ p=await r.store.writeProject(captured.project,{operational:true,expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
+ const prepared=r.ingestion.prepareCaptured(p,{rawResponseId:captured.rawRecord.rawResponseId});assert.equal(prepared.validation.valid,false,'A syntactically valid empty object is not a contracted Stage1 response.');
+ p=await r.store.writeProject(prepared.project,{operational:true,expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});
+ assert.equal(r.prompts.promptTransportBinding(p,1,'COMPLETE',first.instructionId,first.scope),null,'The rejected reservation must not establish a current export-ready instruction.');
+ let candidateId=first.instructionId;
+ const latestRaw=()=>r.runtime.current.projectData.rawResponses.find(row=>row.rawResponseId===captured.rawRecord.rawResponseId),latestValidation=()=>r.runtime.current.projectData.responseValidations.find(row=>row.validationId===prepared.validation.validationId);
+ Object.assign(r.runtime,{current:p,responseActionFailure:null,safe:r.engine.safe,esc:value=>String(value),details:(_label,value)=>JSON.stringify(value),latestResponseAttempt:latestRaw,latestResponseValidation:latestValidation,currentFileSelection:()=>null,returnedFileCorrectionPending:()=>false,pendingInstructionUnchanged:()=>false});
+ // The rendering adapter supplies the result of the actual prompt/reservation
+ // authority. This check does not claim to cover the UI's lane-selection owner.
+ r.runtime.currentPromptRecord=()=>{const record=r.runtime.current.projectData.generatedPrompts.find(row=>row.instructionId===candidateId);return record&&Number(record.scope.projectRevision)===Number(r.runtime.current.revision)&&r.prompts.promptTransportBinding(r.runtime.current,1,'COMPLETE',record.instructionId,record.scope)?record:null;};
+ const start=app.indexOf('function validationMarkup('),end=app.indexOf('function returnedFileCorrectionPending(',start);assert.ok(start>=0&&end>start,'The production validation message owner is required.');vm.runInContext(app.slice(start,end),r.runtime,{filename:'app-core.js:validationMarkup'});
+ const observations=[],observe=(caseId,expected)=>{const markup=r.runtime.validationMarkup(1);observations.push({caseId,expected,markup});return markup;};
+ const missing=observe('REJECTED-INSTRUCTION-NO-SAVED-REPLACEMENT','Preserve the rejection and direct the current required action without claiming regeneration.');
+ assert.doesNotMatch(missing,/saved an updated correction instruction|automatically prepared|app has prepared an updated/i,'REJECTION_REPLACEMENT_CLAIM_ORACLE: a rejected reservation without a saved replacement must not claim that a new instruction exists.');
+ assert.match(missing,/No updated controlling instruction has been saved/);assert.match(missing,/current required action/);
+ draft=r.copy(p);const replacement=r.prompts.reserveAndBuildPromptRecord(draft,1,{operation:'COMPLETE'},{owningTabInstance:'SYNTHETIC-MARKUP'}).prompt;
+ p=await r.store.writeProject(draft,{expectedProjectRevision:p.revision,expectedStateSha256:p.projectSha256});r.runtime.current=p;candidateId=replacement.instructionId;
+ assert.ok(r.prompts.promptTransportBinding(p,1,'COMPLETE',replacement.instructionId,replacement.scope),'The positive control must have a genuinely saved current reservation.');
+ const fresh=observe('REJECTED-INSTRUCTION-FRESH-SAVED-REPLACEMENT','A genuinely saved fresh replacement following this validation retains the useful export guidance.');
+ assert.match(fresh,/saved an updated correction instruction/,'REJECTION_REPLACEMENT_READY_ORACLE: an actual fresh saved replacement must remain discoverable.');assert.match(fresh,/Export the updated instruction/);
+ const original=r.copy(p);r.runtime.current=r.copy(p);latestValidation().issues=[{code:'STALE_PROMPT_IDENTITY',message:'Controlled stale-response display branch',severity:'ERROR'}];
+ const staleReady=observe('STALE-RESPONSE-FRESH-SAVED-REPLACEMENT','Stale response guidance can identify a real saved replacement.');assert.match(staleReady,/belongs to an older instruction/);assert.match(staleReady,/saved an updated correction instruction|automatically prepared/);
+ r.runtime.current.revision+=1;const staleMissing=observe('STALE-RESPONSE-NO-CURRENT-RESERVATION','A changed revision must not present a stale saved instruction as a prepared replacement.');assert.doesNotMatch(staleMissing,/saved an updated correction instruction|automatically prepared|app has prepared an updated/i,'REJECTION_REPLACEMENT_CLAIM_ORACLE: stale response feedback cannot invent a current replacement.');assert.match(staleMissing,/current required action/);
+ r.runtime.current=r.copy(original);const failedEvent=r.runtime.current.projectData.history.find(event=>event.type==='RESPONSE_VALIDATION_FAILED'&&event.validationId===prepared.validation.validationId),savedEvent=r.runtime.current.projectData.history.find(event=>event.type==='INSTRUCTION_SAVED'&&event.recordId===replacement.instructionId);assert.ok(failedEvent&&savedEvent&&savedEvent.eventSequence>failedEvent.eventSequence);
+ savedEvent.eventSequence=failedEvent.eventSequence-1;
+ const preceding=observe('CURRENT-INSTRUCTION-PREDATES-FAILED-ATTEMPT','A current bound instruction can be exported without claiming this rejection created it.');assert.doesNotMatch(preceding,/saved an updated correction instruction|automatically prepared/,'REJECTION_REPLACEMENT_ORDER_ORACLE: a pre-existing instruction must not be attributed to a later rejection.');assert.match(preceding,/current controlling instruction is ready to export/);
+ r.runtime.current=r.copy(original);latestRaw().validationId='CONTROLLED-UNRELATED-VALIDATION';
+ const unrelated=observe('REPLACEMENT-UNRELATED-VALIDATION','Do not attribute a saved instruction to a different attempt/validation binding.');assert.doesNotMatch(unrelated,/saved an updated correction instruction|automatically prepared/,'REJECTION_REPLACEMENT_BINDING_ORACLE: the exact failed attempt must be bound to this validation.');
+ return {caseId:'REJECTION-REPLACEMENT-MARKUP',result:'PASS',sourceHashes,productionSourceSha256:createHash('sha256').update(app).digest('hex'),boundary:'Actual response Blob staging/raw admission/rejected reservation and saved replacement through synthetic transactional store; extracted production presentation. Controlled rendered stale/order/binding counterexamples; no browser, external actor, or full-stage-completion claim.',rawResponseId:captured.rawRecord.rawResponseId,rawResponseSha256:received.sha256,validationId:prepared.validation.validationId,originalInstructionId:first.instructionId,replacementInstructionId:replacement.instructionId,observations};
+}
+if(process.argv.includes('--validation-markup-only')){console.log(JSON.stringify(await verifyRejectedInstructionMarkup(),null,2));process.exit(0);}
 
 // Execute the same injected-failure owner used in the browser. A commit must be
 // observed before a view read may fail; unrelated requests or responses cannot arm it.
@@ -97,6 +138,7 @@ original=await store.writeProject(original,{expectedProjectRevision:original.rev
 const backup=await store.exportPackage(original.job.JOB_ID),independent=await store.readProject(b.job.JOB_ID);
 await store.deleteArtifact(fileId,original.job.JOB_ID);
 Object.assign(r.runtime,{projectStore:store,current:independent,projects:r.copy([independent,original]),withStorageActivity:async(_label,fn)=>fn(),takeBackupPassphrase:()=>null,requestBackupPassword:()=>false,saveFileSelection:async()=>{},loadAcceptanceSession:async()=>{},recordMobileBackupRestore:async()=>{},refreshProjectStorage:async()=>{throw new Error('CONTROLLED_POST_IMPORT_REFRESH_FAILURE');},selectSavedView:()=>{},recordCommittedBoundary:async()=>{},render:()=>{},applySavedView:()=>{}});
+Object.assign(r.runtime,{engine,core:r.core,clone:r.copy,recordValue:engine.recordValue});bindProjectActivationUi(r,{source:app});
 vm.runInContext(app.slice(importStart,importEnd),r.runtime,{filename:'app-core.js:import-owner'});
 report.diagnosticMarkup='';
 await r.runtime.importProjectPackageFile(backup,{recordSelection:false});
@@ -117,4 +159,5 @@ assert.doesNotMatch(report.textContent,/imported and saved/i,'Rejected import mu
 cases.push({caseId:'IMPORT-REJECTED-PRESERVES-COMMIT',result:'PASS',message:report.textContent});
 
 cases.push(await verifyImportFaultBoundary());
+cases.push(await verifyRejectedInstructionMarkup());
 console.log(JSON.stringify({primaryErrorInformation:'PASS',cases},null,2));

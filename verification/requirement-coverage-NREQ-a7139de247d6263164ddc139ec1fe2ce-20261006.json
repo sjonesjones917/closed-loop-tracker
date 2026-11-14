@@ -1,0 +1,172 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-a7139de247d6263164ddc139ec1fe2ce",
+  "sourceLineSha256": "b8d8c72b488c785bcc234dac2cbb1189cfe57bb9b8d92da80959347bcefc8b28",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "9119d3a19435070c5cf1fdb2fdd4b10fe9f9309bf5e0bb99d171f0e613e284a9",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Actual separate-context renewed review reconciled the exact complete source clause and governing context, current production owners, original expected outcomes and named positive/negative assertions, and current declared suite dependencies. The retained row-specific independent decision approves this narrow declaration. Current complete executed receipts remain separately required.",
+  "author": {
+    "actor": "Codex current-owner declaration renewal author",
+    "contextId": "/root/ci_delivery_audit"
+  },
+  "reviewer": {
+    "actor": "Codex independent exact-clause declaration reviewer",
+    "contextId": "/root/storage_audit"
+  },
+  "reviewedInputs": [
+    {
+      "path": "project-store.js",
+      "sha256": "2d6896f47164f4a232c631d949cce64d2200e6d4e2202c2c3cdb29b08648cdf2"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "fdcaa258f88be52f2b426785ac0fcdcd547392e702c33fbb0eb4823d9c2a711d"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "955fc63a1b7ae3ec7f8b71f36fd4d76d4ad8ee8fa0de2fa8d2697a66b1458eef"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "feedf2e728fca37acf303536dd55216389d591567c1ab89236a53aa0b2d19eed"
+    },
+    {
+      "path": "verification/normative-context-applicability-20261005.json",
+      "sha256": "7cd05ff0028578a1ca1c2560533519a602ce6a974c240ee11dbbd272524cf656"
+    },
+    {
+      "path": "verification/requirement-coverage-NREQ-a7139de247d6263164ddc139ec1fe2ce-20261005.json",
+      "sha256": "a12a60f62ab501ec499b95ffc4258eccea6de0994896ce34020b536ebd3a839e"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "8a4c9058b6c72a5aa8dd68809e3cbfd8e5c217b358c41970347443a338f83933"
+    },
+    {
+      "path": "verify-operational-persistence.mjs",
+      "sha256": "df78d294a6c4e1fedc1e5f5a01ac3adbeeb93e0b3e552bc4f3c9db0366790f42"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "b47195d41a130cb1b84425f5eb33bd8a163e1047c0e95e19eef59d47525e463d"
+    },
+    {
+      "declarationSha256": "9119d3a19435070c5cf1fdb2fdd4b10fe9f9309bf5e0bb99d171f0e613e284a9"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "reviewCompletedAt": "2026-10-06T20:42:47.521746+00:00",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 3098,
+    "endLine": 3098,
+    "lineSha256": "b8d8c72b488c785bcc234dac2cbb1189cfe57bb9b8d92da80959347bcefc8b28"
+  },
+  "controllingText": "- rehashed;",
+  "governingContext": [],
+  "additionalControllingContext": [],
+  "reviewedChecks": [
+    {
+      "suite": "verify-operational-persistence.mjs",
+      "checkId": "store.retained-evidence-custody"
+    },
+    {
+      "suite": "verify-operational-persistence.mjs",
+      "checkId": "store.current-supplied-input-custody"
+    }
+  ],
+  "semanticDecision": "EXACT_EVIDENCE_BYTE_CUSTODY_SUBCLAUSE",
+  "reason": "observeArtifactCustody hashes the actual read-back Blob and compares both its size and digest against stored metadata before recording private verified custody. Its safe reuse cache is bound to the exact row/Blob/size/digest already observed and does not promote caller-supplied metadata. Corrupt-byte controls and the omitted observer fault exercise the read-back verification requirement.",
+  "scopeLimit": "Named byte-custody steps with current supplied and retained evidence; not every downstream byte consumer or full backup/browser route.",
+  "actorIndependenceBoundary": "Renewal author /root/ci_delivery_audit is a different actual agent context from reviewer /root/storage_audit. Attribution does not establish hidden-context authentication or independent authorship of all implementation/tests.",
+  "reviewerPriorContributionDisclosure": "This reviewer audited storage/migration source and authored the separate current ingestion repair and its focused regressions. The declaration author is a different agent context. This is independent review of the proposed coverage declarations, not a claim of independent authorship of every underlying implementation or test.",
+  "retainedReviewInputs": {
+    "proposal": {
+      "path": "/workspace/scratch/full-coverage-storage-proposals.json",
+      "sha256": "3a805bca70e96b132d5f8923fc4d87d8131af0977692ddfbc361ce9f7bd8656e"
+    },
+    "priorSemanticReview": {
+      "path": "/workspace/scratch/independent-full-coverage-semantic-review-current45.json",
+      "sha256": "8b76d6c6c1425220853a1798090edf609fadde97ad840f2699e006b7ed2bb866"
+    }
+  },
+  "qualifiedExecutionAndReviewEvidence": [
+    {
+      "path": "/workspace/scratch/storage-normative-coverage-20261005/batch-execution.json",
+      "sha256": "495f6cee1b4086064ce550a7327c9daa619f365177b4f756a58092362e5335d0",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    },
+    {
+      "path": "/workspace/scratch/storage-normative-coverage-20261005/operational.final.stdout.log",
+      "sha256": "007665c1789b52701e388eab1eafd41c7f474ac21a9e89f4d9b064f8c4f81bb3",
+      "qualification": "Retained actual boundary/source tuple only; this reference does not substitute for current canonical executed receipts."
+    }
+  ],
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "priorReview": {
+    "path": "verification/requirement-coverage-NREQ-a7139de247d6263164ddc139ec1fe2ce-20261005.json",
+    "sha256": "a12a60f62ab501ec499b95ffc4258eccea6de0994896ce34020b536ebd3a839e",
+    "author": {
+      "actor": "Codex declaration author",
+      "contextId": "/root/storage"
+    },
+    "reviewer": {
+      "actor": "Codex independent declaration reviewer",
+      "contextId": "/root/independent_spec"
+    },
+    "reviewCompletedAt": "2026-10-05T17:00:42.178Z",
+    "declarationSha256": "fa270e3c0914e1b8e06bbbbb5b216c4bed11f9ccc59413676186eace77e0d6a3"
+  },
+  "currentDependencyReconciliation": {
+    "classification": "DIRECT_PRODUCTION_OWNER_CHANGED",
+    "priorStaleInputs": [
+      "project-store.js",
+      "test-project-store-runtime.mjs",
+      "verification-evidence-catalog.mjs",
+      "workflow-engine.js"
+    ],
+    "newRequiredInputs": [
+      "test-fixtures.mjs",
+      "test-handoff-authorization.mjs"
+    ],
+    "changedProductionOwners": [
+      "project-store.js",
+      "workflow-engine.js"
+    ],
+    "changedDirectSuiteFiles": [],
+    "priorDeclarationSha256": "fa270e3c0914e1b8e06bbbbb5b216c4bed11f9ccc59413676186eace77e0d6a3",
+    "currentDeclarationSha256": "9119d3a19435070c5cf1fdb2fdd4b10fe9f9309bf5e0bb99d171f0e613e284a9",
+    "declarationChanges": "Only production-owner SHA256 values are changed; all controlling clause text, governing context, obligation decomposition, expected outcomes, evidence kinds, named assertions, nonapplicability and scope remain exact for independent reassessment.",
+    "sourceReviewStatus": "ACTUAL_INDEPENDENT_REVIEW_COMPLETE_NO_EXECUTION_CLAIM",
+    "finalSourceFreezeStatus": "EXACT_FINAL_INPUTS_APPROVED_WITH_CURRENT_EXECUTION_REQUIRED",
+    "finalIndependentEvidence": {
+      "packet": {
+        "path": "/tmp/closed-loop-evidence/12-storage-number-final-renewal-proposal-7edf6dcb5bf29214298be813c178a8236485374f42ce9f005d8ea5a7c7367f18.json",
+        "sha256": "7edf6dcb5bf29214298be813c178a8236485374f42ce9f005d8ea5a7c7367f18"
+      },
+      "semanticReview": {
+        "path": "/tmp/closed-loop-evidence/12-storage-number-independent-review-1998fb4da39b0a5ab98e1d11ffb2e721949060c5329ce5e16f93f21adf9a39eb.json",
+        "sha256": "1998fb4da39b0a5ab98e1d11ffb2e721949060c5329ce5e16f93f21adf9a39eb"
+      },
+      "finalDependencyReview": [
+        {
+          "path": "/tmp/closed-loop-evidence/12-storage-number-independent-review-1998fb4da39b0a5ab98e1d11ffb2e721949060c5329ce5e16f93f21adf9a39eb.json",
+          "sha256": "1998fb4da39b0a5ab98e1d11ffb2e721949060c5329ce5e16f93f21adf9a39eb"
+        }
+      ]
+    },
+    "finalDependencyFinding": "Independent exact final35 input reconciliation; only approved catalog and final bounded-loader metadata changed, all12 declaration digests unchanged. Historical unavailable scratch logs remain unverified and current receipts remain required."
+  }
+}

@@ -76,9 +76,13 @@ function validateRunnerEvidence(run,jobs,runId,commit){
   assert(run.path===WORKFLOW_PATH&&run.event==='push'&&run.head_branch==='main','Execution evidence is not the canonical main deployment workflow.');
   assert(Number.isSafeInteger(run.run_attempt)&&run.run_attempt>0&&successful(run),'Execution evidence run is not a completed success.');
   const required={
-    'test':['Local Chromium operator path'],
+    'test-checks':['Local Chromium supporting paths','Validate local supporting browser receipts'],
+    'operator-journey':['Complete local operator journey','Validate complete local operator receipt'],
+    'test':['Validate complete local browser receipt set','Collect current executed assertion evidence','Seal verified deployment artifact'],
     'Deploy exact verified bytes':['Deploy application'],
-    'Verify deployed bytes and operator path':['Exact deployed-byte verification','Deployed Chromium operator path']
+    'Verify deployed bytes and operator path':['Exact deployed-byte verification','Deployed Chromium operator path','Validate supporting deployed browser receipts'],
+    'deployed-operator-journey':['Complete deployed operator journey','Validate complete deployed operator receipt'],
+    'Publish machine acceptance status':['Reconcile local and deployed current assertion receipts']
   };
   for(const [name,steps] of Object.entries(required)){
     const matches=jobs.filter(job=>job.name===name);
@@ -300,9 +304,13 @@ for(const fixture of ['specification-digest-mismatch','invalid-status','skipped-
 // failing child; synthetic records cannot override the observed exit status.
 const fixtureCommit='a'.repeat(40),fixtureRun={id:1,repository:{full_name:REPOSITORY},head_repository:{full_name:REPOSITORY},head_sha:fixtureCommit,path:WORKFLOW_PATH,event:'push',head_branch:'main',run_attempt:1,status:'completed',conclusion:'success'};
 const fixtureJobs=[
-  ['test',['Local Chromium operator path']],
+  ['test-checks',['Local Chromium supporting paths','Validate local supporting browser receipts']],
+  ['operator-journey',['Complete local operator journey','Validate complete local operator receipt']],
+  ['test',['Validate complete local browser receipt set','Collect current executed assertion evidence','Seal verified deployment artifact']],
   ['Deploy exact verified bytes',['Deploy application']],
-  ['Verify deployed bytes and operator path',['Exact deployed-byte verification','Deployed Chromium operator path']]
+  ['Verify deployed bytes and operator path',['Exact deployed-byte verification','Deployed Chromium operator path','Validate supporting deployed browser receipts']],
+  ['deployed-operator-journey',['Complete deployed operator journey','Validate complete deployed operator receipt']],
+  ['Publish machine acceptance status',['Reconcile local and deployed current assertion receipts']]
 ].map(([name,steps],index)=>({id:index+1,run_id:1,run_attempt:1,head_sha:fixtureCommit,name,status:'completed',conclusion:'success',steps:steps.map(name=>({name,status:'completed',conclusion:'success'}))}));
 validateRunnerEvidence(fixtureRun,fixtureJobs,1,fixtureCommit);
 const mutations=[
@@ -317,13 +325,31 @@ const mutations=[
   ['stale-attempt',(_,jobs)=>{jobs[0].run_attempt=2;}],
   ['wrong-job-commit',(_,jobs)=>{jobs[0].head_sha='b'.repeat(40);}],
   ['failed-job',(_,jobs)=>{jobs[0].conclusion='failure';}],
-  ['missing-deployment',(_,jobs)=>{jobs.splice(1,1);}],
+  ['missing-deployment',(_,jobs)=>{jobs.splice(jobs.findIndex(job=>job.name==='Deploy exact verified bytes'),1);}],
   ['duplicate-job',(_,jobs)=>{jobs.push(structuredClone(jobs[0]));}],
   ['skipped-browser',(_,jobs)=>{jobs[0].steps[0].conclusion='skipped';}],
-  ['missing-byte-verification',(_,jobs)=>{jobs[2].steps.shift();}],
+  ['missing-byte-verification',(_,jobs)=>{jobs.find(job=>job.name==='Verify deployed bytes and operator path').steps.shift();}],
   ['unfinished-step-masked-by-job',(_,jobs)=>{jobs[0].steps.push({name:'unfinished test',status:'in_progress',conclusion:null});}],
   ['failed-step-masked-by-job',(_,jobs)=>{jobs[0].steps.push({name:'failed test',status:'completed',conclusion:'failure'});}]
 ];
+// A successful aggregate job cannot substitute for any split producer or its
+// receipt join. These expectations are independent of the validator's table.
+for(const fixtureJob of fixtureJobs){
+  const name=fixtureJob.name;
+  mutations.push(['missing-required-job:'+name,(_,jobs)=>{jobs.splice(jobs.findIndex(job=>job.name===name),1);}]);
+  for(const conclusion of ['failure','cancelled','skipped']){
+    mutations.push(['required-job-'+conclusion+':'+name,(_,jobs)=>{jobs.find(job=>job.name===name).conclusion=conclusion;}]);
+  }
+  for(const fixtureStep of fixtureJob.steps){
+    const stepName=fixtureStep.name;
+    mutations.push(['missing-required-step:'+name+':'+stepName,(_,jobs)=>{
+      const job=jobs.find(job=>job.name===name);job.steps.splice(job.steps.findIndex(step=>step.name===stepName),1);
+    }]);
+    for(const conclusion of ['failure','cancelled','skipped']){
+      mutations.push(['required-step-'+conclusion+':'+name+':'+stepName,(_,jobs)=>{jobs.find(job=>job.name===name).steps.find(step=>step.name===stepName).conclusion=conclusion;}]);
+    }
+  }
+}
 for(const [name,mutate] of mutations){
   const run=structuredClone(fixtureRun),jobs=structuredClone(fixtureJobs);mutate(run,jobs);
   let rejected=false;try{validateRunnerEvidence(run,jobs,1,fixtureCommit);}catch{rejected=true;}

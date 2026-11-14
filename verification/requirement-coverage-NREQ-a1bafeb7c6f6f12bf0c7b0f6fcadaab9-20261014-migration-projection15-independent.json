@@ -1,0 +1,246 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9",
+  "sourceLineSha256": "824d490be3d365319470880cd0b72d13491e6484edacaa5b2b8a579d6d2c86a6",
+  "specificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+  "atomicObligationSha256": "38f22645136575c2cf05849aaf5369a9d1f7704eae13dedbaff16e4ad95cc82e",
+  "reviewedAtomicStatement": "Migration must preserve unknown extension data",
+  "contextSourceLocations": [
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 890,
+      "endLine": 890,
+      "lineSha256": "e96c43aa289f86b71534dd8a41c056540526c02165152b449a78f95b0832ae0d",
+      "controllingText": "13. Versioning and migration"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 903,
+      "endLine": 903,
+      "lineSha256": "723dc3394231ba706fadc3108c5b671094ccc912859c27c4246b7f5e216896df",
+      "controllingText": "Required deterministic migration:"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 910,
+      "endLine": 910,
+      "lineSha256": "22185e72883762d43c34947ab5a29b1b5c2a53f76b577c55a753f854e8e1fb6e",
+      "controllingText": "Migration MUST preserve:"
+    }
+  ],
+  "sourceSpans": [
+    {
+      "startByte": 51125,
+      "endByte": 51150,
+      "text": "- unknown extension data;",
+      "sha256": "824d490be3d365319470880cd0b72d13491e6484edacaa5b2b8a579d6d2c86a6"
+    }
+  ],
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 911,
+    "endLine": 911,
+    "lineSha256": "824d490be3d365319470880cd0b72d13491e6484edacaa5b2b8a579d6d2c86a6"
+  },
+  "controllingText": "- unknown extension data;",
+  "governingContext": [],
+  "declarationSha256": "701cae612404d5e1f3bf78d01c326eb439d0d5ca80cdba83138ed6d422add57f",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Fresh independent semantic renewal against frozen49446c0c. Exactly five reviewed dependency files changed from prior560e review: schema, engine, store, catalog and consumer tests. Complete migration verifier, workbook, response-ingestion, source-retention helper and migration-preservation predicate are unchanged. Reviewed added existing projection12/13/14 activation routing, registered chain-specific proof-obligation preimages, existing release-current binding and due-stage release/proof calculations; these update current derived work rather than original imported data. Independently executed all three public migration startup/readback/package preservation routes, historical-schema guard-deletion challenge,379 migration and22 source consumer controls on current bytes. Compared exact retained projection12, chain3, confirmation8 and convergence6 registries with prior source. Read and verified independently supplied genuine projection13/chain3-to15/5 activation/reproof/archive/forgery/rollback records and cold-currentness addendum, preserving their explicitly blocked-state scope and separate producer identities. Independently reviewed author proposal changing only twelve assigned current owner SHA leaves; all source propositions, contexts, assertions and scopes unchanged. Reviewed distinct catalog-only acceptance and exact integrated focused follow-up. Prior full migration producer result remains attributed to28601d57; neither current full-owner PASS nor eligible current receipt is fabricated.",
+  "author": {
+    "actor": "Migration preservation declaration author",
+    "contextId": "/root/bind_migration_preservation_proofs"
+  },
+  "reviewer": {
+    "actor": "Independent migration preservation reviewer",
+    "contextId": "/root/review_migration_preservation_proofs"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "701cae612404d5e1f3bf78d01c326eb439d0d5ca80cdba83138ed6d422add57f"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883"
+    },
+    {
+      "path": "verify-v3-migration.mjs",
+      "sha256": "97e784eef80196e017333d8b98a99ead28f9a30bef0ffa0e245b7b1a04c8abfa"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "58e1e8c9f4d6991fbcd9ce71356491ef32539860ec6ed461422402dbd4158ca6"
+    },
+    {
+      "path": "verification-evidence.mjs",
+      "sha256": "6c3fc424b828bb7edbdda043f82116712e3870a0632c09b6adf795344948bf30"
+    },
+    {
+      "path": "test-normative-catalog-consumers.mjs",
+      "sha256": "9ceee1d869ba116a311cde892edea72dbb90c83831db23c930d2fb952368ceaf"
+    },
+    {
+      "path": "test-migration-source-retention.mjs",
+      "sha256": "46758013d469fe70cab397662b5cad6d181e5bc5258da325e8c21581e6054d41"
+    },
+    {
+      "path": "test-backup-capacity-roundtrip.mjs",
+      "sha256": "6222a2467d95ea84c452eb9505852c2aa817b5e38071d4b74796fb94e512cc94"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "d5a2c93dde17700f524e4e1092e40ee1fdcd650d96022c6e56c117b601beeea0"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "1a0e0789abcb829c79dec4748dbaa0e90d2989d6d263ac3e6b6e1fcf26377d1f"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "ea0c6d1798dfd3a5711bf96550b7a7d085d8374fdfdfaf5e694ee84b39ad28f9"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+    },
+    {
+      "path": "test-canonical-field-integrity.mjs",
+      "sha256": "a1ed30652be313638a8e23b24e080bc7235fe3044dbdaeb55f56b78fe18732bd"
+    },
+    {
+      "path": "test-specification-field-registry.mjs",
+      "sha256": "462397c71d275a31058e098a65f2477434c1cea22233543250a37b03b8b1d582"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "a9eadc5db096997c51540068fecddaa71dca221b7342eac703d243438a9d1c23"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "38fad6b6170193b5675c4bf2c69374def1f735c100a51a5ac108489daa3b63b9"
+    },
+    {
+      "path": "test-agent-job-default-migration.mjs",
+      "sha256": "f3ffe2a0fbac3de49287a1c21fbfbc519202848eddb1c755ceb82c3e8db638df"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true,
+  "reviewedChecks": [
+    {
+      "suite": "verify-v3-migration.mjs",
+      "checkId": "migration.unknown-preserved"
+    }
+  ],
+  "scopeLimit": "Only the named Section13 atomic preservation or historical-response predicate. Synthetic production transaction-adapter evidence; no native IndexedDB/browser/device/deployment or whole-application claim. Direct-versus-sequential canonical-result/audit-history equivalence is a distinct adjacent obligation. This review binds combined /15 dependencies but does not accept the separate /15 runtime repair. Formal shared Stage29/full-owner acceptance remains pending and is outside this review.",
+  "reviewedCandidateCommit": "49446c0c7673fa23f0d38068908878f2717eb4d7",
+  "combinedRuntimeBase": "49446c0c7673fa23f0d38068908878f2717eb4d7",
+  "currentExecutionRequired": true,
+  "applicationConformanceClaim": false,
+  "reviewCompletedAt": "2026-10-14T23:20:03.315Z",
+  "priorReview": {
+    "commit": "560e9797931707521b700596722d459b4cecf3d2",
+    "path": "verification/requirement-coverage-NREQ-a1bafeb7c6f6f12bf0c7b0f6fcadaab9-20261014-migration-projection12-independent.json",
+    "sha256": "a736e85debf60f7302e781f520967d0dec1439f2c34549f2bd15321c7bc53585",
+    "preservedUnchanged": true
+  },
+  "priorExecutedEvidence": {
+    "candidateCommit": "28601d57a5b01268b90203808733cd00062ec1ad",
+    "command": "node verify-v3-migration.mjs",
+    "exitCode": 0,
+    "stdoutSha256": "dffccd34497a755760dfc77aa854ca1532830ceccd556ff85d0995133006b709",
+    "stderrByteSize": 0,
+    "owningFaultsDetected": 26,
+    "publicMigrationRoutes": 3,
+    "actualCatalogChecksPassed": 8,
+    "independentConsumerControls": 379,
+    "originalSourceConsumerControls": 22,
+    "currentCandidateFullProducerReplay": false
+  },
+  "currentFocusedEvidence": {
+    "runtimeCandidate": "49446c0c7673fa23f0d38068908878f2717eb4d7",
+    "catalogCandidate": "49446c0c7673fa23f0d38068908878f2717eb4d7",
+    "publicMigrationRoutes": 3,
+    "publicRouteReadbackAndPackageRoundtrip": true,
+    "exactOpaqueRawStagesAndOriginalBytes": true,
+    "independentWrongResultControlsPerRoute": 4,
+    "historicalOwnerMutant": {
+      "exitCode": 1,
+      "oracle": "MIGRATION_HISTORICAL_CURRENT_CONTRACT_ORACLE"
+    },
+    "frozenRegistryContractsCompared": [
+      "closed-loop-derivation/project-current-projection/12",
+      "closed-loop-derivation/stage29-evidence-chains/3",
+      "closed-loop-derivation/stage19-confirmation/8",
+      "closed-loop-derivation/stage18-convergence/6"
+    ],
+    "migrationConsumerControls": 379,
+    "sourceConsumerControls": 22,
+    "fullMigrationProducerRerun": false,
+    "broadWrapperRerun": false,
+    "eligibleCurrentReceiptCreated": false
+  },
+  "metadataRefresh": {
+    "authorContext": "/root/bind_migration_preservation_proofs",
+    "proposalPostimageSha256": "56d510f587073d50e03a1e8f7de23e75cc20d710bd673be2323ef58e39151bd6",
+    "changedLeavesAcrossFiveDesigns": 12,
+    "proposalOtherTwoLeavesOutOfReviewScope": true,
+    "activeBindingsRetained": 358,
+    "changeScope": "Schema/store owner hashes for each five atoms and engine hashes for original-audit/historical-response atoms only. All other assigned fields and review pointers unchanged."
+  },
+  "independentSemanticDelta": {
+    "migrationAndRawPreservationOwnersUnchanged": true,
+    "exactRetainedLegacyContractsCompared": true,
+    "currentDerivationChanges": "Due-stage release/proof selection and registered chain5 proof-obligation preimage; releaseCurrent supplied by existing owner. No original import/raw preservation path edited.",
+    "newVersionActivation": "Existing activation recognizes project12/13/14 and retains immutable history; legitimate owner reproof may replace active old derived rows while original rows/inputs/receipts remain archived.",
+    "corroboratingIndependentEvidence": [
+      {
+        "path": "/workspace/shared/clrt-catalog15-independent-review/review-verdict.json",
+        "sha256": "759756efb38492d7b3819dce98f15392b78db4fadfb87b3d90b9a99a6c6453c0"
+      },
+      {
+        "path": "/workspace/shared/clrt-catalog15-integrated-review/result.json",
+        "sha256": "8dd631dc71b18b99c182106ced0e1e8aa1099346ddb79a94b53e10dd45af8399"
+      },
+      {
+        "path": "/workspace/shared/clrt-iteration-repair-evidence/independent-release-review-20261014/chain5-integration-disposition.json",
+        "sha256": "64d6a8decb8f84459a655d6c905f8fe9d04f708bfd8509d436b644793e35ee77"
+      },
+      {
+        "path": "/workspace/shared/clrt-iteration-repair-evidence/independent-blocked-chain3-migration/independent-review-manifest.json",
+        "sha256": "ad39d910e907d93d128549cbfeb569beb6354ee99e752e8ff86a1ea4006e1c35"
+      },
+      {
+        "path": "/workspace/shared/clrt-iteration-repair-evidence/independent-blocked-chain3-migration/independent-review-addendum-cold-currentness.json",
+        "sha256": "94c575b0738a5c9ea36324ad61216b712ea104426f4ddc85a5719843400d9a28"
+      }
+    ],
+    "corroborationLimits": "Genuine blocked old3/project13 migration, cold5 currentness, positive bounded public command and separate catalog checks are not a formal shared Stage29/full-owner or whole-journey result.",
+    "applicationConformanceClaim": false
+  }
+}

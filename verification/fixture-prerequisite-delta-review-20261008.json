@@ -1,0 +1,70 @@
+{
+  "schema": "closed-loop-fixture-prerequisite-delta-review/1",
+  "reviewedAtUtc": "2026-10-08T11:31:00Z",
+  "actor": "Codex current source integrator",
+  "contextId": "/root",
+  "examinedHead": "41178d281428ca27ac9a80f68439594b73811999",
+  "controllingSource": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+  "controllingSourceSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "governingLines": [
+    {
+      "line": 2380,
+      "obligation": "Stage 12 verifier context must differ from generator context and be current."
+    },
+    {
+      "line": 3763,
+      "obligation": "Application owns run, iteration, candidate and context identities."
+    }
+  ],
+  "affectedRequirementIds": [
+    "NREQ-360281bfdd66bed29237ed7202962808",
+    "NREQ-a0db6ddcb33d9af123b08d4d481c8ebd",
+    "NREQ-baa1c33b2e2490264f91881b06ff9da8",
+    "NREQ-f1919b51ebfc8561d0140c02cbf08abd",
+    "NREQ-4b27c9f604f44c29404eacc12a59fd68",
+    "NREQ-71896faa31bc64e94d98bc976e1e6f1d",
+    "NREQ-78fef21919bbd7bb3bafba6f62210631",
+    "NREQ-72aa03a305fb8893a65d384f41d86aeb",
+    "NREQ-848909d4b95219bdb481803a4b1b91c2",
+    "NREQ-601ec85ffefcffd713520f4067f7529c",
+    "NREQ-c0080ab56f40757c88225dc35a1f98f0",
+    "NREQ-a42ec803577aa8ccbe176ed8e20a8595",
+    "NREQ-928a65a08b403be3edc8b160ef9cc53c",
+    "NREQ-7a68fe07ee725cf205dd2102cd997b7f",
+    "NREQ-4bb86ccfacff0ea8bbbc59df67b0ca4f",
+    "NREQ-768d67996244254c83c0d11796f63912",
+    "NREQ-59d5854af99ac5a566eb61e978519b21",
+    "NREQ-75b670fc6ea047b7452b4148f12a30ba",
+    "NREQ-86651d173d1583e48cf6c03f9d486f4f",
+    "NREQ-1576e27fba46e1d68631bb2ade2e37f4",
+    "NREQ-cf25cf824db06866df51c0e538fcbc03",
+    "NREQ-41ab1c200b4ce5c9d1d96613a3e5b264",
+    "NREQ-0c973b955d61ee36887734df0ade5e69",
+    "NREQ-971af7158d193e9b1d780c13b6c8e0ec"
+  ],
+  "narrowSourceDeltas": [
+    {
+      "path": "verify-ingestion.mjs",
+      "priorCommit": "251702790d2f17a2ae2f761df9b8298331a51cc9",
+      "priorSha256": "f7b4aef437956f2593401cc1923bc48ed8127223467b91d71f83608f7fa1c285",
+      "currentSha256": "433db26aef984c714c8e59d3d02dfe174b9cfdd8a7dc2daeb8e0e5fb1fbb24bf",
+      "review": "verify-ingestion skips generic synthetic context allocation for VERIFY so the application issues the selected run verifier context."
+    },
+    {
+      "path": "verify-reservation-contract.mjs",
+      "priorCommit": "dbe8997e9679d5f97198a91b0ab424c45dbbb86e",
+      "priorSha256": "8c26d4f085118e956af896460f5e05ad90398570736c0043a0a5378767721d86",
+      "currentSha256": "d90035bced2ff5abb4c562f9bfa8c91d79db368c1f460d926bfae6668dbcfca8",
+      "review": "verify-reservation-contract establishes the fixture run/iteration/candidate binding before testing application-issued verifier reservation and prompt transport."
+    }
+  ],
+  "executionEvidence": {
+    "verify-ingestion.mjs": "PASS: Node 22.23.3, source commit 41178d281428ca27ac9a80f68439594b73811999, 2026-10-08T10:39:46Z–11:09:52Z, 73 reports and 87 observations, validated receipt SHA256 3ea0c854db237ac40ba9bb08a09092f2542735e5a140e231cff36f55e6f1e932.",
+    "verify-reservation-contract.mjs": "PASS: Node 22.23.3 direct owner on current source; reservation prompt committed, replacement transport lifecycle, terminal attempt retries and final accepted state asserted. Synthetic fixture, no real external actor."
+  },
+  "reviewDecision": "NARROW_FIXTURE_PREREQUISITE_SOURCE_RENEWAL",
+  "priorIndependentSemanticReviewRetained": true,
+  "newIndependentSemanticReviewClaimed": false,
+  "applicationConformanceClaim": false,
+  "fullCurrentCandidateExecutionStillRequired": true
+}

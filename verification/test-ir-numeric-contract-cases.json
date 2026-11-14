@@ -1,0 +1,3528 @@
+{
+  "population": 173,
+  "basis": "Current numeric clauses2063/2065/2067/2069 and finite reviewed public-API baseline; exact outputs are independent literals, not generated from production evaluator.",
+  "selectedSortDiagnostic": "Malformed SORT DECIMAL domain consistently uses existing published SORT_DOMAIN/UNDETERMINED; exact code is the deliberately selected implementation diagnostic, while UNDETERMINED is normative.",
+  "cases": [
+    {
+      "id": "decimal-coercion-COMPARE_EQ-number-pair",
+      "group": "decimal-string-coercion",
+      "operation": "COMPARE_EQ",
+      "actual": 1,
+      "expected": 1,
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "decimal-coercion-COMPARE_EQ-number-string",
+      "group": "decimal-string-coercion",
+      "operation": "COMPARE_EQ",
+      "actual": 1,
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "decimal-coercion-COMPARE_EQ-singleton-array-string",
+      "group": "decimal-string-coercion",
+      "operation": "COMPARE_EQ",
+      "actual": [
+        "1"
+      ],
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "decimal-coercion-COMPARE_NE-number-pair",
+      "group": "decimal-string-coercion",
+      "operation": "COMPARE_NE",
+      "actual": 1,
+      "expected": 1,
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "decimal-coercion-COMPARE_NE-number-string",
+      "group": "decimal-string-coercion",
+      "operation": "COMPARE_NE",
+      "actual": 1,
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "decimal-coercion-COMPARE_NE-singleton-array-string",
+      "group": "decimal-string-coercion",
+      "operation": "COMPARE_NE",
+      "actual": [
+        "1"
+      ],
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "decimal-coercion-ASSERT_EQ-number-pair",
+      "group": "decimal-string-coercion",
+      "operation": "ASSERT_EQ",
+      "actual": 1,
+      "expected": 1,
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "decimal-coercion-ASSERT_EQ-number-string",
+      "group": "decimal-string-coercion",
+      "operation": "ASSERT_EQ",
+      "actual": 1,
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "decimal-coercion-ASSERT_EQ-singleton-array-string",
+      "group": "decimal-string-coercion",
+      "operation": "ASSERT_EQ",
+      "actual": [
+        "1"
+      ],
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "ordered-decimal-domain-COMPARE_GT",
+      "group": "ordered-decimal-domain",
+      "operation": "COMPARE_GT",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "ordered-decimal-domain-COMPARE_GTE",
+      "group": "ordered-decimal-domain",
+      "operation": "COMPARE_GTE",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "ordered-decimal-domain-COMPARE_LT",
+      "group": "ordered-decimal-domain",
+      "operation": "COMPARE_LT",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "ordered-decimal-domain-COMPARE_LTE",
+      "group": "ordered-decimal-domain",
+      "operation": "COMPARE_LTE",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-COMPARE_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "COMPARE_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-COMPARE_NE",
+      "group": "nonascii-whitespace",
+      "operation": "COMPARE_NE",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-COMPARE_GT-omitted",
+      "group": "nonascii-whitespace",
+      "operation": "COMPARE_GT",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-COMPARE_GT-INTEGER",
+      "group": "nonascii-whitespace",
+      "operation": "COMPARE_GT",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-COMPARE_GT-DECIMAL_STRING",
+      "group": "nonascii-whitespace",
+      "operation": "COMPARE_GT",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-COMPARE_GTE-omitted",
+      "group": "nonascii-whitespace",
+      "operation": "COMPARE_GTE",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-COMPARE_GTE-INTEGER",
+      "group": "nonascii-whitespace",
+      "operation": "COMPARE_GTE",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-COMPARE_GTE-DECIMAL_STRING",
+      "group": "nonascii-whitespace",
+      "operation": "COMPARE_GTE",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-COMPARE_LT-omitted",
+      "group": "nonascii-whitespace",
+      "operation": "COMPARE_LT",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-COMPARE_LT-INTEGER",
+      "group": "nonascii-whitespace",
+      "operation": "COMPARE_LT",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-COMPARE_LT-DECIMAL_STRING",
+      "group": "nonascii-whitespace",
+      "operation": "COMPARE_LT",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-COMPARE_LTE-omitted",
+      "group": "nonascii-whitespace",
+      "operation": "COMPARE_LTE",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-COMPARE_LTE-INTEGER",
+      "group": "nonascii-whitespace",
+      "operation": "COMPARE_LTE",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-COMPARE_LTE-DECIMAL_STRING",
+      "group": "nonascii-whitespace",
+      "operation": "COMPARE_LTE",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-ASSERT_GT",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_GT",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-ASSERT_GTE",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_GTE",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-ASSERT_LT",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_LT",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-nbsp-ASSERT_LTE",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_LTE",
+      "actual": " 2 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U1680-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U2000-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U2001-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U2002-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U2003-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U2004-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U2005-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U2006-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U2007-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U2008-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U2009-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U200A-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U2028-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U2029-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U202F-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U205F-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": " 1 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-U3000-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": "　1　",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "nonascii-UFEFF-ASSERT_EQ",
+      "group": "nonascii-whitespace",
+      "operation": "ASSERT_EQ",
+      "actual": "﻿1﻿",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "approximate-operand-COMPARE_EQ-typed-extra",
+      "group": "approximate-domain-coercion",
+      "operation": "COMPARE_EQ",
+      "actual": {
+        "numberType": "DECIMAL",
+        "value": "1",
+        "extra": true
+      },
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": "0"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "approximate-tolerance-COMPARE_EQ-typed-extra",
+      "group": "approximate-domain-coercion",
+      "operation": "COMPARE_EQ",
+      "actual": "2",
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": {
+          "numberType": "DECIMAL",
+          "value": "1",
+          "extra": true
+        }
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "requiredValidationIssue": "Step 0 input absTol is invalid."
+    },
+    {
+      "id": "approximate-operand-COMPARE_EQ-typed-number",
+      "group": "approximate-domain-coercion",
+      "operation": "COMPARE_EQ",
+      "actual": {
+        "numberType": "DECIMAL",
+        "value": 1
+      },
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": "0"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "approximate-tolerance-COMPARE_EQ-typed-number",
+      "group": "approximate-domain-coercion",
+      "operation": "COMPARE_EQ",
+      "actual": "2",
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": {
+          "numberType": "DECIMAL",
+          "value": 1
+        }
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "requiredValidationIssue": "Step 0 input absTol is invalid."
+    },
+    {
+      "id": "approximate-operand-COMPARE_EQ-array",
+      "group": "approximate-domain-coercion",
+      "operation": "COMPARE_EQ",
+      "actual": [
+        "1"
+      ],
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": "0"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "approximate-tolerance-COMPARE_EQ-array",
+      "group": "approximate-domain-coercion",
+      "operation": "COMPARE_EQ",
+      "actual": "2",
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": [
+          "1"
+        ]
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "requiredValidationIssue": "Step 0 input absTol is invalid."
+    },
+    {
+      "id": "approximate-operand-COMPARE_NE-typed-extra",
+      "group": "approximate-domain-coercion",
+      "operation": "COMPARE_NE",
+      "actual": {
+        "numberType": "DECIMAL",
+        "value": "1",
+        "extra": true
+      },
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": "0"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "approximate-tolerance-COMPARE_NE-typed-extra",
+      "group": "approximate-domain-coercion",
+      "operation": "COMPARE_NE",
+      "actual": "2",
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": {
+          "numberType": "DECIMAL",
+          "value": "1",
+          "extra": true
+        }
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "requiredValidationIssue": "Step 0 input absTol is invalid."
+    },
+    {
+      "id": "approximate-operand-COMPARE_NE-typed-number",
+      "group": "approximate-domain-coercion",
+      "operation": "COMPARE_NE",
+      "actual": {
+        "numberType": "DECIMAL",
+        "value": 1
+      },
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": "0"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "approximate-tolerance-COMPARE_NE-typed-number",
+      "group": "approximate-domain-coercion",
+      "operation": "COMPARE_NE",
+      "actual": "2",
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": {
+          "numberType": "DECIMAL",
+          "value": 1
+        }
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "requiredValidationIssue": "Step 0 input absTol is invalid."
+    },
+    {
+      "id": "approximate-operand-COMPARE_NE-array",
+      "group": "approximate-domain-coercion",
+      "operation": "COMPARE_NE",
+      "actual": [
+        "1"
+      ],
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": "0"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "approximate-tolerance-COMPARE_NE-array",
+      "group": "approximate-domain-coercion",
+      "operation": "COMPARE_NE",
+      "actual": "2",
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": [
+          "1"
+        ]
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "requiredValidationIssue": "Step 0 input absTol is invalid."
+    },
+    {
+      "id": "approximate-operand-ASSERT_EQ-typed-extra",
+      "group": "approximate-domain-coercion",
+      "operation": "ASSERT_EQ",
+      "actual": {
+        "numberType": "DECIMAL",
+        "value": "1",
+        "extra": true
+      },
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": "0"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "approximate-tolerance-ASSERT_EQ-typed-extra",
+      "group": "approximate-domain-coercion",
+      "operation": "ASSERT_EQ",
+      "actual": "2",
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": {
+          "numberType": "DECIMAL",
+          "value": "1",
+          "extra": true
+        }
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "requiredValidationIssue": "Step 0 input absTol is invalid."
+    },
+    {
+      "id": "approximate-operand-ASSERT_EQ-typed-number",
+      "group": "approximate-domain-coercion",
+      "operation": "ASSERT_EQ",
+      "actual": {
+        "numberType": "DECIMAL",
+        "value": 1
+      },
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": "0"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "approximate-tolerance-ASSERT_EQ-typed-number",
+      "group": "approximate-domain-coercion",
+      "operation": "ASSERT_EQ",
+      "actual": "2",
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": {
+          "numberType": "DECIMAL",
+          "value": 1
+        }
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "requiredValidationIssue": "Step 0 input absTol is invalid."
+    },
+    {
+      "id": "approximate-operand-ASSERT_EQ-array",
+      "group": "approximate-domain-coercion",
+      "operation": "ASSERT_EQ",
+      "actual": [
+        "1"
+      ],
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": "0"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "approximate-tolerance-ASSERT_EQ-array",
+      "group": "approximate-domain-coercion",
+      "operation": "ASSERT_EQ",
+      "actual": "2",
+      "expected": "1",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absTol": [
+          "1"
+        ]
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "requiredValidationIssue": "Step 0 input absTol is invalid."
+    },
+    {
+      "id": "valid-decimal-string-COMPARE_EQ",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_EQ",
+      "actual": " +001.2000 ",
+      "expected": "1.2",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": true
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-decimal-string-COMPARE_NE",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_NE",
+      "actual": " +001.2000 ",
+      "expected": "1.2",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": false
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-decimal-string-ASSERT_EQ",
+      "group": "valid-domain-control",
+      "operation": "ASSERT_EQ",
+      "actual": " +001.2000 ",
+      "expected": "1.2",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": " +001.2000 "
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-COMPARE_GT-omitted",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_GT",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": true
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-COMPARE_GT-INTEGER",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_GT",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": true
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-COMPARE_GT-DECIMAL_STRING",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_GT",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": true
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-COMPARE_GTE-omitted",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_GTE",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": true
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-COMPARE_GTE-INTEGER",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_GTE",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": true
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-COMPARE_GTE-DECIMAL_STRING",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_GTE",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": true
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-COMPARE_LT-omitted",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_LT",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": false
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-COMPARE_LT-INTEGER",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_LT",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": false
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-COMPARE_LT-DECIMAL_STRING",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_LT",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": false
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-COMPARE_LTE-omitted",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_LTE",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": false
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-COMPARE_LTE-INTEGER",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_LTE",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": false
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-COMPARE_LTE-DECIMAL_STRING",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_LTE",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": false
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-ASSERT_GT",
+      "group": "valid-domain-control",
+      "operation": "ASSERT_GT",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": " +002.000 "
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-ASSERT_GTE",
+      "group": "valid-domain-control",
+      "operation": "ASSERT_GTE",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": " +002.000 "
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-ASSERT_LT",
+      "group": "valid-domain-control",
+      "operation": "ASSERT_LT",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": " +002.000 "
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ordered-string-ASSERT_LTE",
+      "group": "valid-domain-control",
+      "operation": "ASSERT_LTE",
+      "actual": " +002.000 ",
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": " +002.000 "
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-COMPARE_EQ-omitted",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_EQ",
+      "actual": 1,
+      "expected": 1,
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": true
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-COMPARE_EQ-INTEGER",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_EQ",
+      "actual": 1,
+      "expected": 1,
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": true
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-COMPARE_NE-omitted",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_NE",
+      "actual": 1,
+      "expected": 1,
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": false
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-COMPARE_NE-INTEGER",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_NE",
+      "actual": 1,
+      "expected": 1,
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": false
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-ASSERT_EQ-omitted",
+      "group": "valid-domain-control",
+      "operation": "ASSERT_EQ",
+      "actual": 1,
+      "expected": 1,
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": 1
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-ASSERT_EQ-INTEGER",
+      "group": "valid-domain-control",
+      "operation": "ASSERT_EQ",
+      "actual": 1,
+      "expected": 1,
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": 1
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-COMPARE_GT-omitted",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_GT",
+      "actual": 2,
+      "expected": 1,
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": true
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-COMPARE_GT-INTEGER",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_GT",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": true
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-COMPARE_GTE-omitted",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_GTE",
+      "actual": 2,
+      "expected": 1,
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": true
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-COMPARE_GTE-INTEGER",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_GTE",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": true
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-COMPARE_LT-omitted",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_LT",
+      "actual": 2,
+      "expected": 1,
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": false
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-COMPARE_LT-INTEGER",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_LT",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": false
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-COMPARE_LTE-omitted",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_LTE",
+      "actual": 2,
+      "expected": 1,
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": false
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-COMPARE_LTE-INTEGER",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_LTE",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": false
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-ASSERT_GT",
+      "group": "valid-domain-control",
+      "operation": "ASSERT_GT",
+      "actual": 2,
+      "expected": 1,
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": 2
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-ASSERT_GTE",
+      "group": "valid-domain-control",
+      "operation": "ASSERT_GTE",
+      "actual": 2,
+      "expected": 1,
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": 2
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-ASSERT_LT",
+      "group": "valid-domain-control",
+      "operation": "ASSERT_LT",
+      "actual": 2,
+      "expected": 1,
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": 2
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-integer-ASSERT_LTE",
+      "group": "valid-domain-control",
+      "operation": "ASSERT_LTE",
+      "actual": 2,
+      "expected": 1,
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": 2
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ascii-U0009",
+      "group": "ascii-whitespace-control",
+      "operation": "ASSERT_EQ",
+      "actual": "\t+01.00\t",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": "\t+01.00\t"
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ascii-U000A",
+      "group": "ascii-whitespace-control",
+      "operation": "ASSERT_EQ",
+      "actual": "\n+01.00\n",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": "\n+01.00\n"
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ascii-U000B",
+      "group": "ascii-whitespace-control",
+      "operation": "ASSERT_EQ",
+      "actual": "\u000b+01.00\u000b",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": "\u000b+01.00\u000b"
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ascii-U000C",
+      "group": "ascii-whitespace-control",
+      "operation": "ASSERT_EQ",
+      "actual": "\f+01.00\f",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": "\f+01.00\f"
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ascii-U000D",
+      "group": "ascii-whitespace-control",
+      "operation": "ASSERT_EQ",
+      "actual": "\r+01.00\r",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": "\r+01.00\r"
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-ascii-U0020",
+      "group": "ascii-whitespace-control",
+      "operation": "ASSERT_EQ",
+      "actual": " +01.00 ",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": " +01.00 "
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "reject-mixed-ordered-COMPARE_GT",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_GT",
+      "actual": 1,
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings.",
+      "messageChangeBasis": "Explicit DECIMAL_STRING now reaches its declared string-only comparator, retaining UNSUPPORTED_NUMERIC_PRECISION/UNDETERMINED rather than ordinary ordered-domain wording."
+    },
+    {
+      "id": "reject-mixed-ordered-COMPARE_GTE",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_GTE",
+      "actual": 1,
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings.",
+      "messageChangeBasis": "Explicit DECIMAL_STRING now reaches its declared string-only comparator, retaining UNSUPPORTED_NUMERIC_PRECISION/UNDETERMINED rather than ordinary ordered-domain wording."
+    },
+    {
+      "id": "reject-mixed-ordered-COMPARE_LT",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_LT",
+      "actual": 1,
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings.",
+      "messageChangeBasis": "Explicit DECIMAL_STRING now reaches its declared string-only comparator, retaining UNSUPPORTED_NUMERIC_PRECISION/UNDETERMINED rather than ordinary ordered-domain wording."
+    },
+    {
+      "id": "reject-mixed-ordered-COMPARE_LTE",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_LTE",
+      "actual": 1,
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings.",
+      "messageChangeBasis": "Explicit DECIMAL_STRING now reaches its declared string-only comparator, retaining UNSUPPORTED_NUMERIC_PRECISION/UNDETERMINED rather than ordinary ordered-domain wording."
+    },
+    {
+      "id": "reject-mixed-ordinary-COMPARE_EQ-omitted",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_EQ",
+      "actual": 1,
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact numeric equality is supported only for safe integers unless DECIMAL_STRING or APPROXIMATE semantics are explicit."
+    },
+    {
+      "id": "reject-mixed-ordinary-COMPARE_EQ-INTEGER",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_EQ",
+      "actual": 1,
+      "expected": "1",
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact numeric equality is supported only for safe integers unless DECIMAL_STRING or APPROXIMATE semantics are explicit."
+    },
+    {
+      "id": "reject-decimal-domain-COMPARE_EQ-boolean",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_EQ",
+      "actual": false,
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-decimal-domain-COMPARE_EQ-null",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_EQ",
+      "actual": null,
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-decimal-domain-COMPARE_EQ-object",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_EQ",
+      "actual": {},
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-decimal-domain-COMPARE_EQ-typed",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_EQ",
+      "actual": {
+        "numberType": "DECIMAL",
+        "value": "1"
+      },
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-decimal-domain-COMPARE_EQ-exponent",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_EQ",
+      "actual": "1e0",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-mixed-ordinary-COMPARE_NE-omitted",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_NE",
+      "actual": 1,
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact numeric equality is supported only for safe integers unless DECIMAL_STRING or APPROXIMATE semantics are explicit."
+    },
+    {
+      "id": "reject-mixed-ordinary-COMPARE_NE-INTEGER",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_NE",
+      "actual": 1,
+      "expected": "1",
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact numeric equality is supported only for safe integers unless DECIMAL_STRING or APPROXIMATE semantics are explicit."
+    },
+    {
+      "id": "reject-decimal-domain-COMPARE_NE-boolean",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_NE",
+      "actual": false,
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-decimal-domain-COMPARE_NE-null",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_NE",
+      "actual": null,
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-decimal-domain-COMPARE_NE-object",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_NE",
+      "actual": {},
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-decimal-domain-COMPARE_NE-typed",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_NE",
+      "actual": {
+        "numberType": "DECIMAL",
+        "value": "1"
+      },
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-decimal-domain-COMPARE_NE-exponent",
+      "group": "existing-refusal-control",
+      "operation": "COMPARE_NE",
+      "actual": "1e0",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-mixed-ordinary-ASSERT_EQ-omitted",
+      "group": "existing-refusal-control",
+      "operation": "ASSERT_EQ",
+      "actual": 1,
+      "expected": "1",
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact numeric equality is supported only for safe integers unless DECIMAL_STRING or APPROXIMATE semantics are explicit."
+    },
+    {
+      "id": "reject-mixed-ordinary-ASSERT_EQ-INTEGER",
+      "group": "existing-refusal-control",
+      "operation": "ASSERT_EQ",
+      "actual": 1,
+      "expected": "1",
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact numeric equality is supported only for safe integers unless DECIMAL_STRING or APPROXIMATE semantics are explicit."
+    },
+    {
+      "id": "reject-decimal-domain-ASSERT_EQ-boolean",
+      "group": "existing-refusal-control",
+      "operation": "ASSERT_EQ",
+      "actual": false,
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-decimal-domain-ASSERT_EQ-null",
+      "group": "existing-refusal-control",
+      "operation": "ASSERT_EQ",
+      "actual": null,
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-decimal-domain-ASSERT_EQ-object",
+      "group": "existing-refusal-control",
+      "operation": "ASSERT_EQ",
+      "actual": {},
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-decimal-domain-ASSERT_EQ-typed",
+      "group": "existing-refusal-control",
+      "operation": "ASSERT_EQ",
+      "actual": {
+        "numberType": "DECIMAL",
+        "value": "1"
+      },
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-decimal-domain-ASSERT_EQ-exponent",
+      "group": "existing-refusal-control",
+      "operation": "ASSERT_EQ",
+      "actual": "1e0",
+      "expected": "1",
+      "settings": {
+        "numericMode": "DECIMAL_STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "UNSUPPORTED_NUMERIC_PRECISION",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "Exact decimal comparison requires plain decimal strings."
+    },
+    {
+      "id": "reject-ordered-assert-setting-ASSERT_GT-mode",
+      "group": "existing-definition-refusal-control",
+      "operation": "ASSERT_GT",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "validationIssues": [
+        "Step 0 operation ASSERT_GT contains unknown input port numericMode."
+      ],
+      "regressionErrorMessage": "Step 0 operation ASSERT_GT contains unknown input port numericMode."
+    },
+    {
+      "id": "reject-ordered-assert-setting-ASSERT_GT-tolerance",
+      "group": "existing-definition-refusal-control",
+      "operation": "ASSERT_GT",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "absTol": "1"
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "validationIssues": [
+        "Step 0 operation ASSERT_GT contains unknown input port absTol."
+      ],
+      "regressionErrorMessage": "Step 0 operation ASSERT_GT contains unknown input port absTol."
+    },
+    {
+      "id": "reject-ordered-assert-setting-ASSERT_GTE-mode",
+      "group": "existing-definition-refusal-control",
+      "operation": "ASSERT_GTE",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "validationIssues": [
+        "Step 0 operation ASSERT_GTE contains unknown input port numericMode."
+      ],
+      "regressionErrorMessage": "Step 0 operation ASSERT_GTE contains unknown input port numericMode."
+    },
+    {
+      "id": "reject-ordered-assert-setting-ASSERT_GTE-tolerance",
+      "group": "existing-definition-refusal-control",
+      "operation": "ASSERT_GTE",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "relTol": "1"
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "validationIssues": [
+        "Step 0 operation ASSERT_GTE contains unknown input port relTol."
+      ],
+      "regressionErrorMessage": "Step 0 operation ASSERT_GTE contains unknown input port relTol."
+    },
+    {
+      "id": "reject-ordered-assert-setting-ASSERT_LT-mode",
+      "group": "existing-definition-refusal-control",
+      "operation": "ASSERT_LT",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "validationIssues": [
+        "Step 0 operation ASSERT_LT contains unknown input port numericMode."
+      ],
+      "regressionErrorMessage": "Step 0 operation ASSERT_LT contains unknown input port numericMode."
+    },
+    {
+      "id": "reject-ordered-assert-setting-ASSERT_LT-tolerance",
+      "group": "existing-definition-refusal-control",
+      "operation": "ASSERT_LT",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "absoluteTolerance": "1"
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "validationIssues": [
+        "Step 0 operation ASSERT_LT contains unknown input port absoluteTolerance."
+      ],
+      "regressionErrorMessage": "Step 0 operation ASSERT_LT contains unknown input port absoluteTolerance."
+    },
+    {
+      "id": "reject-ordered-assert-setting-ASSERT_LTE-mode",
+      "group": "existing-definition-refusal-control",
+      "operation": "ASSERT_LTE",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "numericMode": "INTEGER"
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "validationIssues": [
+        "Step 0 operation ASSERT_LTE contains unknown input port numericMode."
+      ],
+      "regressionErrorMessage": "Step 0 operation ASSERT_LTE contains unknown input port numericMode."
+    },
+    {
+      "id": "reject-ordered-assert-setting-ASSERT_LTE-tolerance",
+      "group": "existing-definition-refusal-control",
+      "operation": "ASSERT_LTE",
+      "actual": 2,
+      "expected": 1,
+      "settings": {
+        "relativeTolerance": "1"
+      },
+      "normative": {
+        "validationValid": false,
+        "error": {
+          "code": "INVALID_TEST_IR",
+          "disposition": "EXECUTION_FAILED"
+        }
+      },
+      "validationIssues": [
+        "Step 0 operation ASSERT_LTE contains unknown input port relativeTolerance."
+      ],
+      "regressionErrorMessage": "Step 0 operation ASSERT_LTE contains unknown input port relativeTolerance."
+    },
+    {
+      "id": "valid-approximate-domain-COMPARE_EQ",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_EQ",
+      "actual": {
+        "numberType": "DECIMAL",
+        "value": "-4.00"
+      },
+      "expected": "-3",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absoluteTolerance": "1"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": true
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-approximate-domain-COMPARE_NE",
+      "group": "valid-domain-control",
+      "operation": "COMPARE_NE",
+      "actual": {
+        "numberType": "DECIMAL",
+        "value": "-4.00"
+      },
+      "expected": "-3",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absoluteTolerance": "1"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "VIOLATED",
+          "actual": false
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "valid-approximate-domain-ASSERT_EQ",
+      "group": "valid-domain-control",
+      "operation": "ASSERT_EQ",
+      "actual": {
+        "numberType": "DECIMAL",
+        "value": "-4.00"
+      },
+      "expected": "-3",
+      "settings": {
+        "numericMode": "APPROXIMATE",
+        "absoluteTolerance": "1"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": {
+            "numberType": "DECIMAL",
+            "value": "-4.00"
+          }
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "sort-decimal-singleton-extra-key",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": "1",
+          "extra": true
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "1",
+          "extra": true
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-singleton-numeric-value",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": 1
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": 1
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-singleton-missing-value",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL"
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL"
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-singleton-null-value",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": null
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": null
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-singleton-plus",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": "+1"
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "+1"
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-singleton-leading-zero",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": "01"
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "01"
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-singleton-ascii-space",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": " 1 "
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": " 1 "
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-singleton-nonascii-space",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": " 1 "
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": " 1 "
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-singleton-exponent",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": "1e0"
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "1e0"
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-singleton-negative-zero",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": "-0.0"
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "-0.0"
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-singleton-empty-fraction",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": "1."
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "1."
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-pair-extra-key",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": "1",
+          "extra": true
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "0"
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "0"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "1",
+          "extra": true
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-pair-numeric-value",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": 1
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "0"
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "0"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": 1
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-pair-plus",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": "+1"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "0"
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "0"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "+1"
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-pair-leading-zero",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": "01"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "0"
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "0"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "01"
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-pair-ascii-space",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": " 1 "
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "0"
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "0"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": " 1 "
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-decimal-pair-nonascii-space",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": " 1 "
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "0"
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "0"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": " 1 "
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL"
+      },
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-inferred-malformed-singleton",
+      "group": "sort-decimal-domain",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": "1",
+          "extra": true
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "1",
+          "extra": true
+        }
+      ],
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      }
+    },
+    {
+      "id": "sort-mixed-domain-disposition",
+      "group": "sort-domain-disposition",
+      "operation": "SORT",
+      "actual": [
+        1,
+        "2"
+      ],
+      "expected": [
+        1,
+        "2"
+      ],
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "error": {
+          "code": "SORT_DOMAIN",
+          "disposition": "UNDETERMINED"
+        }
+      },
+      "validationIssues": [],
+      "regressionErrorMessage": "SORT input is not homogeneous in the declared domain."
+    },
+    {
+      "id": "sort-decimal-exact-stable-asc",
+      "group": "sort-valid-control",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": "1.00000000000000002"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "1.00000000000000001"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "1.0"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "1.00"
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "1.0"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "1.00"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "1.00000000000000001"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "1.00000000000000002"
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL",
+        "direction": "ASC"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": [
+            {
+              "numberType": "DECIMAL",
+              "value": "1.0"
+            },
+            {
+              "numberType": "DECIMAL",
+              "value": "1.00"
+            },
+            {
+              "numberType": "DECIMAL",
+              "value": "1.00000000000000001"
+            },
+            {
+              "numberType": "DECIMAL",
+              "value": "1.00000000000000002"
+            }
+          ]
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "sort-decimal-exact-desc-reverses-asc",
+      "group": "sort-valid-control",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": "1.00000000000000002"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "1.00000000000000001"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "1.0"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "1.00"
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "1.00000000000000002"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "1.00000000000000001"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "1.00"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "1.0"
+        }
+      ],
+      "settings": {
+        "domain": "DECIMAL",
+        "direction": "DESC"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": [
+            {
+              "numberType": "DECIMAL",
+              "value": "1.00000000000000002"
+            },
+            {
+              "numberType": "DECIMAL",
+              "value": "1.00000000000000001"
+            },
+            {
+              "numberType": "DECIMAL",
+              "value": "1.00"
+            },
+            {
+              "numberType": "DECIMAL",
+              "value": "1.0"
+            }
+          ]
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "sort-decimal-inferred-valid",
+      "group": "sort-valid-control",
+      "operation": "SORT",
+      "actual": [
+        {
+          "numberType": "DECIMAL",
+          "value": "2"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "-1.00"
+        }
+      ],
+      "expected": [
+        {
+          "numberType": "DECIMAL",
+          "value": "-1.00"
+        },
+        {
+          "numberType": "DECIMAL",
+          "value": "2"
+        }
+      ],
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": [
+            {
+              "numberType": "DECIMAL",
+              "value": "-1.00"
+            },
+            {
+              "numberType": "DECIMAL",
+              "value": "2"
+            }
+          ]
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "sort-ordinary-string",
+      "group": "sort-valid-control",
+      "operation": "SORT",
+      "actual": [
+        "z",
+        "a"
+      ],
+      "expected": [
+        "a",
+        "z"
+      ],
+      "settings": {
+        "domain": "STRING"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": [
+            "a",
+            "z"
+          ]
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "sort-ordinary-boolean",
+      "group": "sort-valid-control",
+      "operation": "SORT",
+      "actual": [
+        true,
+        false
+      ],
+      "expected": [
+        false,
+        true
+      ],
+      "settings": {
+        "domain": "BOOLEAN"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": [
+            false,
+            true
+          ]
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "sort-ordinary-integer",
+      "group": "sort-valid-control",
+      "operation": "SORT",
+      "actual": [
+        2,
+        -1
+      ],
+      "expected": [
+        -1,
+        2
+      ],
+      "settings": {
+        "domain": "INTEGER"
+      },
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": [
+            -1,
+            2
+          ]
+        }
+      },
+      "validationIssues": []
+    },
+    {
+      "id": "sort-ordinary-empty",
+      "group": "sort-valid-control",
+      "operation": "SORT",
+      "actual": [],
+      "expected": [],
+      "settings": {},
+      "normative": {
+        "validationValid": true,
+        "result": {
+          "determination": "SATISFIED",
+          "actual": []
+        }
+      },
+      "validationIssues": []
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "schema": "closed-loop-attributed-xml-root-resolution-reconciliation/1",
+  "status": "FROZEN_SEVEN_CONDITIONAL_CHANGED_IDENTITIES",
+  "record": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/per-id-reconciliation.json",
+    "sha256": "e7c1d33e25e84de5dded16f284de53a8725ee317efb8084a1ac165a6bc8bb358",
+    "byteLength": 67126
+  },
+  "effectiveGovernorLink": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+    "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+    "byteLength": 7671
+  },
+  "verifiedOriginalOccurrenceBindings": 22,
+  "combinedCounts": {
+    "RETAINED": 3153,
+    "CHANGED": 944,
+    "BLOCKED": 3389
+  },
+  "remainingUnexaminedEntries": 3389,
+  "remainingOriginalXmlAmbiguityEntries": 0,
+  "remainingExplicitDependencyScopeEdges": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/remaining-explicit-xml-dependency-edges.json",
+    "sha256": "361154a7dfaa2fe3949de8e823a51ac79b55f99fde83788369dd34f42a046aa7",
+    "byteLength": 300349
+  },
+  "sourceLedgerActivated": false,
+  "proofPromoted": false
+}

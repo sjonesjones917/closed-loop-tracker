@@ -1,0 +1,81 @@
+{
+  "schema": "closed-loop-candidate-hash-corrected-run-outcome/1",
+  "status": "LOST_EXECUTOR_OUTCOME",
+  "exitCode": null,
+  "observedAt": "2026-10-14T07:25:37Z",
+  "sessionId": 84972,
+  "executorObservation": "write_stdin(session_id=84972) returned Unknown process id 84972; original process is unavailable and wrote no terminal exitcode.",
+  "command": [
+    "/workspace/shared/npm-cache/_npx/d18f28baf1132559/node_modules/node/bin/node",
+    "verify-corrected-iteration.mjs"
+  ],
+  "cwd": "/workspace/shared/clrt-candidate-hash-fix",
+  "nodeVersion": "v22.23.3",
+  "sourceCommit": "a3e363737aa88c7eabcd0ebb0acd883c54d4143f",
+  "sourceSha256": {
+    "workbook.js": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062",
+    "hash.js": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420",
+    "workflow-schema.js": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6",
+    "test-runtime.js": "a9eadc5db096997c51540068fecddaa71dca221b7342eac703d243438a9d1c23",
+    "workflow-engine.js": "a3928bba3fb37fa71a130fc68dd60fe7787530b58e2cd8100e6e79e1fa3000c4",
+    "prompt-engine.js": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20",
+    "response-ingestion.js": "01372de4f5f54a480d8ec8a14b21ae595e5d27486add7c882d944b59497ddd21",
+    "project-store.js": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067",
+    "app-core.js": "38fad6b6170193b5675c4bf2c69374def1f735c100a51a5ac108489daa3b63b9",
+    "test-accepted-run-correction-journey.mjs": "673ab3addc7cec2f250210663e0bc2580b8c5cf364a324eab359d908e8ed74da",
+    "verify-corrected-iteration.mjs": "bb77dcdeeac5f4a8611eed0be4b124a5690840ec9b3cfcc9b7ee7c314ac41bcd"
+  },
+  "frozenSourceHashManifest": "/workspace/shared/clrt-candidate-hash-final-source-hashes.txt",
+  "stdout": {
+    "path": "/workspace/shared/clrt-candidate-hash-corrected-final.stdout.log",
+    "byteSize": 928,
+    "sha256": "65fae5b8fa50066c5bd783ec15283581b50d1d14a754e5a3c12a08fee81fcb88"
+  },
+  "stderr": {
+    "path": "/workspace/shared/clrt-candidate-hash-corrected-final.stderr.log",
+    "byteSize": 174,
+    "sha256": "e0cb71fe601c6aa0bc77d1c72b7de24eb689cec9d73775860edf39dc4fa5755c"
+  },
+  "partialResult": {
+    "correctionVersionControl": {
+      "schema": "correction-version-control/1",
+      "passed": true,
+      "synthetic": true,
+      "actualBrowser": false,
+      "canonicalAdmissionClaimed": false,
+      "structuralTraceAndSemanticGateSeparated": true,
+      "cases": [
+        {
+          "caseId": "distinct-new-version-control",
+          "traceValid": true,
+          "lineageValid": true,
+          "sameVersionGateReason": false,
+          "statePreserved": true
+        },
+        {
+          "caseId": "same-version-refused",
+          "traceValid": true,
+          "lineageValid": false,
+          "iterationRejected": true,
+          "gateComplete": false,
+          "exactLineageReason": true,
+          "exactGateReason": true,
+          "statePreserved": true
+        },
+        {
+          "caseId": "same-version-repaired-with-new-version",
+          "lineageValid": true,
+          "sameVersionGateReason": false,
+          "statePreserved": true
+        }
+      ]
+    }
+  },
+  "stderrText": "(node:6) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.\n(Use `node --trace-warnings ...` to show where the warning was created)\n",
+  "acceptedRunCorrectionJourneyTerminalResultPresent": false,
+  "overallPass": null,
+  "restarted": false,
+  "duplicated": false,
+  "codeChanged": false,
+  "limitation": "Initial lineage-control output is retained, but it does not establish completion of the accepted corrected/confirmation journey or the verifier. No pass or failure is inferred."
+}

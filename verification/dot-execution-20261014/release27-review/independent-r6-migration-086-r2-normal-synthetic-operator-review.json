@@ -1,0 +1,28 @@
+{
+  "observedAt": "2026-10-14T17:17:27.182Z",
+  "synthetic": true,
+  "scope": "Disposable diagnostic review, not user acceptance or production approval.",
+  "initialGuardEvidence": "/workspace/shared/clrt-iteration-repair-evidence/independent-r6-migration-086/normal-failure.json",
+  "impact": {
+    "jobId": "JOB-GOVERNED-PREPRODUCT-CYCLE",
+    "projectRevision": 2,
+    "priorProjectSha256": "baefd2d69e1d2090708adf3fb076c1fb9e8e8d4165f45997ba9b15b871260114",
+    "historyActivationId": null,
+    "candidateSha256": "4053ae1b1537b1b7083cef14d3e5b52258ea6e86f362123b6af1c6d66a010125",
+    "replaces": [],
+    "affected": [
+      {
+        "stage": 27,
+        "work": [
+          {
+            "kind": "releaseRecords",
+            "id": "RELEASE-nanhvge68ff8vfbhp1tjdtj729a7mnaj"
+          }
+        ]
+      }
+    ],
+    "stage": 27,
+    "requiresConfirmation": true,
+    "confirmationKey": "9feed31b7108f76ef86a0edcef85bea2a80c1b9be073644d8a7788c16495a5ba"
+  }
+}

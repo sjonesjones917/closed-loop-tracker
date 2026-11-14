@@ -1,0 +1,39 @@
+{
+  "subject": "14880c1f13fd4addc23b62136f23337c81f05ce5",
+  "synthetic": true,
+  "independentlyAuthored": true,
+  "results": [
+    {
+      "name": "duplicate-text-distinct-occurrences-positive",
+      "result": "PASS"
+    },
+    {
+      "name": "two-old-to-one-current-without-delta",
+      "result": "PASS"
+    },
+    {
+      "name": "duplicate-exact-old-anchor",
+      "result": "PASS"
+    },
+    {
+      "name": "retention-reuses-current-anchor",
+      "result": "PASS"
+    },
+    {
+      "name": "surviving-text-without-occurrence-review",
+      "result": "PASS"
+    },
+    {
+      "name": "remove-retained-occurrence",
+      "result": "PASS"
+    },
+    {
+      "name": "duplicate-removal-delta",
+      "result": "PASS"
+    },
+    {
+      "name": "stale-prior-context-bytes",
+      "result": "PASS"
+    }
+  ]
+}

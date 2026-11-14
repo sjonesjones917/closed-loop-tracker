@@ -1,0 +1,164 @@
+{
+  "schema": "closed-loop-attributed-source-resolution-custody-link/1",
+  "id": "V4-C1-EXHAUSTIVE-READING-SOURCE-DOMAIN-PREDECESSOR-GOVERNOR-002-20261015",
+  "status": "LINKED_IN_ADDITIVE_CANDIDATE_SOURCE_GOVERNOR_SET",
+  "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+  "attribution": "New separately attributed implementation-aware technical interpretation accepted under delegated intent-consistent authority; not original blind-source entailment. This reconciler consulted only approved source and the exact accepted technical text/acceptance selectors, not implementation or proof results.",
+  "authority": {
+    "delegatedAuthority": {
+      "messageId": "Sentinel_a923e955d0a08191b56d89578d6d0736",
+      "author": "User",
+      "exactText": "Please continue at all costs . If you get done making it live continue the remaining work. You have approval to spend up to $50 on ram or cpu or storage or tokens or whatever you need that will expedite it finish the application. You but make decisions for me in favor of the intent of the application. Please finish the application while I’m sleeping. When I wake up you better have at the least made pr1248 live",
+      "provenance": "Exact transcript_evidence forwarded by the lead to this preparer on 2026-10-15; original message ID retained.",
+      "usedScope": "Intent-consistent technical implementation decisions within exact approved v4 and this independently reviewed narrow reference resolution.",
+      "notInferred": [
+        "Separate owner approval of this record or the technical text",
+        "Approval of material silent behavior changes beyond reviewed scope",
+        "Implementation/CI/deployment acceptance or waiver",
+        "Purchase authority exercised by this record"
+      ]
+    },
+    "leadInstruction": "Consume exact independently accepted technical reference input62460d50/fb3e9239 for additive per-duty reconciliation without rewriting original blind uncertainties.",
+    "sender": "/root/repair_iteration_receipt_dependencies"
+  },
+  "sourceBasis": {
+    "BASE_SOURCE": {
+      "role": "BASE_SOURCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+      "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "byteLength": 309482
+    },
+    "SUCCESSOR_SOURCE": {
+      "role": "SUCCESSOR_SOURCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "byteLength": 369901
+    },
+    "EXACT_APPROVED_V4": {
+      "role": "EXACT_APPROVED_V4",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/verification/approved-owner-decisions-v4-20261015.txt",
+      "sha256": "aa966b7ac8f38f66b046ce796ab55de5c69dc3f8485f6bba499e32442e29476f",
+      "byteLength": 65481
+    }
+  },
+  "technicalResolution": {
+    "artifact": {
+      "path": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+      "sha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+      "byteLength": 10634
+    },
+    "span": {
+      "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+      "startLine": 6,
+      "endLine": 21,
+      "startByte": 758,
+      "endByteExclusive": 5830,
+      "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+      "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt"
+    },
+    "text": "C1: exact denotation of preserved structural-decoder safety\n\n“Existing bounded closed-loop-inbound-zip/1 structural decoder” denotes the structural/byte-validation mechanism present at frozen f92fae96c01122c5338b16a182bf0df9c2650eb2 and byte-identical at 2933fd05538a3663769f27ad08e70d0f9520e910: project-store.js SHA-256 be8a5b5f9a2ca7caa42024f2831447c38947fe099198c3303e7eb83e410965d0, structural helpers/decoder lines2866–2956, with workflow-schema.js SHA-256 626e51a6590e1bb19e6c4478a2531326daddceffabdb8ced225dbb4aa81deb1b lines2338–2352 and pinned filename authority in hash.js SHA-256 bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420 lines393–415. These coordinates identify the referent; the files are not incorporated wholesale as normative source.\n\nPreservation targets, each to be reconciled independently with retained source safety before source closure:\n- One volume, no prefix or suffix, exact local-record/central-directory/end-record boundaries, nonoverlapping payload extents; EOCD fixed 22+declared comment ends exactly at EOF; ordinary disk fields zero and counts equal.\n- ZIP64 only as the existing bounded forms: locator 20, one disk, safe-integer offsets; ZIP64 EOCD 56 with declared body 44, required version ≤45, zero disk fields/equal counts, immediately before locator; nonsentinel ordinary values must agree. Central/local 0x0001 extras contain exactly the sentinel-requested expanded/compressed/local-offset/disk fields in that order and prescribed 8/8/8/4 byte widths, with local extras limited to expanded/compressed widths 8/8. No unused payload bytes; safe integers. Optional ZIP64 with agreeing nonsentinel ordinary values remains within the inherited subset; no extensible EOCD sectors.\n- Required member version 10..45; STORE 0 or DEFLATE 8; only flag bits 1,2,3,11 (mask 0x080e), with STORE rejecting bits 1/2. Encrypted and other flags remain rejected. Do not silently add a descriptor-width/ZIP64-sentinel or version/method coupling absent from the inherited mechanism.\n- Nonempty bounded name; allowed extra IDs exactly 0x0001,0x000a,0x000d,0x5455,0x5855,0x7855,0x7875,0x7075,0x6375,0x756e. Every extra area requires complete ID/length/payload framing and unique IDs. 0x000d payload length 12; 0x756e length 14 with CRC over bytes 4 onward, type bits 0 or regular 0x8000 and recorded value at offset 6 zero. The remaining timestamp/UID/comment extras have only their retained framing/allowlist checks unless explicitly described here; they supply no path, permission or execution authority.\n- Bit 11 names use fatal UTF-8 with BOM retained; otherwise exact pinned CP437. Unicode-path extra 0x7075 requires version 1, at least 5 bytes, CRC of raw filename and fatal UTF-8 alternate whose pinned NFC equals the decoded base-name NFC. It does not replace rawFilename. Local raw name bytes and independently interpreted names must exactly match the central name. Unknown extras, invalid alternatives, collisions and unsafe paths remain rejected.\n- Local/central required version, flags, method, timestamps, CRC and resolved sizes must agree, except bit 3 allows local CRC/sizes zero or exact declared central value. Descriptor consumes exactly its boundary gap: 12/16/20/24 bytes for unsigned/signed narrow/wide forms; signed signature 0x08074b50 and exact central CRC/length matches. No unexplained gap.\n- Directory, link, device and special-file rejection, pinned Unicode 15.1 NFC/casefold/confusable and platform-risk collision checks, safe canonical paths, filename/path depth bounds and isolated storage authority stay effective. Original archive bytes/occurrence remain preserved.\n- STORE lengths agree. DEFLATE frame walk and actual decompression both remain required; exact compressed-span exhaustion, output-length agreement, valid symbols/back-references and actual CRC/SHA verification remain. A successful frame parse is never a substitute for verified output bytes.\n- C1's explicit pass-wide entries/reserved-or-produced bytes/archive bytes/ratio/name/path/nesting/deadline profile governs intake. Transport member roles, special manifest/response size allowances and nonrecursive response policy are not intake semantics. Existing worker isolation, request/build identity and lower actual platform/storage/read bounds remain; no failure becomes favorable completeness or unsupported-format bypass. C1's explicit empty-archive blocker is retained.\n\nThe complete observed-predicate matrix and exact byte/line citations are in zip/findings.md and zip/reference-trace.json. Those files are evidence for this proposed clarification, not independently authoritative algorithms or proof of conformance. No separate pre-existing normative inbound-subset enumeration was located. Independent review must establish that each explicit preservation target faithfully resolves C1 without accepting an existing defect, weakening safety or changing the supported subset. An unresolved differing predicate remains narrowly blocked; known determinate C1 duties continue. Actual boundary/fault tests remain due.\n",
+    "relationship": "CLARIFIES_INHERITED_DENOTATION",
+    "wrapper": {
+      "path": "/workspace/shared/clrt-v4-technical-reference-adoption-input-2933-v2/approved-v4-technical-reference-input-20261015.json",
+      "sha256": "62460d5001962238d5f09499545d5bf8bec7d0cac0948a057e7174d327ed6092",
+      "byteLength": 29468
+    },
+    "wrapperIssuePointer": "/issueBindings/0",
+    "technicalReview": {
+      "path": "/workspace/shared/clrt-iteration-repair-evidence/independent-release-review-20261014/approved-v4-reference-resolution-precedence-successor-review.json",
+      "byteLength": 4088,
+      "sha256": "0131a25605ac81d6ac53407252fd2cf7196a9075a1a1ae928806c021b577348b",
+      "role": "INDEPENDENT_IMPLEMENTATION_AWARE_TECHNICAL_SCOPE_REVIEW"
+    },
+    "laterWrapperAcceptance": {
+      "path": "/workspace/shared/clrt-iteration-repair-evidence/independent-release-review-20261014/approved-v4-technical-reference-input-and-current-composition-review.json",
+      "sha256": "fb3e9239516cb6c452466286c245fca7e512955a5f806fc10cd6670bae8a342a",
+      "byteLength": 11236
+    }
+  },
+  "issueResolution": {
+    "issueId": "SRC-GAP-DECODER-SUBSET",
+    "historicalSourceOnlyState": "BLOCKED_MISSING_NORMATIVE_REFERENCE_CLOSURE",
+    "successorMeaning": "RESOLVED_UNDER_EXACT_LINKED_TECHNICAL_GOVERNOR",
+    "remainingSemanticQuestionWithinThisIssue": null,
+    "interpretation": "The exact decoder referent and its observed structural/safety predicate matrix may be used as a separately attributed technical clarification of C1; no standalone earlier normative enumeration is claimed.",
+    "limits": [
+      "Only the exact pinned decoder subset is identified; no wholesale code incorporation or claim that existing behavior is automatically correct.",
+      "Approved C1 intake accounting, recursion, pass-wide safety budgets, explicit empty-archive blocker and honest incomplete/unavailable/resource outcomes continue to govern.",
+      "Transport-specific roles/size allowances and response opacity do not become intake authority; no accepted-form expansion, integrity/path weakening or unsupported/resource bypass."
+    ],
+    "remainingImplementationAndEvidenceDuties": [
+      "Reconcile every preservation predicate with retained/current source safety.",
+      "Implement source-determined intake accounting and run actual boundary/fault tests.",
+      "Retain any differing or unsupported predicate as an explicit unresolved impact."
+    ]
+  },
+  "sourceLedgerActivated": false,
+  "proofPromoted": false,
+  "originalReviewInheritance": false,
+  "preservedPriorGovernor": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/decoder-deferred-amendment-edge-successor-001/decoder-effective-governor-link.json",
+    "sha256": "6d3046bd8c2f6d99086a15b803626d09fe5f3368f2c75b5b6e1bb38f9990d5b4",
+    "byteLength": 11459
+  },
+  "governedPredecessorIndexes": [
+    269,
+    270,
+    271,
+    272,
+    273,
+    274,
+    275,
+    276,
+    277,
+    278,
+    279,
+    387,
+    388,
+    390,
+    391,
+    392,
+    393,
+    394,
+    395,
+    396,
+    397,
+    398,
+    399,
+    400,
+    401,
+    402,
+    403,
+    417,
+    418,
+    419,
+    420,
+    421,
+    422,
+    423,
+    424,
+    425,
+    426,
+    427,
+    428,
+    429,
+    430,
+    431,
+    432,
+    433
+  ],
+  "effectiveBranchCondition": "Only where the current required reading, extraction or omission-search domain includes source content supplied through a ZIP occurrence and its exact safely exposed metadata or verified child bytes. No ZIP route means no decoder-specific gate. Semantic validity, human authority, factual classification and evidence basis remain separate; blocked or unknown ZIP content cannot yield favorable completeness.",
+  "operativeTechnicalSpans": [
+    {
+      "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+      "endByteExclusive": 5183,
+      "endLine": 19,
+      "path": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+      "spanSha256IncludingLineTerminators": "3b82040c11910a6358c3676c05e2bf96e06b0e741fa6fbf5829e2c5164200812",
+      "startByte": 1652,
+      "startLine": 11,
+      "text": "- One volume, no prefix or suffix, exact local-record/central-directory/end-record boundaries, nonoverlapping payload extents; EOCD fixed 22+declared comment ends exactly at EOF; ordinary disk fields zero and counts equal.\n- ZIP64 only as the existing bounded forms: locator 20, one disk, safe-integer offsets; ZIP64 EOCD 56 with declared body 44, required version ≤45, zero disk fields/equal counts, immediately before locator; nonsentinel ordinary values must agree. Central/local 0x0001 extras contain exactly the sentinel-requested expanded/compressed/local-offset/disk fields in that order and prescribed 8/8/8/4 byte widths, with local extras limited to expanded/compressed widths 8/8. No unused payload bytes; safe integers. Optional ZIP64 with agreeing nonsentinel ordinary values remains within the inherited subset; no extensible EOCD sectors.\n- Required member version 10..45; STORE 0 or DEFLATE 8; only flag bits 1,2,3,11 (mask 0x080e), with STORE rejecting bits 1/2. Encrypted and other flags remain rejected. Do not silently add a descriptor-width/ZIP64-sentinel or version/method coupling absent from the inherited mechanism.\n- Nonempty bounded name; allowed extra IDs exactly 0x0001,0x000a,0x000d,0x5455,0x5855,0x7855,0x7875,0x7075,0x6375,0x756e. Every extra area requires complete ID/length/payload framing and unique IDs. 0x000d payload length 12; 0x756e length 14 with CRC over bytes 4 onward, type bits 0 or regular 0x8000 and recorded value at offset 6 zero. The remaining timestamp/UID/comment extras have only their retained framing/allowlist checks unless explicitly described here; they supply no path, permission or execution authority.\n- Bit 11 names use fatal UTF-8 with BOM retained; otherwise exact pinned CP437. Unicode-path extra 0x7075 requires version 1, at least 5 bytes, CRC of raw filename and fatal UTF-8 alternate whose pinned NFC equals the decoded base-name NFC. It does not replace rawFilename. Local raw name bytes and independently interpreted names must exactly match the central name. Unknown extras, invalid alternatives, collisions and unsafe paths remain rejected.\n- Local/central required version, flags, method, timestamps, CRC and resolved sizes must agree, except bit 3 allows local CRC/sizes zero or exact declared central value. Descriptor consumes exactly its boundary gap: 12/16/20/24 bytes for unsigned/signed narrow/wide forms; signed signature 0x08074b50 and exact central CRC/length matches. No unexplained gap.\n- Directory, link, device and special-file rejection, pinned Unicode 15.1 NFC/casefold/confusable and platform-risk collision checks, safe canonical paths, filename/path depth bounds and isolated storage authority stay effective. Original archive bytes/occurrence remain preserved.\n- STORE lengths agree. DEFLATE frame walk and actual decompression both remain required; exact compressed-span exhaustion, output-length agreement, valid symbols/back-references and actual CRC/SHA verification remain. A successful frame parse is never a substitute for verified output bytes.\n- C1's explicit pass-wide entries/reserved-or-produced bytes/archive bytes/ratio/name/path/nesting/deadline profile governs intake. Transport member roles, special manifest/response size allowances and nonrecursive response policy are not intake semantics. Existing worker isolation, request/build identity and lower actual platform/storage/read bounds remain; no failure becomes favorable completeness or unsupported-format bypass. C1's explicit empty-archive blocker is retained.\n"
+    }
+  ],
+  "sourceMeaningBoundary": "The scoped link closes the C1 decoder denotation that determines the actual ZIP source-occurrence domain. It does not establish semantic inspection or change an extraction category; fact/assumption and human-only/research classification atoms remain diagnostic-only."
+}

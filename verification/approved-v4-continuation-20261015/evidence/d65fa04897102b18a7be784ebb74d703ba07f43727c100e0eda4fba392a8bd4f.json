@@ -1,0 +1,963 @@
+[
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/0",
+    "localId": "CONTEXT-HEADING-P13",
+    "candidateSha256": "04f57e5f7c04bf9b1594254321e11490a7be636ce2289e3c3d85ac3772b20840",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-1637-1637",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/1",
+    "localId": "CONTEXT-HEADING-P28",
+    "candidateSha256": "a2bc43ba3da1ad52d6cae83432d0e5217bbfff0a4ad4991b05c89c7b1148ae35",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2041-2041",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/2",
+    "localId": "CONTEXT-HEADING-P39",
+    "candidateSha256": "049243e3b9eb2787f873895ff04f44f2e31aa6b45ae8250245d04bc12ed2a809",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L422"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/0"
+    }
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/3",
+    "localId": "CONTEXT-HEADING-P65",
+    "candidateSha256": "47ee9564af1b598496daa4f4a8166c453ec2700e4d69b72336bcafc2e9b522de",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L448"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/1"
+    }
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/4",
+    "localId": "CONTEXT-HEADING-P68",
+    "candidateSha256": "112318f4e392dd4941662ae2ba05485f120912aa28e3d1bcc9fc8b129f3353d6",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L451"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/2"
+    }
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/5",
+    "localId": "CONTEXT-HEADING-P73",
+    "candidateSha256": "5f79c308b5369234e357efb00ec49cf41eca9cf668ecd758c561b09f5d5d3c84",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L456"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/3"
+    }
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/6",
+    "localId": "CONTEXT-HEADING-P78",
+    "candidateSha256": "62a8625f248085daff192a4ec15c05b5601779f54945ebd08c9b59226f70553d",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L461"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/4"
+    }
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/7",
+    "localId": "CONTEXT-HEADING-P94",
+    "candidateSha256": "5cc5b7eebd7c6798bde224fefd70a929e31c905a43d28467634ef21edb2d360a",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L477"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/5"
+    }
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/8",
+    "localId": "CONTEXT-HEADING-P99",
+    "candidateSha256": "bfa179268ce273766c92123c6a61590632ed6730ce1589d1fa052a3236ecfce8",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L482"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/6"
+    }
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/9",
+    "localId": "CONTEXT-HEADING-P102",
+    "candidateSha256": "3b117a0dfda16d4b16f5593e249e2c18b86585ce700eefdea6d2db1a2ab33ff1",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L485"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/7"
+    }
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/10",
+    "localId": "CONTEXT-HEADING-P113",
+    "candidateSha256": "7a0a504042e527982acf2177937dcc1505be704e3d371df48f0b3d1864823f3c",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2052-2052",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/11",
+    "localId": "CONTEXT-HEADING-P117",
+    "candidateSha256": "81ec55c944950312243286d068f993ee3c48481d5560ccdf30c774009d0b0d68",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2056-2056",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/12",
+    "localId": "CONTEXT-HEADING-P122",
+    "candidateSha256": "51305cd201049c9de772c7c213ebf4288c6b81a1a381621e21378bcdccc7cf70",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2061-2061",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/13",
+    "localId": "CONTEXT-HEADING-P132",
+    "candidateSha256": "d0a27d7c107274537c251acfd36c827e790c1aa6848a7f5d6006945331a06814",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2071-2071",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/14",
+    "localId": "CONTEXT-HEADING-P136",
+    "candidateSha256": "4f4afa0cba18e4c274a7f5741bd5da705a22d5a4065e1099168cd04faa115db5",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2075-2075",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/15",
+    "localId": "CONTEXT-HEADING-P146",
+    "candidateSha256": "4c88ec32140901ad6711dee7861ff17e99088afab0c92bfff437cd884417fc52",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2085-2085",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/16",
+    "localId": "CONTEXT-HEADING-P149",
+    "candidateSha256": "af0f270a970fbde0c8fbf5094695631de942231edaac5b15a30be7d62e337eb8",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-4055-4055",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/17",
+    "localId": "CONTEXT-HEADING-P161",
+    "candidateSha256": "2203b0cbc1b5ba19f4260f6aac8c13e993979ffa71b53b1ef1ef827123f165d7",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-1187-1187",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/18",
+    "localId": "CONTEXT-HEADING-P163",
+    "candidateSha256": "f9fe68d754065a1ded16d26e08d698f898d83ebd2cc7bff4bc1a8596f121f1aa",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-1189-1189",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/19",
+    "localId": "CONTEXT-HEADING-P177",
+    "candidateSha256": "03b9ce75f07a19dd8ec3662e69e28ac2e359ed47a8e3e63eea3e7e6a4424da3d",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2524-2524",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/20",
+    "localId": "CONTEXT-ROUTE-TABLE-P179",
+    "candidateSha256": "9a199299bdce587fbfffc7086532e532609fe875b3e7d472a89fc5ebd3e8b23d",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2526-2526",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/21",
+    "localId": "CONTEXT-ROUTE-TABLE-P180",
+    "candidateSha256": "03198302c47ba5bdd57df3a868a804e81c0c59fb334c5c6d3835c1542dfaa92e",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2527-2527",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/22",
+    "localId": "CONTEXT-ROUTE-TABLE-P181",
+    "candidateSha256": "f717a8ca383051a1e5f2bc1f6204504f1a3762d93b1b338bc6711a45093cd822",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2528-2528",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/23",
+    "localId": "CONTEXT-ROUTE-TABLE-P182",
+    "candidateSha256": "92663e85a132b10c95320a1c1d4b59987bbac5e7eb6600a58b83541b1de21738",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2529-2529",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/24",
+    "localId": "CONTEXT-ROUTE-TABLE-P183",
+    "candidateSha256": "f1dd749c8c5aa8f2a81995d277d07ed0400fb415230ac28608891ddfd5de7c41",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2530-2530",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/25",
+    "localId": "CONTEXT-ROUTE-TABLE-P184",
+    "candidateSha256": "5265a949f64085ebb3d544b3873d3f2af63d8f86176cff72377dec113385cfed",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2531-2531",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/26",
+    "localId": "CONTEXT-ROUTE-TABLE-P185",
+    "candidateSha256": "263a5958a159b7b3e8ae64b09f551578ae68188794bdac68c6c28b04be0885d6",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2532-2532",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/27",
+    "localId": "CONTEXT-ROUTE-TABLE-P186",
+    "candidateSha256": "3a0a6679c8e43d7addb55455ab3f15d12a3c2b57dd50f33f3c61cab672e5fb1a",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2533-2533",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/28",
+    "localId": "CONTEXT-ROUTE-TABLE-P187",
+    "candidateSha256": "6a2dc435ca93d5886a475a548627f36a05dcd472bdd673e3f3244622521eb681",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2534-2534",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/29",
+    "localId": "CONTEXT-ROUTE-TABLE-P188",
+    "candidateSha256": "3d0e465b91373292e4ad765a8abca79db74cf53f50e8bb29aca21885770b1786",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2535-2535",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/30",
+    "localId": "CONTEXT-ROUTE-TABLE-P189",
+    "candidateSha256": "7de8face613d1c1c66a772d1b1690f030b3831fb9cf56de917533e1927fec6d4",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2536-2536",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/31",
+    "localId": "CONTEXT-ROUTE-TABLE-P190",
+    "candidateSha256": "a4f3e8e2953ecb9be1da2e08ce5337e34a16fd63c4e838c7aeb1ba19263e5b5f",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2537-2537",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/32",
+    "localId": "CONTEXT-ROUTE-TABLE-P191",
+    "candidateSha256": "85c9375928f00f8f0ca97a66ef6de39a8eb9463e4fbe67af012fd641af3cda3c",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2538-2538",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/33",
+    "localId": "CONTEXT-ROUTE-TABLE-P192",
+    "candidateSha256": "01f9f27a3a8c14d2a21819eb60ebffa4d68a4d2bd4cf099c08c47dc490738946",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2539-2539",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/34",
+    "localId": "CONTEXT-ROUTE-TABLE-P193",
+    "candidateSha256": "9d8e8f7f863b1cbbfef7f69d3ebd6ad25a4ea4b1f91f3bcc258628cc993aaf05",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2540-2540",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/35",
+    "localId": "CONTEXT-ROUTE-TABLE-P194",
+    "candidateSha256": "79552a4119e30067218fbbcabb4299a1bb5965bef805d930c69af03b70fd80cf",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2541-2541",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/36",
+    "localId": "CONTEXT-ROUTE-TABLE-P195",
+    "candidateSha256": "43a81c0b8df6a87f0faaf2dfbd4d6e02efb7e52fa5df6e89124e774338e45dee",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2542-2542",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/37",
+    "localId": "CONTEXT-ROUTE-TABLE-P196",
+    "candidateSha256": "1caca3a932ed88adcad16e7dddf916d7efa4ea6dc866843b6cb5cc2cbeb3360c",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2543-2543",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/38",
+    "localId": "CONTEXT-C1-PLACEMENT",
+    "candidateSha256": "4270fc886bbc6a51ce58446a5d951a83ffddb44c9e0f2a1626bbd7e3edf4d282",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-PLACEMENT"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/8"
+    }
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/39",
+    "localId": "CONTEXT-SOURCE-HASH-TABLE",
+    "candidateSha256": "943a7df59efe7210759c3790c37202eafd28b2646642cc16aeee7e88af8cb4ff",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-HASH-TABLE"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/9"
+    }
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/40",
+    "localId": "CONTEXT-PROPOSAL-P1-11",
+    "candidateSha256": "d1572425016da61e097a149d2632cdeddb66179445c22f16b194dd5b2ce25ff5",
+    "canonicalId": "CONTEXT-EXACT_APPROVED_V4-1-11",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/41",
+    "localId": "CONTEXT-PROPOSAL-P208-214",
+    "candidateSha256": "021b598dd45216f560db05d67ccf4d8fc4a1b2385d472bcba3e4bbe835d9e2bd",
+    "canonicalId": "CONTEXT-EXACT_APPROVED_V4-206-216",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/42",
+    "localId": "CONTEXT-PROPOSAL-P215-216",
+    "candidateSha256": "111e5537e75e2f290e7f88d2ffed53eceb028c689b10aaef1634c58c295d56c5",
+    "canonicalId": "CONTEXT-EXACT_APPROVED_V4-206-216",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "AUTHOR",
+    "jsonPointer": "/sourceContexts/43",
+    "localId": "CONTEXT-EXACT-OWNER-APPROVAL",
+    "candidateSha256": "805fc5282c3cd134a5f842202a74f5990c6156ecd4d4ad9f98db3335efd8646c",
+    "canonicalId": "CONTEXT-APPROVAL_PROVENANCE-3-21",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/0",
+    "localId": "CONTEXT-P013",
+    "candidateSha256": "8a6a1e0a2ca9b6a8fa6948d54eb09a893a167f2f647077b133acca084c99a102",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-1637-1637",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/1",
+    "localId": "CONTEXT-P028",
+    "candidateSha256": "8fdb3b32f2c60b5bc0f1f523c7291355150b336df36298c1fee02d12f26ca959",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2041-2041",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/2",
+    "localId": "CONTEXT-P039",
+    "candidateSha256": "6c392fc2481b1c1482784aaafe7eca28e185fd249c9ae1dd46f04f7ac0ef1b14",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L422"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/10"
+    }
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/3",
+    "localId": "CONTEXT-P065",
+    "candidateSha256": "8ae4cfb296279e7438134bce386a7f54117d4ded856a68dfee27644156cb86ff",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L448"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/11"
+    }
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/4",
+    "localId": "CONTEXT-P068",
+    "candidateSha256": "2308868baa742fd1e117a71c93175437adddab77fb3c5d3c2192d566226094e8",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L451"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/12"
+    }
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/5",
+    "localId": "CONTEXT-P073",
+    "candidateSha256": "ab402f397b2645f188952537bf2cab2dd458291f5a1a12c94d773c712eb60ee0",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L456"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/13"
+    }
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/6",
+    "localId": "CONTEXT-P078",
+    "candidateSha256": "2c1c5bd5d92ae182de88acb0defa224e1d9c7ea49b43e2301683bb6478d74f0d",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L461"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/14"
+    }
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/7",
+    "localId": "CONTEXT-P094",
+    "candidateSha256": "a6570a2156befc0d00405e1a5d7f07b8171c16ed4a05430bcc2fddff2a636b8e",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L477"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/15"
+    }
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/8",
+    "localId": "CONTEXT-P099",
+    "candidateSha256": "0833aaef3f9a38ca744fe94606030bfcbe230d46aae67a3e1b0a91c17db16842",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L482"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/16"
+    }
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/9",
+    "localId": "CONTEXT-P102",
+    "candidateSha256": "cdb8e78df4e9076d31b56dbc3bea0608531812671097883067e8bad5a6e0a0a7",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-L485"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/17"
+    }
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/10",
+    "localId": "CONTEXT-P113",
+    "candidateSha256": "0f572742ac30585cdd3e3d8e00167fec21c54659d9cdf7feef8ad5a6041c00ed",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2052-2052",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/11",
+    "localId": "CONTEXT-P117",
+    "candidateSha256": "194a78377266e28f9825dd26b8adb8e2d99ea94ede8cf86585d688fa00fb7a5b",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2056-2056",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/12",
+    "localId": "CONTEXT-P122",
+    "candidateSha256": "0cab4f42126e93b97cacf4c7cd7e6bcd9c9bc9f6f51e8897d0abec0239a22b6c",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2061-2061",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/13",
+    "localId": "CONTEXT-P132",
+    "candidateSha256": "cc9a5eb0e8669201b7c501b65db754f57834bc95dc06c13185aeacb7d7c6e6a8",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2071-2071",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/14",
+    "localId": "CONTEXT-P136",
+    "candidateSha256": "043d55eb1a141dfc134f5cf8385c4e3066bcb6a3766aa96c26615e69fbcaa933",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2075-2075",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/15",
+    "localId": "CONTEXT-P146",
+    "candidateSha256": "2da701278c0bab84a390f0862b97f16227c73afa9d076d6ba5ac6fb16509b76c",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2085-2085",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/16",
+    "localId": "CONTEXT-P149",
+    "candidateSha256": "d8871cb805a27a127b4fc214bbe8513c8c10f027c3e46a9028c47b2335b93630",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-4055-4055",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/17",
+    "localId": "CONTEXT-P161",
+    "candidateSha256": "b0898cda00f42425e07783f8e67b2b1ce14096bf722e88bc3112fcc0a115d7c3",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-1187-1187",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/18",
+    "localId": "CONTEXT-P163",
+    "candidateSha256": "8872c7e8d3756fe313db2e3a5d5c2871f3bdada5c24b63fe75183928de2e1617",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-1189-1189",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/19",
+    "localId": "CONTEXT-P177",
+    "candidateSha256": "10fd60a371cd4b356a644c998ac4bb23833715eea5de138551ce4d4b9dc2c16a",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2524-2524",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/20",
+    "localId": "CONTEXT-TABLE-P180",
+    "candidateSha256": "169a9ea42665bef9099f0647591c83bdaaf42b8309144b73c79b31f26252e331",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2527-2527",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/21",
+    "localId": "CONTEXT-TABLE-P181",
+    "candidateSha256": "fe6793849fac0815e9728c6398e204ad3e63b149c498f592f3322b8451c892b8",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2528-2528",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/22",
+    "localId": "CONTEXT-TABLE-P182",
+    "candidateSha256": "9018ec3383c119295763507511093d652ae4137ed54829cdfb8be21a50a6d80d",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2529-2529",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/23",
+    "localId": "CONTEXT-TABLE-P183",
+    "candidateSha256": "c375d3adf5f1ec00d65d94501d6ac3b37d16788e833a2a2781d54d341c44de30",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2530-2530",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/24",
+    "localId": "CONTEXT-TABLE-P184",
+    "candidateSha256": "93ecb4bf3f124d6f63a1c99e07d81bc355e7f26d8a8b701228b8c1933c11c3f7",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2531-2531",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/25",
+    "localId": "CONTEXT-TABLE-P185",
+    "candidateSha256": "ae06917578673af2bba0bca6d63e14766210ad876d8c1630270906c4645dad86",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2532-2532",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/26",
+    "localId": "CONTEXT-TABLE-P186",
+    "candidateSha256": "2a410359a7f33c4287761d72d26d21e3f929f439463a3cc3692df738a67f336c",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2533-2533",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/27",
+    "localId": "CONTEXT-TABLE-P187",
+    "candidateSha256": "b385a4249d85f459714fc1c86422544c84244c42c87382ccbb93de89f802c415",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2534-2534",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/28",
+    "localId": "CONTEXT-TABLE-P188",
+    "candidateSha256": "08b9c2cfcbc6eff381f8c6e254238f4d3a6ccebceac49a559b04c103b802f25d",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2535-2535",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/29",
+    "localId": "CONTEXT-TABLE-P189",
+    "candidateSha256": "28d8f6c30fc0070c35c8ad4fbf0c23da1f29583223d5e0ba36984e423878dfeb",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2536-2536",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/30",
+    "localId": "CONTEXT-TABLE-P190",
+    "candidateSha256": "6602ac603cbc303e418d3ee24021d8764e07139153b806ce2526032fac2b9d12",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2537-2537",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/31",
+    "localId": "CONTEXT-TABLE-P191",
+    "candidateSha256": "624dbf99be477c6d935c6a5051f7070fdbe7f4c6b245c7df20f948202977a8a0",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2538-2538",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/32",
+    "localId": "CONTEXT-TABLE-P192",
+    "candidateSha256": "2d1cffaf2d40b73bce87e42c163eff5dcd7b9f90ce8c0d4aeedb5295194f67fc",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2539-2539",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/33",
+    "localId": "CONTEXT-TABLE-P193",
+    "candidateSha256": "a1d8b6ccec9d167a27d975dcb70a53e2f4203f225373c26af53f6cf2bbbde553",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2540-2540",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/34",
+    "localId": "CONTEXT-TABLE-P194",
+    "candidateSha256": "8084ea01c7c06ae9d824f694e0b21d40b952fc2a71dbeb34d378071f54ff809d",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2541-2541",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/35",
+    "localId": "CONTEXT-TABLE-P195",
+    "candidateSha256": "81170d1f75ea8988707844fd47dad1c6871daed4a2d522d63b2a69aa6923bcc9",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2542-2542",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/36",
+    "localId": "CONTEXT-TABLE-P196",
+    "candidateSha256": "4fb0674740aeadff4c2d58749646c18efb0e10cb27b1fd1b97f2df1502231d7d",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2543-2543",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/37",
+    "localId": "CONTEXT-PROPOSAL-1-11",
+    "candidateSha256": "dbe90bae9fb4bca2489ec122900930a3e1c242314b1933e60ff5fa1317e830ce",
+    "canonicalId": "CONTEXT-EXACT_APPROVED_V4-1-11",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/38",
+    "localId": "CONTEXT-PROPOSAL-206-216",
+    "candidateSha256": "6ac3ae46bd31e476d5eb88d223086cc0ecfa7d68d24bfe6996d8dac4f0886e12",
+    "canonicalId": "CONTEXT-EXACT_APPROVED_V4-206-216",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/39",
+    "localId": "CONTEXT-HISTORICAL-FRAGMENT-P66",
+    "candidateSha256": "247460727003cf957399b90e1e56f07c721d6f831557ecaa58fbd77f8840cded",
+    "decision": "RECONCILED_BY_EXACT_COUNTING_SCOPE",
+    "reason": "Exact heading/fragment preserved with bounded scope; other normative fragments on the physical line remain separate.",
+    "canonicalIds": [
+      "COUNT-CTX-CHOICE-HISTORY"
+    ],
+    "countingDecisionPointer": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContextCandidateMappings/18"
+    }
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/40",
+    "localId": "CONTEXT-HISTORICAL-FRAGMENT-P175",
+    "candidateSha256": "8dcf35776906547ac716858a44b5573dac076c8531f0110f03dbf0680917813c",
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-1201-1201-FRAGMENT-3f3522e7ec4d",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/41",
+    "localId": "CONTEXT-RETAINED-RAW_ACCOUNTING_LAYER",
+    "candidateSha256": "5c56b3693367d3304b85d8d327d2385af501d616fd6d81fd6ba931fa031cd997",
+    "canonicalId": "CONTEXT-BASE_SOURCE-367-382",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/42",
+    "localId": "CONTEXT-RETAINED-RAW_UNITIZATION",
+    "candidateSha256": "e884e0020005c09cbcc74a0856c57f5f10e68b463468a6ddf962b03170dfc147",
+    "canonicalId": "CONTEXT-BASE_SOURCE-416-420",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/43",
+    "localId": "CONTEXT-RETAINED-CLOSED_OPERATIONS",
+    "candidateSha256": "f02bdb9e3d2d47918d786fc6439bcec1654d8ffda472239771b2f7c323343715",
+    "canonicalId": "CONTEXT-BASE_SOURCE-1078-1080",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/44",
+    "localId": "CONTEXT-RETAINED-FALLBACK_CONTEXT",
+    "candidateSha256": "56feebe76f534ca578cf219a25ce8dae49fe0206c2d9b7e7afc8da2648541015",
+    "canonicalId": "CONTEXT-BASE_SOURCE-1521-1545",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/45",
+    "localId": "CONTEXT-RETAINED-NATIVE_LANGUAGE",
+    "candidateSha256": "b878da9f9dcd9d7a3bd123525dc7f29638696245ce52aacfe702cb7bf4259363",
+    "canonicalId": "CONTEXT-BASE_SOURCE-1676-1683",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/46",
+    "localId": "CONTEXT-RETAINED-INPUT_BINDING_BASIS",
+    "candidateSha256": "caf315e8e80307f2b8e69f7c0274913e7b1416351d3051bc8878c40270f0c317",
+    "canonicalId": "CONTEXT-BASE_SOURCE-2366-2370",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  },
+  {
+    "inputRole": "REVIEWER",
+    "jsonPointer": "/sourceContexts/47",
+    "localId": "CONTEXT-RETAINED-VARIANCE_FAMILY",
+    "candidateSha256": "8a9fd18e1a6336041f9d1045731d07083e276a2a00497561ee11f6f9f1cdb0be",
+    "canonicalId": "CONTEXT-BASE_SOURCE-3868-3872",
+    "decision": "RECONCILED_EXACT_SCOPE",
+    "reason": "Named source scope and historical-fragment boundaries control. Candidate heading-self inclusion, blank coverage, and overlapping reference neighborhoods do not create extra requirements or broaden old occurrence sets."
+  }
+]

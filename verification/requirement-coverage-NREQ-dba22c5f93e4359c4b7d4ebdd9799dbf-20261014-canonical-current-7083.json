@@ -1,0 +1,127 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+  "sourceLineSha256": "6ceea161cf4fc12d52f66189110a6aae635278efe3442751a653794c8e81c68f",
+  "specificationSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+  "atomicObligationSha256": "76a5c483081ff3243f1bb69a83b3e3ee597dafabcd34adda7b25fcc861df7a42",
+  "reviewedAtomicStatement": "closed-loop-canonical-json/1 fixes JSON escapes `\\\"`, `\\\\`, `\\b`, `\\f`, `\\n`, `\\r`, and `\\t`, with every other U+0000 through U+001F emitted as lowercase `\\u00xx`.",
+  "sourceSpans": [
+    {
+      "startByte": 151208,
+      "endByte": 151338,
+      "text": "- JSON escapes `\\\"`, `\\\\`, `\\b`, `\\f`, `\\n`, `\\r`, and `\\t`, with every other U+0000 through U+001F emitted as lowercase `\\u00xx`;",
+      "sha256": "6ceea161cf4fc12d52f66189110a6aae635278efe3442751a653794c8e81c68f"
+    }
+  ],
+  "contextSourceLocations": [
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 2869,
+      "endLine": 2869,
+      "lineSha256": "774e4e8f76194d802466c7325360169af41c413cc053a82d83c1e1c9d69d8d40",
+      "controllingText": "34.1 Canonical serialization portability"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 2871,
+      "endLine": 2871,
+      "lineSha256": "15968ab6cfcb305b94e767f60e01fa39420bae94e6ae1edb6cfe288d3e347103",
+      "controllingText": "All canonical semantic hashes use closed-loop-canonical-json/1. Its implementation contract fixes:"
+    }
+  ],
+  "declarationSha256": "d6b37c1a4222f2548b5d8c94d39c0716c80f304733dd06d29bb597d2d2691853",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Criteria frozen from exact current source lines2872,2874–2880 and contexts2869/2871 before inspecting author diff. Independently inspected declaration, owner and normal producer assertion lineage; reran verify-hash.mjs at candidate7083bb05432d7847221e5680c80d87c8026cbd6e and independent root/nested/array invalid-value, Unicode, literal byte, boundary and UTF16-order-mutant challenges. This approves only the exact atomic coverage design, not aggregate admission, current frozen receipts, browser acceptance or release. Existing historical reviews were not renewed.",
+  "author": {
+    "actor": "Canonical JSON current-atom proof author",
+    "contextId": "/root/bind_canonical_json_proofs"
+  },
+  "reviewer": {
+    "actor": "Independent current-atom canonical JSON reviewer",
+    "contextId": "/root/review_canonical_json_proofs"
+  },
+  "reviewedInputs": [
+    {
+      "declarationSha256": "d6b37c1a4222f2548b5d8c94d39c0716c80f304733dd06d29bb597d2d2691853"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883"
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "4773f157f198781918b0fb9f20a696ad9d2b09dbea0120a9407ce0d24c96df5c"
+    },
+    {
+      "path": "specification/requirement-evidence-bindings.json",
+      "sha256": "cd5e2800f114801aacc2c194974088b37059c64013b8c5fbd02010c4d143774c"
+    },
+    {
+      "path": "verify-hash.mjs",
+      "sha256": "78c7407c182cd96035293c7335c07c1a729b7312813cde5474af74b82e905e28"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "d585909462997cc0276d7469a5948901fd17e66336828af3654923a077abda95"
+    },
+    {
+      "path": "verification-evidence.mjs",
+      "sha256": "6c3fc424b828bb7edbdda043f82116712e3870a0632c09b6adf795344948bf30"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
+    },
+    {
+      "path": "test-canonical-prefix-supplier.mjs",
+      "sha256": "9460ed0c645255980e85c7f372134db3657e50489d2b9ab4c370a740f43776a5"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "d5a2c93dde17700f524e4e1092e40ee1fdcd650d96022c6e56c117b601beeea0"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "a9eadc5db096997c51540068fecddaa71dca221b7342eac703d243438a9d1c23"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "7693262468c7c21026921c7b98205205150c0c3887c8926f3fd6974687dda153"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "01372de4f5f54a480d8ec8a14b21ae595e5d27486add7c882d944b59497ddd21"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "38fad6b6170193b5675c4bf2c69374def1f735c100a51a5ac108489daa3b63b9"
+    },
+    {
+      "path": "test-complete-record-carrier-shapes.mjs",
+      "sha256": "7e0598b04149a45b241c0e7049f62e0d93446e026ca0b3faf94c1b3176859dfb"
+    }
+  ],
+  "findings": [],
+  "reviewPerformed": true
+}

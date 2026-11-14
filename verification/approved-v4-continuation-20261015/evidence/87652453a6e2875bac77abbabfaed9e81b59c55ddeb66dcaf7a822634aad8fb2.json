@@ -1,0 +1,22 @@
+{
+  "schema": "closed-loop-approved-v4-source-only-authority/1",
+  "approval": {
+    "requestMessageId": "Sentinel_0b56149405008191bfa011f4ac8c50c7",
+    "approvalMessageId": "Sentinel_758903605ba881919f8f43d503096713",
+    "approvalMessageExact": "👍🏻yes",
+    "requestMessageExact": "CI is now blocked by five unresolved behavior rules. The attached revision 4 gives concrete recommendations for input counting, evidence requirements, native-test semantics, clarification/target references, and variance handling.\n\nImportant proposed limits: ZIP processing stops at 27 members or 67 MiB expanded data and reports incomplete coverage; numeric JSON spellings such as 1.0 and 1e0 return UNDETERMINED. These are choices requiring your approval.\n\nDo you approve revision 4 for implementation and verification, or want exceptions? Approval won’t accept unfinished code or waive CI. Independent repairs continue while you decide.",
+    "attachmentLibraryIds": [
+      "libfile_ddd633041f248191a56963ec22371282",
+      "libfile_a8f9abf04aa48191a468535516a66e96"
+    ],
+    "scope": "Exact revision 4 for implementation and verification; no implementation, CI, release, merge or deployment acceptance inferred"
+  },
+  "approvedProposal": {
+    "path": "verification/approved-owner-decisions-v4-20261015.txt",
+    "byteLength": 65481,
+    "sha256": "aa966b7ac8f38f66b046ce796ab55de5c69dc3f8485f6bba499e32442e29476f"
+  },
+  "baseSourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+  "currentCandidateSourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+  "qualification": "Source-choice approval only; no implementation or current proof acceptance."
+}

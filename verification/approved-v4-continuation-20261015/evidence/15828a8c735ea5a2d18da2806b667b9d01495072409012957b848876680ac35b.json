@@ -1,0 +1,1937 @@
+[
+  {
+    "predecessorIndex": 642,
+    "predecessorId": "NREQ-4723522e0a5f0223eafb5c5b29f22d43",
+    "originalStatement": "Every generated prompt must include required source or artifact material directly or through an exact handoff package",
+    "priorReviewedStatement": "Every generated prompt must include required source or artifact material directly or through an exact handoff package",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1191,
+    "predecessorId": "NREQ-fa13a9b6ed478767fcc534e2141a4700",
+    "originalStatement": "Every durable object required by the specification must be either a top-level canonical family listed in Section 38 or a closed nested object registered under exactly one such family.",
+    "priorReviewedStatement": "Every durable object required by the specification must be either a top-level canonical family listed in Section 38 or a closed nested object registered under exactly one such family.",
+    "independentMechanismClass": "FIXED_DURABLE_REGISTRY_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This exact predicate requires registration/one parent or a declared identity/producer/lifecycle/scope/relationship/hash/migration/gate component. Technical11–19 determines actual ZIP bytes, not a new canonical object/family/property or the declaration rule. Current C/C1 structures remain registered under already-governing source; actual input/provenance values have separate links.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical29 explicitly introduces no store, writer or family and requires separate source field/producer/consumer review for serialization. The exact registry declaration/cardinality rule remains; actual conditional receipt/binding values are separately governed. Do not infer schema additions from the technical meaning record.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1192,
+    "predecessorId": "NREQ-3271aa1361484bd6fae3048a7a2879f4",
+    "originalStatement": "DURABLE_OBJECT_REGISTRY must declare identity.",
+    "priorReviewedStatement": "DURABLE_OBJECT_REGISTRY must declare identity.",
+    "independentMechanismClass": "FIXED_DURABLE_REGISTRY_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This exact predicate requires registration/one parent or a declared identity/producer/lifecycle/scope/relationship/hash/migration/gate component. Technical11–19 determines actual ZIP bytes, not a new canonical object/family/property or the declaration rule. Current C/C1 structures remain registered under already-governing source; actual input/provenance values have separate links.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical29 explicitly introduces no store, writer or family and requires separate source field/producer/consumer review for serialization. The exact registry declaration/cardinality rule remains; actual conditional receipt/binding values are separately governed. Do not infer schema additions from the technical meaning record.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1193,
+    "predecessorId": "NREQ-2f28b1c82afb8004400b06bb9330da33",
+    "originalStatement": "DURABLE_OBJECT_REGISTRY must declare parent family if nested.",
+    "priorReviewedStatement": "DURABLE_OBJECT_REGISTRY must declare parent family if nested.",
+    "independentMechanismClass": "FIXED_DURABLE_REGISTRY_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This exact predicate requires registration/one parent or a declared identity/producer/lifecycle/scope/relationship/hash/migration/gate component. Technical11–19 determines actual ZIP bytes, not a new canonical object/family/property or the declaration rule. Current C/C1 structures remain registered under already-governing source; actual input/provenance values have separate links.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical29 explicitly introduces no store, writer or family and requires separate source field/producer/consumer review for serialization. The exact registry declaration/cardinality rule remains; actual conditional receipt/binding values are separately governed. Do not infer schema additions from the technical meaning record.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1194,
+    "predecessorId": "NREQ-fa5531c2cba3d78589d709c0ff1398e1",
+    "originalStatement": "DURABLE_OBJECT_REGISTRY must declare producer partitions.",
+    "priorReviewedStatement": "DURABLE_OBJECT_REGISTRY must declare producer partitions.",
+    "independentMechanismClass": "FIXED_DURABLE_REGISTRY_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This exact predicate requires registration/one parent or a declared identity/producer/lifecycle/scope/relationship/hash/migration/gate component. Technical11–19 determines actual ZIP bytes, not a new canonical object/family/property or the declaration rule. Current C/C1 structures remain registered under already-governing source; actual input/provenance values have separate links.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical29 explicitly introduces no store, writer or family and requires separate source field/producer/consumer review for serialization. The exact registry declaration/cardinality rule remains; actual conditional receipt/binding values are separately governed. Do not infer schema additions from the technical meaning record.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1195,
+    "predecessorId": "NREQ-3034d2deddb70483e6f1cdf11e31185c",
+    "originalStatement": "DURABLE_OBJECT_REGISTRY must declare lifecycle policy.",
+    "priorReviewedStatement": "DURABLE_OBJECT_REGISTRY must declare lifecycle policy.",
+    "independentMechanismClass": "FIXED_DURABLE_REGISTRY_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This exact predicate requires registration/one parent or a declared identity/producer/lifecycle/scope/relationship/hash/migration/gate component. Technical11–19 determines actual ZIP bytes, not a new canonical object/family/property or the declaration rule. Current C/C1 structures remain registered under already-governing source; actual input/provenance values have separate links.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical29 explicitly introduces no store, writer or family and requires separate source field/producer/consumer review for serialization. The exact registry declaration/cardinality rule remains; actual conditional receipt/binding values are separately governed. Do not infer schema additions from the technical meaning record.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1196,
+    "predecessorId": "NREQ-47262f24f7f3e9a63d679daa229e2e92",
+    "originalStatement": "DURABLE_OBJECT_REGISTRY must declare scope.",
+    "priorReviewedStatement": "DURABLE_OBJECT_REGISTRY must declare scope.",
+    "independentMechanismClass": "FIXED_DURABLE_REGISTRY_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This exact predicate requires registration/one parent or a declared identity/producer/lifecycle/scope/relationship/hash/migration/gate component. Technical11–19 determines actual ZIP bytes, not a new canonical object/family/property or the declaration rule. Current C/C1 structures remain registered under already-governing source; actual input/provenance values have separate links.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical29 explicitly introduces no store, writer or family and requires separate source field/producer/consumer review for serialization. The exact registry declaration/cardinality rule remains; actual conditional receipt/binding values are separately governed. Do not infer schema additions from the technical meaning record.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1197,
+    "predecessorId": "NREQ-0c71ca2c7e0929b2f2cef31ee85e6d05",
+    "originalStatement": "DURABLE_OBJECT_REGISTRY must declare relationships.",
+    "priorReviewedStatement": "DURABLE_OBJECT_REGISTRY must declare relationships.",
+    "independentMechanismClass": "FIXED_DURABLE_REGISTRY_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This exact predicate requires registration/one parent or a declared identity/producer/lifecycle/scope/relationship/hash/migration/gate component. Technical11–19 determines actual ZIP bytes, not a new canonical object/family/property or the declaration rule. Current C/C1 structures remain registered under already-governing source; actual input/provenance values have separate links.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical29 explicitly introduces no store, writer or family and requires separate source field/producer/consumer review for serialization. The exact registry declaration/cardinality rule remains; actual conditional receipt/binding values are separately governed. Do not infer schema additions from the technical meaning record.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1198,
+    "predecessorId": "NREQ-c1b6ec9936dabc098ff6cc085d007250",
+    "originalStatement": "DURABLE_OBJECT_REGISTRY must declare hash inclusion set.",
+    "priorReviewedStatement": "DURABLE_OBJECT_REGISTRY must declare hash inclusion set.",
+    "independentMechanismClass": "FIXED_DURABLE_REGISTRY_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This exact predicate requires registration/one parent or a declared identity/producer/lifecycle/scope/relationship/hash/migration/gate component. Technical11–19 determines actual ZIP bytes, not a new canonical object/family/property or the declaration rule. Current C/C1 structures remain registered under already-governing source; actual input/provenance values have separate links.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical29 explicitly introduces no store, writer or family and requires separate source field/producer/consumer review for serialization. The exact registry declaration/cardinality rule remains; actual conditional receipt/binding values are separately governed. Do not infer schema additions from the technical meaning record.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1199,
+    "predecessorId": "NREQ-4afa1ec59bddf88f0fadfc107f0e21bf",
+    "originalStatement": "DURABLE_OBJECT_REGISTRY must declare migration behavior.",
+    "priorReviewedStatement": "DURABLE_OBJECT_REGISTRY must declare migration behavior.",
+    "independentMechanismClass": "FIXED_DURABLE_REGISTRY_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This exact predicate requires registration/one parent or a declared identity/producer/lifecycle/scope/relationship/hash/migration/gate component. Technical11–19 determines actual ZIP bytes, not a new canonical object/family/property or the declaration rule. Current C/C1 structures remain registered under already-governing source; actual input/provenance values have separate links.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical29 explicitly introduces no store, writer or family and requires separate source field/producer/consumer review for serialization. The exact registry declaration/cardinality rule remains; actual conditional receipt/binding values are separately governed. Do not infer schema additions from the technical meaning record.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1200,
+    "predecessorId": "NREQ-f6ff8a388526de1dea242010635a38da",
+    "originalStatement": "DURABLE_OBJECT_REGISTRY must declare gate use.",
+    "priorReviewedStatement": "DURABLE_OBJECT_REGISTRY must declare gate use.",
+    "independentMechanismClass": "FIXED_DURABLE_REGISTRY_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This exact predicate requires registration/one parent or a declared identity/producer/lifecycle/scope/relationship/hash/migration/gate component. Technical11–19 determines actual ZIP bytes, not a new canonical object/family/property or the declaration rule. Current C/C1 structures remain registered under already-governing source; actual input/provenance values have separate links.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical29 explicitly introduces no store, writer or family and requires separate source field/producer/consumer review for serialization. The exact registry declaration/cardinality rule remains; actual conditional receipt/binding values are separately governed. Do not infer schema additions from the technical meaning record.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1719,
+    "predecessorId": "NREQ-ede6419426a3f688dbcf46e6dfc8d12e",
+    "originalStatement": "The single ingestion path rejects before canonical mutation: missing provenance.",
+    "priorReviewedStatement": "The single ingestion path rejects before canonical mutation: missing provenance.",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1720,
+    "predecessorId": "NREQ-328ebefaa24eb1da6db91df40d28d966",
+    "originalStatement": "The single ingestion path rejects before canonical mutation: invalid provenance.",
+    "priorReviewedStatement": "The single ingestion path rejects before canonical mutation: invalid provenance.",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1895,
+    "predecessorId": "NREQ-894bf49ffe4f4fc96b545989d3df9969",
+    "originalStatement": "Once the user supplies a file to the application, the application generates the smallest required handoff package.",
+    "priorReviewedStatement": "Once the user supplies a file to the application, the application generates the smallest required handoff package.",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1905,
+    "predecessorId": "NREQ-ec672273f3ba68d470b0ce2907a81acc",
+    "originalStatement": "For every external stage or verification action, the application exports every required source, candidate, product, evidence, or rubric file as a separately identified member.",
+    "priorReviewedStatement": "For every external stage or verification action, the application exports every required source, candidate, product, evidence, or rubric file as a separately identified member.",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1948,
+    "predecessorId": "NREQ-8a6bb28da873f782077df27da38c0ef4",
+    "originalStatement": "Package creation uses derived allowlist.",
+    "priorReviewedStatement": "Package creation uses derived allowlist.",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1953,
+    "predecessorId": "NREQ-dbf4a07fed1c7bb6403fb622739c5a80",
+    "originalStatement": "Package creation uses supported metadata inventory.",
+    "priorReviewedStatement": "Package creation uses supported metadata inventory.",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2313,
+    "predecessorId": "NREQ-14cabca0b16e90d5184f1582af4e5753",
+    "originalStatement": "The engine derives one handoff object from current candidate or product.",
+    "priorReviewedStatement": "The engine derives one handoff object from current candidate or product.",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2314,
+    "predecessorId": "NREQ-4f31cba1e5172d1d85a05f2d5e401efe",
+    "originalStatement": "The engine derives one handoff object from current artifacts.",
+    "priorReviewedStatement": "The engine derives one handoff object from current artifacts.",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2367,
+    "predecessorId": "NREQ-eb4ed10d19f9d5dfc0aea45dc6bdd3a1",
+    "originalStatement": "The package contains only current files and records required by the operation.",
+    "priorReviewedStatement": "The package contains only current files and records required by the operation.",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5062,
+    "predecessorId": "NREQ-97ac21d46b91a2e26869f56ef177ab89",
+    "originalStatement": "Every screen must let the operator determine immediately: What exact files do I send?",
+    "priorReviewedStatement": "Every screen must let the operator determine immediately: What exact files do I send?",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5063,
+    "predecessorId": "NREQ-72b73b679ba4068b411bd8dd9773b48e",
+    "originalStatement": "Every screen must let the operator determine immediately: What must I withhold?",
+    "priorReviewedStatement": "Every screen must let the operator determine immediately: What must I withhold?",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5350,
+    "predecessorId": "NREQ-46ab50e698d4271f4598ea4e8ef819ee",
+    "originalStatement": "The suite must permanently cover the failure: acceptance of an unregistered derivation",
+    "priorReviewedStatement": "The suite must permanently cover the failure: acceptance of an unregistered derivation",
+    "independentMechanismClass": "FIXED_CATALOGUE_AND_HASH_RULES",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom rejects an unregistered derivation/normalizer/object or implements registered pointer/derivation/normalizer hashing. Technical11–19 affects underlying ZIP occurrence values, not these closed membership/declaration/canonical hashing rules. Preserve all current registry coverage without attaching decoder semantics to the generic rule.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 changes SELECT_XML query rooting and affected semantic identity, not registry membership, one-family closure, canonical serialization, pointer sets or hashing procedures. Actual XML semantics and identity values remain separately governed; this catalogue/hash-rule qualifier is diagnostic.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5351,
+    "predecessorId": "NREQ-5f28a155e2aad1807625d8c16b3449bd",
+    "originalStatement": "The suite must permanently cover the failure: acceptance of an unregistered durable object",
+    "priorReviewedStatement": "The suite must permanently cover the failure: acceptance of an unregistered durable object",
+    "independentMechanismClass": "FIXED_CATALOGUE_AND_HASH_RULES",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom rejects an unregistered derivation/normalizer/object or implements registered pointer/derivation/normalizer hashing. Technical11–19 affects underlying ZIP occurrence values, not these closed membership/declaration/canonical hashing rules. Preserve all current registry coverage without attaching decoder semantics to the generic rule.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 changes SELECT_XML query rooting and affected semantic identity, not registry membership, one-family closure, canonical serialization, pointer sets or hashing procedures. Actual XML semantics and identity values remain separately governed; this catalogue/hash-rule qualifier is diagnostic.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5354,
+    "predecessorId": "NREQ-4c0f47377ababce1548ab6a726ef920d",
+    "originalStatement": "The suite must permanently cover the failure: acceptance of an unregistered normalizer",
+    "priorReviewedStatement": "The suite must permanently cover the failure: acceptance of an unregistered normalizer",
+    "independentMechanismClass": "FIXED_CATALOGUE_AND_HASH_RULES",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom rejects an unregistered derivation/normalizer/object or implements registered pointer/derivation/normalizer hashing. Technical11–19 affects underlying ZIP occurrence values, not these closed membership/declaration/canonical hashing rules. Preserve all current registry coverage without attaching decoder semantics to the generic rule.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 changes SELECT_XML query rooting and affected semantic identity, not registry membership, one-family closure, canonical serialization, pointer sets or hashing procedures. Actual XML semantics and identity values remain separately governed; this catalogue/hash-rule qualifier is diagnostic.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5615,
+    "predecessorId": "NREQ-8a07f306f30f5e9d5a3882992724c4b6",
+    "originalStatement": "The mandatory deterministic and behavioral suite must verify: Every release-bearing durable object resolves to a registered canonical family or closed nested object.",
+    "priorReviewedStatement": "The mandatory deterministic and behavioral suite must verify: Every release-bearing durable object resolves to a registered canonical family or closed nested object.",
+    "independentMechanismClass": "FIXED_CATALOGUE_AND_HASH_RULES",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom rejects an unregistered derivation/normalizer/object or implements registered pointer/derivation/normalizer hashing. Technical11–19 affects underlying ZIP occurrence values, not these closed membership/declaration/canonical hashing rules. Preserve all current registry coverage without attaching decoder semantics to the generic rule.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 changes SELECT_XML query rooting and affected semantic identity, not registry membership, one-family closure, canonical serialization, pointer sets or hashing procedures. Actual XML semantics and identity values remain separately governed; this catalogue/hash-rule qualifier is diagnostic.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5964,
+    "predecessorId": "NREQ-788ca03644691b82188cca531c7d4198",
+    "originalStatement": "The acceptance suite must at minimum cover missing provenance",
+    "priorReviewedStatement": "The acceptance suite must at minimum cover missing provenance",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5965,
+    "predecessorId": "NREQ-40fc287b8d0cecf799b4db0fdc0d5871",
+    "originalStatement": "The acceptance suite must at minimum cover wrong evidence relationship",
+    "priorReviewedStatement": "The acceptance suite must at minimum cover wrong evidence relationship",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5966,
+    "predecessorId": "NREQ-42a2c6535cadacbb468aebc88d2b0455",
+    "originalStatement": "The acceptance suite must at minimum cover missing bytes",
+    "priorReviewedStatement": "The acceptance suite must at minimum cover missing bytes",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6032,
+    "predecessorId": "NREQ-6246f3ee19bff389189fcb218dd4c5a2",
+    "originalStatement": "The negative matrix must cover: Unregistered contract negative case: derivation",
+    "priorReviewedStatement": "The negative matrix must cover: Unregistered contract negative case: derivation",
+    "independentMechanismClass": "FIXED_CATALOGUE_AND_HASH_RULES",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom rejects an unregistered derivation/normalizer/object or implements registered pointer/derivation/normalizer hashing. Technical11–19 affects underlying ZIP occurrence values, not these closed membership/declaration/canonical hashing rules. Preserve all current registry coverage without attaching decoder semantics to the generic rule.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 changes SELECT_XML query rooting and affected semantic identity, not registry membership, one-family closure, canonical serialization, pointer sets or hashing procedures. Actual XML semantics and identity values remain separately governed; this catalogue/hash-rule qualifier is diagnostic.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6033,
+    "predecessorId": "NREQ-beb682dec05830bb9c971cf43bbedf2c",
+    "originalStatement": "The negative matrix must cover: Unregistered contract negative case: durable object",
+    "priorReviewedStatement": "The negative matrix must cover: Unregistered contract negative case: durable object",
+    "independentMechanismClass": "FIXED_CATALOGUE_AND_HASH_RULES",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom rejects an unregistered derivation/normalizer/object or implements registered pointer/derivation/normalizer hashing. Technical11–19 affects underlying ZIP occurrence values, not these closed membership/declaration/canonical hashing rules. Preserve all current registry coverage without attaching decoder semantics to the generic rule.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 changes SELECT_XML query rooting and affected semantic identity, not registry membership, one-family closure, canonical serialization, pointer sets or hashing procedures. Actual XML semantics and identity values remain separately governed; this catalogue/hash-rule qualifier is diagnostic.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6036,
+    "predecessorId": "NREQ-0ed46c0973389b8b1a97ff2913e20ead",
+    "originalStatement": "The negative matrix must cover: Unregistered contract negative case: normalizer",
+    "priorReviewedStatement": "The negative matrix must cover: Unregistered contract negative case: normalizer",
+    "independentMechanismClass": "FIXED_CATALOGUE_AND_HASH_RULES",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom rejects an unregistered derivation/normalizer/object or implements registered pointer/derivation/normalizer hashing. Technical11–19 affects underlying ZIP occurrence values, not these closed membership/declaration/canonical hashing rules. Preserve all current registry coverage without attaching decoder semantics to the generic rule.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 changes SELECT_XML query rooting and affected semantic identity, not registry membership, one-family closure, canonical serialization, pointer sets or hashing procedures. Actual XML semantics and identity values remain separately governed; this catalogue/hash-rule qualifier is diagnostic.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6466,
+    "predecessorId": "NREQ-50035e12b76c89e3158284ac17590e12",
+    "originalStatement": "workflow-engine.js must derive one exact handoff",
+    "priorReviewedStatement": "workflow-engine.js must derive one exact handoff",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6487,
+    "predecessorId": "NREQ-911f1cafa68b8d6157bc202fa6af7af9",
+    "originalStatement": "prompt-engine.js must include exact Stage 01 file handoff",
+    "priorReviewedStatement": "prompt-engine.js must include exact Stage 01 file handoff",
+    "independentMechanismClass": "EXACT_STAGE01_HANDOFF",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This exact predicate is Stage01 file handoff and its prescribed ordering. F1 specialized later failure/regression binding/history does not govern the initial Stage01 source input. Preserve the actual C/C1 intake link and all later handoff dependencies elsewhere.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6533,
+    "predecessorId": "NREQ-929486758bb11388918920a66546dfae",
+    "originalStatement": "app-core.js must show the exact Stage 01 file handoff",
+    "priorReviewedStatement": "app-core.js must show the exact Stage 01 file handoff",
+    "independentMechanismClass": "EXACT_STAGE01_HANDOFF",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This exact predicate is Stage01 file handoff and its prescribed ordering. F1 specialized later failure/regression binding/history does not govern the initial Stage01 source input. Preserve the actual C/C1 intake link and all later handoff dependencies elsewhere.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6536,
+    "predecessorId": "NREQ-5107d97489552e7cca3634f6c3a3bfc0",
+    "originalStatement": "app-core.js must show exact external handoff",
+    "priorReviewedStatement": "app-core.js must show exact external handoff",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6591,
+    "predecessorId": "NREQ-3fdc12236dc68f18c9a275d81122afea",
+    "originalStatement": "hash.js must implement closed hash-preimage pointer sets",
+    "priorReviewedStatement": "hash.js must implement closed hash-preimage pointer sets",
+    "independentMechanismClass": "FIXED_CATALOGUE_AND_HASH_RULES",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom rejects an unregistered derivation/normalizer/object or implements registered pointer/derivation/normalizer hashing. Technical11–19 affects underlying ZIP occurrence values, not these closed membership/declaration/canonical hashing rules. Preserve all current registry coverage without attaching decoder semantics to the generic rule.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 changes SELECT_XML query rooting and affected semantic identity, not registry membership, one-family closure, canonical serialization, pointer sets or hashing procedures. Actual XML semantics and identity values remain separately governed; this catalogue/hash-rule qualifier is diagnostic.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6595,
+    "predecessorId": "NREQ-9acdf2fe7438233c75758c34f2f717c8",
+    "originalStatement": "hash.js must implement registered derivation hashing",
+    "priorReviewedStatement": "hash.js must implement registered derivation hashing",
+    "independentMechanismClass": "FIXED_CATALOGUE_AND_HASH_RULES",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom rejects an unregistered derivation/normalizer/object or implements registered pointer/derivation/normalizer hashing. Technical11–19 affects underlying ZIP occurrence values, not these closed membership/declaration/canonical hashing rules. Preserve all current registry coverage without attaching decoder semantics to the generic rule.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 changes SELECT_XML query rooting and affected semantic identity, not registry membership, one-family closure, canonical serialization, pointer sets or hashing procedures. Actual XML semantics and identity values remain separately governed; this catalogue/hash-rule qualifier is diagnostic.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6596,
+    "predecessorId": "NREQ-f6cf3fbfe492653dc6bb822b7d53c3aa",
+    "originalStatement": "hash.js must implement registered normalizer hashing",
+    "priorReviewedStatement": "hash.js must implement registered normalizer hashing",
+    "independentMechanismClass": "FIXED_CATALOGUE_AND_HASH_RULES",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom rejects an unregistered derivation/normalizer/object or implements registered pointer/derivation/normalizer hashing. Technical11–19 affects underlying ZIP occurrence values, not these closed membership/declaration/canonical hashing rules. Preserve all current registry coverage without attaching decoder semantics to the generic rule.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 changes SELECT_XML query rooting and affected semantic identity, not registry membership, one-family closure, canonical serialization, pointer sets or hashing procedures. Actual XML semantics and identity values remain separately governed; this catalogue/hash-rule qualifier is diagnostic.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6674,
+    "predecessorId": "NREQ-454f14fd2c9c8010cf2efe2e2705734b",
+    "originalStatement": "Phase 1 — restore the actual operator path: Correct Stage 01 file handoff. This step follows the declared preceding steps in this required sequence.",
+    "priorReviewedStatement": "Phase 1 — restore the actual operator path: Correct Stage 01 file handoff. This step follows the declared preceding steps in this required sequence.",
+    "independentMechanismClass": "EXACT_STAGE01_HANDOFF",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This exact predicate is Stage01 file handoff and its prescribed ordering. F1 specialized later failure/regression binding/history does not govern the initial Stage01 source input. Preserve the actual C/C1 intake link and all later handoff dependencies elsewhere.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6719,
+    "predecessorId": "NREQ-bceb06e9504ef90e67654c975efcf793",
+    "originalStatement": "Phase 6 — routing and gates: Derive exact handoff. This step follows the declared preceding steps in this required sequence.",
+    "priorReviewedStatement": "Phase 6 — routing and gates: Derive exact handoff. This step follows the declared preceding steps in this required sequence.",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6751,
+    "predecessorId": "NREQ-c832433897255cc91a09818006e45c80",
+    "originalStatement": "Phase 9 — complete proof: Add every required security test. Retain the stated implementation ordering.",
+    "priorReviewedStatement": "Phase 9 — complete proof: Add every required security test. Retain the stated implementation ordering.",
+    "independentMechanismClass": "COMPLETE_SECURITY_TEST_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Complete current security coverage includes C1 ZIP structural/safety admission, verified decompression, bounded isolated resource handling and rejection of unsafe paths under technical11–19. Keep response transport and native worker policies separate; this source duty does not accept an executed test.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Complete current security coverage includes technical33’s confinement to the supplied XML subtree, no implicit ancestor/original-root/outside-sibling lookup and explicit same-execution node provenance. Link that actual traversal boundary only; preserve other security rules and required sequence.",
+        "effectiveBranchCondition": "Only its affected current SELECT_XML traversal/root semantics branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6752,
+    "predecessorId": "NREQ-29907762a5dcd5c9e2114950fca0b3b9",
+    "originalStatement": "Phase 9 — complete proof: Add every required storage-failure test. Retain the stated implementation ordering.",
+    "priorReviewedStatement": "Phase 9 — complete proof: Add every required storage-failure test. Retain the stated implementation ordering.",
+    "independentMechanismClass": "COMPLETE_STORAGE_FAILURE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C1 intake may reserve/quarantine/write verified expanded children and must preserve honest blocked states on actual platform/storage limits. Technical11–19 preserves those boundaries, so complete current storage-failure coverage consumes this ZIP branch without weakening atomic storage duties.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Technical33 changes SELECT_XML traversal inside a supplied node, not durable storage, allocation ownership or storage-failure semantics. The complete security/actual native outcome duties remain separately linked.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6902,
+    "predecessorId": "NREQ-df378915ee8b4a8d2e0cb6b2cbb3d7d8",
+    "originalStatement": "For every accepted result: required bytes are verified",
+    "priorReviewedStatement": "For every accepted result: required bytes are verified",
+    "independentMechanismClass": "CURRENT_HANDOFF_AND_PROVENANCE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "C/C1 and technical11–19 define the actual safe admitted metadata and verified member bytes, original occurrence lineage and honest blocked/unknown remainder. This exact current input/handoff/provenance/member requirement consumes that ZIP source domain; no transport role or metadata grants disclosure, execution or semantic authority. Preserve smallest complete required package, original bytes and source locations.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Technical27–29 defines the actual accepted F1 test/definition/fixture/target/outcome, current scope/history, distinct execution input identities and attributable custody. This exact required handoff/provenance/byte predicate consumes those conditional inputs; preserve minimum disclosure, blind/future-material exclusion, exact registered route and stronger evidence.",
+        "effectiveBranchCondition": "Only its current F1 conditional input/test/fixture/target/history branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 7132,
+    "predecessorId": "NREQ-809b23abcee9fee062b4d7513a802c8b",
+    "originalStatement": "pages.yml runs security tests.",
+    "priorReviewedStatement": "pages.yml runs security tests.",
+    "independentMechanismClass": "COMPLETE_SECURITY_TEST_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DECODER-SUBSET",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Complete current security coverage includes C1 ZIP structural/safety admission, verified decompression, bounded isolated resource handling and rejection of unsafe paths under technical11–19. Keep response transport and native worker policies separate; this source duty does not accept an executed test.",
+        "effectiveBranchCondition": "Only the exact predicate’s current ZIP source-occurrence/verified-child/metadata/availability branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 5830,
+          "endLine": 21,
+          "spanSha256IncludingLineTerminators": "304c88cd1d9c9d02048582edf589d6458238789e746aee885434a96017d4b289",
+          "startByte": 758,
+          "startLine": 6
+        }
+      },
+      {
+        "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Complete current security coverage includes technical33’s confinement to the supplied XML subtree, no implicit ancestor/original-root/outside-sibling lookup and explicit same-execution node provenance. Link that actual traversal boundary only; preserve other security rules and required sequence.",
+        "effectiveBranchCondition": "Only its affected current SELECT_XML traversal/root semantics branch.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 10421,
+          "endLine": 35,
+          "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+          "startByte": 9341,
+          "startLine": 31
+        }
+      }
+    ]
+  }
+]

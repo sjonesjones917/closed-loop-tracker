@@ -1,0 +1,25 @@
+{
+  "verdict": "ACCEPT",
+  "scope": "Required declaration presence and basic shapes only",
+  "candidateCommit": "342b89b013477abe68dfae5967845358438a3e47",
+  "baseCommit": "fc6a8055a4ce01ea2ac1640a5d99fb87614cc9d3",
+  "controllingSpecSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+  "verifierSha256": "6e36f7d5e7716a9fc68927d2d789434e1751aa6bfb8f7b2aa1169ef5c28b7f34",
+  "unchangedWorkflowSchemaSha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6",
+  "reviewWorktree": "/workspace/shared/clrt-operation-properties-review",
+  "focusedCommand": "node verify-contract-closure.mjs --operation-registry-properties-only",
+  "independentCommand": "node .review-test.mjs",
+  "focusedEvidenceRejections": [
+    {
+      "consumer": "observationsFromReports",
+      "result": "PASS: assert.throws matched",
+      "matchedErrorRegex": "expected exactly one report marker contractClosure; received 0"
+    },
+    {
+      "consumer": "createExecutionReceipt",
+      "result": "PASS: assert.throws matched",
+      "matchedErrorRegex": "expected exactly one report marker contractClosure; received 0"
+    }
+  ],
+  "rejectionCaptureNote": "The executed harness asserted the actual thrown exceptions matched this exact diagnostic text. Original result JSON retains success booleans; raw exception strings were not separately printed. These are asserted rejection results, not fabricated raw logs."
+}

@@ -1,0 +1,52 @@
+{
+  "schema": "closed-loop-attributed-reference-edge-freeze/1",
+  "status": "FROZEN",
+  "outputs": [
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/chain-loader.py",
+      "sha256": "fd2e4fd8313d838d52f85f8769995f92098388cfad86876c2e09719d4177dca4",
+      "byteLength": 8390
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/effective-governor-link.json",
+      "sha256": "67b3ebd38914df4b7b055e238fc0f2bed4ac195c1a83dadcec7cab9eb6302d13",
+      "byteLength": 11967
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/per-entry-reconciliation.json",
+      "sha256": "3bf9f32de26a8ab9cc93002a498bea9f083668a7792b774f62898dd9937955bd",
+      "byteLength": 76969
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/read-inventory.json",
+      "sha256": "145286e63028e980e17074c1ba97f14b9d64cdcce5216bfb3fcfe140238f8d1f",
+      "byteLength": 34723
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/reconcile.py",
+      "sha256": "a482b9fcda332e01e41f045b7535e858ddac1b8f1e3728c80f030c81496f40d4",
+      "byteLength": 16534
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/reconciliation.json",
+      "sha256": "8f4d021ca28d2084acd714c6f113c5bc9d6c9055dbbaa685a6812bf9747ef0c0",
+      "byteLength": 3075
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/source-evidence.json",
+      "sha256": "25adb0d0d114f76938ee954c5d2c4106ee564bb136017131cb77be3cbc71458d",
+      "byteLength": 64086
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/original-decoder-edge-successor-002/validation.json",
+      "sha256": "e877a1c3a1a063ddc9c01dfd0c84c9a9b62bf374702e3d4c13539f8c459b90a8",
+      "byteLength": 562
+    }
+  ],
+  "originalFreeze": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/freeze-manifest.json",
+    "sha256": "49580d98e96917aaa6cad169c29930005682fed83beaa0591437f97b5cb5cecc",
+    "byteLength": 12165
+  },
+  "sourceOnly": true
+}

@@ -1,0 +1,261 @@
+{
+  "sourceOnly": true,
+  "originalPredecessor": {
+    "role": "PREDECESSOR",
+    "path": "/workspace/shared/clrt-integration/verification/atomic-extraction-20261014/reconciliation.json",
+    "sha256": "1cc93c4e49e3e5530ee2a802314617f3aa07d5c72282ded6cd1da68570dac280",
+    "byteLength": 71701945,
+    "purpose": "Pinned source-only evidence",
+    "readMode": "WHOLE_FILE_BYTES_FOR_HASH_AND_STRUCTURAL_ACCOUNTING"
+  },
+  "baseLedger": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-dispositions.json",
+    "sha256": "0e93d748752c866605ccc18e19a6eb3b9107390ee6f0644fdc5076966688a9f0",
+    "byteLength": 20401933
+  },
+  "originalOccurrenceTransport": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/predecessor-occurrence-transport.json",
+    "sha256": "4157cda2f60669a2feba4c3021aa212f5bee00f4456a4e7a59d8e86da08a02d4",
+    "byteLength": 6309790
+  },
+  "exactPassages": {
+    "BASE:1133:1133": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1133,
+      "endLine": 1133,
+      "startByte": 65484,
+      "endByte": 65562,
+      "sha256": "274dda76f385821dcdc2f3d6fe370de472cb9668b58bde7ab91aa371c9930d6c",
+      "text": "- Stages 08-09: requirementsVersion, testSuiteVersion, and instructionVersion;"
+    },
+    "BASE:1124:1124": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1124,
+      "endLine": 1124,
+      "startByte": 64997,
+      "endByte": 65030,
+      "sha256": "32e63bce79fb07090de61033fbcae303197bc7ff36108239608b00d879ec11bb",
+      "text": "14.7 Stage-operation scope matrix"
+    },
+    "BASE:1126:1126": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1126,
+      "endLine": 1126,
+      "startByte": 65032,
+      "endByte": 65196,
+      "sha256": "111829a81cf6e1931fdd923ee49b0024155a68877c3fa6206cd6b0e7c0a5f266",
+      "text": "Every operation binds jobId, stage, operation, expected projectRevision, contractProfileId, prompt or command identity, and scopeHash. Additional required scope is:"
+    },
+    "BASE:1149:1149": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1149,
+      "endLine": 1149,
+      "startByte": 66833,
+      "endByte": 67314,
+      "sha256": "dffe63f4b15a376bd614307eab4baad44c5afd515eeac0fbaa542062ac2e23bd",
+      "text": "Each matrix entry is statically classified as INPUT_CURRENT, TARGET_RESERVED, or IMMUTABLE_REFERENCE by STAGE_OPERATION_SCOPE_MATRIX. Creation operations use application-reserved target identities for the version or record they create; they do not pretend that the target already exists. Read dependencies use current input identities. The response echoes both classes in their registered locations, and the application verifies every input current and every target still reserved."
+    },
+    "BASE:1151:1151": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1151,
+      "endLine": 1151,
+      "startByte": 67316,
+      "endByte": 67630,
+      "sha256": "3b34966264383c18bbc623cf2e41e57ab55df6cefdf332ddd0162ead4831f51e",
+      "text": "A dimension designated by this matrix is required and non-null. A scope dimension not designated for the operation is prohibited unless the registry marks it as an immutable referenced target. Missing, extra, stale, unreserved, or inconsistent dimensions are rejected before proposal creation or command execution."
+    },
+    "SUCCESSOR_SOURCE:88258:91453": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startByte": 88258,
+      "endByte": 91453,
+      "sha256": "f9af9a6cb894d615e75cdb1c289534b91e5601ded09308c8fa4ae413f5cc2481",
+      "text": "F. R02: exact operation minima and narrow reconciliation of existing deferred routes\n\nF1. Insert after the Stage30 line of the §14.6 closed stage-operation list, before “No other stage-operation combination is valid.”\n\nThe closed set additionally retains these historically adopted conditional operation pairs, and no others:\n- EXECUTE_FAILURE_TEST at Stages 08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29 and 30;\n- EXECUTE_REGRESSION at Stages 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29 and 30.\n\nThese are the existing later-than-owning-stage deferred failure-test and regression execution routes. A pair is available only for a current accepted definition and its current accepted, independently reviewed execution-test binding, with established definition/test/fixture/target/outcome compatibility, the declared earliest executable stage reached, and the required current target-availability and phase conditions TRUE. Unknown, stale or unavailable prerequisites block; a legitimately future definition remains visible and unexecuted. Timing, compatibility and authority cannot be supplied by this list or inferred from a route label.\n\nThe routes remain receipt-only: one appended regressionExecutions receipt for the selected subject and ordinary supporting evidence, through the existing reserved external response path or existing isolated application-native execution path as its reviewed execution mode requires. They cannot rewrite definitions, complete unrelated ordinary stage work, expose future-stage material early, or mutate canonical user data as a test fixture. Owning Stage07/Stage15 writers and Stage17 REGRESSION permissions are unchanged. No new operation name, executor, store or canonical family is introduced.\n\nEach execution retains exact subject/test/fixture/target identities and hashes, selected stage and operation, current scope and history activation, actual isolation and attributable raw/native provenance. Failure validation requires an actual observation establishing rejection of the bound known-invalid fixture. Regression pre-correction failure and post-correction success require distinct executions and distinct actual target input identities; one observation cannot prove both. Existing capability, risk/disclosure authorization, human review where required, compatibility, reservation, retry, replacement, receipt, freshness and restoration controls remain mandatory and cannot be bypassed by an input-basis minimum. Supported semantic compatibility and application-observed input custody remain separate facts; a supported author interpretation does not change a valid native executor into an external one.\n\nThis is the explicit current-source inclusion of exactly the 38 previously adopted conditional pairs. It preserves their bounded authority; it does not adopt every omitted historical clause, widen their writer permissions, migrate old evidence into current proof, or certify that any implementation or execution conforms. Historical approval identifies the preserved lineage only. Each current result must independently satisfy the current governing source and exact current identities.\n"
+    },
+    "SUCCESSOR_SOURCE:181854:185547": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startByte": 181854,
+      "endByte": 185547,
+      "sha256": "d64000e5157c61f1e96a5ae2527f294cfb8ba9273b336a0af55e73da6a46d8fc",
+      "text": "F2. Insert after §26.6: closed-loop-external-input-binding-minima/1\n\nMINIMUM_INPUT_BINDING_BASIS is EXTERNALLY_SUPPORTED for the external route of each pair in the following closed mapping:\n01 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_INTAKE;\n02 COMPLETE, SEARCH_ADEQUACY_REVIEW, RECONCILE_SOURCE_SEARCH;\n03 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_RESEARCH;\n04 COMPLETE, DISPOSITION_CHALLENGE, ATOMICITY_CHALLENGE, RECONCILE_REQUIREMENTS;\n05 COMPLETE, SEMANTIC_REVIEW, RECONCILE_REQUIREMENT_SET;\n06 COMPLETE, PROOF_REVIEW, RECONCILE_VERIFICATION_SUITE;\n07 COMPLETE, EXECUTE_FAILURE_TEST when externally routed;\n08 COMPLETE; 09 COMPLETE; 11 EXECUTE_RUN; 12 VERIFY; 13 COMPARE; 14 ROOT_CAUSE;\n15 COMPLETE, EXECUTE_REGRESSION when externally routed;\n16 CORRECT;\n17 EXECUTE_RUN, VERIFY, COMPARE, ROOT_CAUSE, REGRESSION, CORRECT;\n19 EXECUTE_RUN, VERIFY, COMPARE (always external);\n19 REGRESSION_VERIFY only when externally routed;\n21 COMPLETE; 22 EXECUTE_EXTERNAL_TEST; 23 COMPLETE; 24 COMPLETE; 25 COMPLETE;\n26 COMPLETE, SEMANTIC_REVIEW, RECONCILE;\n27 ADVISORY_REVIEW; 29 INVESTIGATE_MISSING_EVIDENCE;\nand, only when externally routed, every one of the 38 exact conditional pairs listed in F1.\n\nThe mapping has 88 external routes: 50 from the original §14.6 list plus 23 later failure-test and 15 later regression routes. F1's closed lists, not a wildcard allowing arbitrary operation names or stages, determine the additional pairs. The minimum does not grant operation availability or new writer authority. ADVISORY_REVIEW remains optional and non-gating.\n\nFor the conditional native route of 07 EXECUTE_FAILURE_TEST, 15 EXECUTE_REGRESSION, 19 REGRESSION_VERIFY, and the 38 F1 pairs, the input-binding minimum is APPLICATION_OBSERVED. The application establishes that basis from actual custody and verification of each required exact input, its current identity/hash and scope, before execution may start. This is not a requirement that execution has already succeeded: execution outcome, isolation, provenance, disposition and evidence sufficiency are separately determined from the actual execution. An absent or mismatched required input blocks native execution; a download, actor echo or route label does not satisfy this native minimum. This clause does not change the execution mode or permit an unapproved fallback to a different executor. Existing application, human-decision and operator commands outside these conditional pairs retain their existing source contracts; no external evidence minimum is assigned to them by this amendment.\n\nFor an external route, exact attributable echoes of the application-issued package/manifest identity and each required member identity/digest may establish EXTERNALLY_SUPPORTED under the existing input-binding contract; missing or mismatched echoes cannot. A package download, filename, provider label or unbound assertion is insufficient. Echoes never become APPLICATION_OBSERVED external possession, VERIFIED_EXTERNAL attestation, or proof of hidden provider independence. Recording that the application supplied bytes does not prove that an external recipient independently possessed or executed them.\n\nIf the applicable proof obligation, evidence contract or dimensioned-independence contract requires a stronger or distinct basis, that requirement also must be met. This generic minimum cannot weaken it, convert SUPPORTS_ONLY into ESTABLISHES, remove a required accepted review, waive unknown freshness/independence, or supply a successful result. §29.14's registered attestation-verification contract remains necessary for VERIFIED_EXTERNAL. Actual basis and its supporting observations remain recorded and evaluated by the existing gates.\n"
+    },
+    "BASE:1134:1134": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1134,
+      "endLine": 1134,
+      "startByte": 65563,
+      "endByte": 65663,
+      "sha256": "37081ea7a66688db56af70390ae728e935e6e69fb6853e67c2bf446b25ad1010",
+      "text": "- Stage 10: requirementsVersion, testSuiteVersion, instructionVersion, iterationId, and candidateId;"
+    },
+    "BASE:1135:1135": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1135,
+      "endLine": 1135,
+      "startByte": 65664,
+      "endByte": 65712,
+      "sha256": "c87e3bf0c938cd17251b39812a015ca5865b230e9862241fb47bda8b6552a87f",
+      "text": "- Stage 11: iterationId, candidateId, and runId;"
+    },
+    "BASE:1136:1136": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1136,
+      "endLine": 1136,
+      "startByte": 65713,
+      "endByte": 65800,
+      "sha256": "c2ba206e11fd2af7eee4218b096a4bc3e4bfab80bd77e900810e752408232e32",
+      "text": "- Stage 12: iterationId, candidateId, runId, requirementsVersion, and testSuiteVersion;"
+    },
+    "BASE:1137:1137": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1137,
+      "endLine": 1137,
+      "startByte": 65801,
+      "endByte": 65905,
+      "sha256": "882ea504221441ec14b1d87bd10dfd1c2d07e0134a6284a60c09d0b90429931f",
+      "text": "- Stages 13-18: iterationId, candidateId, requirementsVersion, testSuiteVersion, and instructionVersion;"
+    },
+    "BASE:1138:1138": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1138,
+      "endLine": 1138,
+      "startByte": 65906,
+      "endByte": 66046,
+      "sha256": "3312831383e5abf3bd3a0f536d63db218dfa19d6fbc2aaca6d55ef1f3595c67a",
+      "text": "- Stage 19: sourceConvergedIterationId, confirmationIterationId, candidateId, requirementsVersion, testSuiteVersion, and instructionVersion;"
+    },
+    "BASE:1139:1139": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1139,
+      "endLine": 1139,
+      "startByte": 66047,
+      "endByte": 66098,
+      "sha256": "09be24d2e4b499b53b0afa51d82f36fc156e915aef312e9fa673264c75bbef5a",
+      "text": "- Stage 20: confirmationIterationId and baselineId;"
+    },
+    "BASE:1140:1140": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1140,
+      "endLine": 1140,
+      "startByte": 66099,
+      "endByte": 66136,
+      "sha256": "6f7df96f67b23fffdc3d3808d2271656f897eacf1026f1ac9f9f8c9942fa5511",
+      "text": "- Stage 21: baselineId and productId;"
+    },
+    "BASE:1141:1141": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1141,
+      "endLine": 1141,
+      "startByte": 66137,
+      "endByte": 66234,
+      "sha256": "c35b5116fb80d8a40742789f9a7f2bfe2f3387f2b67d63d5bc1cd954e30df286",
+      "text": "- Stages 22-24: baselineId, productId, productVersion, requirementsVersion, and testSuiteVersion;"
+    },
+    "BASE:1142:1142": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1142,
+      "endLine": 1142,
+      "startByte": 66235,
+      "endByte": 66313,
+      "sha256": "2d491fc9702303591b5a787e48a0c0ba2ea1a21b732759f40d49ca2e80fc3d75",
+      "text": "- Stage 25: baselineId, productId, productVersion, and deliveryCandidateSetId;"
+    },
+    "BASE:1143:1143": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1143,
+      "endLine": 1143,
+      "startByte": 66314,
+      "endByte": 66407,
+      "sha256": "5ffccab5e1b0a91256a208eab6a669d689c8628c57390fa4f924e9bc52fdabea",
+      "text": "- Stage 26: baselineId, productId, productVersion, deliveryCandidateSetId, and reviewVersion;"
+    },
+    "BASE:1144:1144": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1144,
+      "endLine": 1144,
+      "startByte": 66408,
+      "endByte": 66511,
+      "sha256": "6f9dbe3dc7d2442be2d3babad59ce579e8088247c9b0b5589653b56f44694c9d",
+      "text": "- Stage 27: baselineId, productId, productVersion, deliveryCandidateSetId, and reconciledReviewVersion;"
+    },
+    "BASE:1145:1145": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1145,
+      "endLine": 1145,
+      "startByte": 66512,
+      "endByte": 66601,
+      "sha256": "17c5ae9dadac9499f6585e9dbaf3828b42bed8a263c7a84c126c4c39ebbb2251",
+      "text": "- Stage 28: baselineId, productId, productVersion, deliveryCandidateSetId, and releaseId;"
+    },
+    "BASE:1146:1146": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1146,
+      "endLine": 1146,
+      "startByte": 66602,
+      "endByte": 66705,
+      "sha256": "9d8f3e435aaa15b0275c2b1a65b0227b0b99f9e1b0a8a9b5feccb21f44a6a102",
+      "text": "- Stage 29: baselineId, productId, productVersion, deliveryCandidateSetId, releaseId, and hashReviewId;"
+    },
+    "BASE:1147:1147": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1147,
+      "endLine": 1147,
+      "startByte": 66706,
+      "endByte": 66831,
+      "sha256": "d3cc6d067056043b93347e7d566a0cd7cfcdb1eec8e6364b4f7c3ea3f5348d40",
+      "text": "- Stage 30: baselineId, productId, productVersion, deliveryCandidateSetId, releaseId, hashReviewId, and evidenceChainVersion."
+    },
+    "SUCCESSOR:1191:1201": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1191,
+      "endLine": 1201,
+      "startByte": 88482,
+      "endByte": 91452,
+      "sha256": "e201d2ea09cce382b651ca8ae840f597ca6cbfdfc9d14feac079db1f7808fd69",
+      "text": "The closed set additionally retains these historically adopted conditional operation pairs, and no others:\n- EXECUTE_FAILURE_TEST at Stages 08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29 and 30;\n- EXECUTE_REGRESSION at Stages 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29 and 30.\n\nThese are the existing later-than-owning-stage deferred failure-test and regression execution routes. A pair is available only for a current accepted definition and its current accepted, independently reviewed execution-test binding, with established definition/test/fixture/target/outcome compatibility, the declared earliest executable stage reached, and the required current target-availability and phase conditions TRUE. Unknown, stale or unavailable prerequisites block; a legitimately future definition remains visible and unexecuted. Timing, compatibility and authority cannot be supplied by this list or inferred from a route label.\n\nThe routes remain receipt-only: one appended regressionExecutions receipt for the selected subject and ordinary supporting evidence, through the existing reserved external response path or existing isolated application-native execution path as its reviewed execution mode requires. They cannot rewrite definitions, complete unrelated ordinary stage work, expose future-stage material early, or mutate canonical user data as a test fixture. Owning Stage07/Stage15 writers and Stage17 REGRESSION permissions are unchanged. No new operation name, executor, store or canonical family is introduced.\n\nEach execution retains exact subject/test/fixture/target identities and hashes, selected stage and operation, current scope and history activation, actual isolation and attributable raw/native provenance. Failure validation requires an actual observation establishing rejection of the bound known-invalid fixture. Regression pre-correction failure and post-correction success require distinct executions and distinct actual target input identities; one observation cannot prove both. Existing capability, risk/disclosure authorization, human review where required, compatibility, reservation, retry, replacement, receipt, freshness and restoration controls remain mandatory and cannot be bypassed by an input-basis minimum. Supported semantic compatibility and application-observed input custody remain separate facts; a supported author interpretation does not change a valid native executor into an external one.\n\nThis is the explicit current-source inclusion of exactly the 38 previously adopted conditional pairs. It preserves their bounded authority; it does not adopt every omitted historical clause, widen their writer permissions, migrate old evidence into current proof, or certify that any implementation or execution conforms. Historical approval identifies the preserved lineage only. Each current result must independently satisfy the current governing source and exact current identities."
+    },
+    "SUCCESSOR:1210:1235": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1210,
+      "endLine": 1235,
+      "startByte": 94958,
+      "endByte": 97285,
+      "sha256": "a059f9174d407e3d8aee7f7aa416f98afa4d69d12fd15fa784cf928c16d2b0ce",
+      "text": "- EXPORT_PROMPT_FILE, EXPORT_EXECUTION_PACKAGE, SELECT_RESPONSE_JSON_FILE, SELECT_RETURNED_FILES, EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS, and RECORD_DELIVERY_EVIDENCE are operator actions. They create only the application receipts and human or external evidence explicitly declared by their contracts.\n\nFor every operation, TARGET_SLOT = SHA-256(closed-loop-canonical-json/1 of contractProfileId, jobId, stage, operation, and all operation-specific target identities required by Section 14.7). The target slot excludes projectRevision so an exact retry retains its slot; expectedRevision and scopeHash remain separate mandatory preconditions. No operation can write a family or field not listed in its FIELD_REGISTRY entry.\n\n14.7 Stage-operation scope matrix\n\nEvery operation binds jobId, stage, operation, expected projectRevision, contractProfileId, prompt or command identity, and scopeHash. Additional required scope is:\n\n- Stage 01: inputVersion;\n- Stage 02: inputVersion and sourceSetVersion;\n- Stage 03: inputVersion, sourceSetVersion, and researchVersion;\n- Stages 04-05: inputVersion, sourceSetVersion, researchVersion, and requirementsVersion;\n- Stages 06-07: requirementsVersion and testSuiteVersion;\n- Stages 08-09: requirementsVersion, testSuiteVersion, and instructionVersion;\n- Stage 10: requirementsVersion, testSuiteVersion, instructionVersion, iterationId, and candidateId;\n- Stage 11: iterationId, candidateId, and runId;\n- Stage 12: iterationId, candidateId, runId, requirementsVersion, and testSuiteVersion;\n- Stages 13-18: iterationId, candidateId, requirementsVersion, testSuiteVersion, and instructionVersion;\n- Stage 19: sourceConvergedIterationId, confirmationIterationId, candidateId, requirementsVersion, testSuiteVersion, and instructionVersion;\n- Stage 20: confirmationIterationId and baselineId;\n- Stage 21: baselineId and productId;\n- Stages 22-24: baselineId, productId, productVersion, requirementsVersion, and testSuiteVersion;\n- Stage 25: baselineId, productId, productVersion, and deliveryCandidateSetId;\n- Stage 26: baselineId, productId, productVersion, deliveryCandidateSetId, and reviewVersion;\n- Stage 27: baselineId, productId, productVersion, deliveryCandidateSetId, and reconciledReviewVersion;\n- Stage 28: baselineId, productId, productVersion, deliveryCandidateSetId, and releaseId;"
+    }
+  },
+  "currentMechanismReference": {
+    "artifactSha256": "090b3fbed3622f3d5b916115ce4220f5ea8dd69f65743c04acb4ae2d32f9299e",
+    "jsonPointer": "/decisions/CONDITIONAL_LATER_STAGE_SCOPE_DOMAIN",
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-009/mechanism-adjudication.json",
+    "selectedValueSha256": "004b39ab3591ebfa2683f2b9387b9d5413a6dcdf5f4f5920fdde4bfd50fca29c"
+  },
+  "acceptedTechnicalLink": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-001/effective-governor-link.json",
+    "sha256": "5776e3c128ca5e7c5c7643501071afd647a39ee5a6cf64270aa62a23c1c47e9a",
+    "byteLength": 13313
+  },
+  "independentMechanismDecision": "Every one of the76 exact atoms is a named stage08–30 required matrix dimension or a matrix-wide echo/nullability/exclusion/rejection predicate. Current F1 operation-domain expansion was separately reconciled in009. All76 consume current conditional-route scope/history/reservation relationships, which the accepted technical paragraph29 expressly preserves. The external link is confined to that branch; the original atom and every existing dimension/class remain exact. This is actual effective dependency rather than blanket whole-F context inheritance."
+}

@@ -1,0 +1,135 @@
+{
+  "aggregate": {
+    "allSuiteCollectorExecuted": false,
+    "globalProven": 7,
+    "overallReleaseEstablished": false,
+    "totalSubstantive": 3999
+  },
+  "portabilityLimit": "This is an accounting summary of a source-bound private result. The full result, fingerprint, evidence and receipt artifacts remain in private evidence storage; their hashes and any opaque private references are not portable proof. This file alone cannot reproduce or independently validate the private execution.",
+  "portableSanitizationQualification": "This attachment is a six-locator opaque-token derivative of the original work map. Requirement/accounting/assertion scope is unchanged; the original private map identity remains lineage only.",
+  "priorV7UploadSnapshot": {
+    "fileIdentities": [
+      {
+        "bytes": 1994355,
+        "filename": "complete-work-map.json.gz",
+        "sha256": "7d9339a9458fe5e204bfe501ad1e44729d6bb05c3aa35174e81e0a2f780cc7b1"
+      },
+      {
+        "bytes": 1637,
+        "filename": "README.md",
+        "sha256": "a9b45017b21f742a3b96041e73bf06e6d9146251f9d290b76d4c7aad36f1e29c"
+      },
+      {
+        "bytes": 2451,
+        "filename": "manifest.json",
+        "sha256": "eca01fffa21e0c998cc002de363d96e477b01397adfc46fe81d6c6c53e962d97"
+      }
+    ],
+    "receiptState": "Access confirmed for those files; inserted=false. This proposal does not claim a library page insertion or restamp. Native receipt identifiers and private account paths are not copied.",
+    "scope": "Prior uploaded portable work-map package (map, summary, manifest); this upload receipt is separate from the original six-proof tuple and this seven-row current result."
+  },
+  "receipt": {
+    "receiptSha256": "2a632da57af1096d864d6fcc87d9436408c51898ba6515479ff87433fb9acb65",
+    "suite": "verify-hash.mjs"
+  },
+  "recordedUtc": "2026-10-12T08:49:51.060Z",
+  "relationshipToHistoricalAdequacy": "No historical adequacy row, verdict, or current-admission tally is altered by this separate canonical runtime evidence record.",
+  "resultSha256": "1a19f1c4b49a885dcf3f54e22a86c10651232b7f6883bbea3148dc71d687380c",
+  "schema": "canonical-admission-accounting-summary/1",
+  "scopeNote": "Seven rows are six renewals plus one new NREQ (not thirteen distinct IDs). The prior V7 uploaded six-row snapshot and original six-row tuple remain separately preserved. This aggregate does not establish all-suite collection, overall release, or other rows.",
+  "separateOriginalSixProofTuple": {
+    "note": "Separate prior six-proof tuple; not restamped or overwritten by this seven-row result.",
+    "resultSha256": "454a7ede8ccf3c5c56beae2e81709dbf89bb3d6ab4d00fef439b8975dc678e37",
+    "sourceInputsSha256": "e347d4eb3bf765b499839031216a843ee15ce15b44d5a36134516d1e6dad23fd",
+    "suiteReceiptSha256": "1f373e27331e85a48cffb05ae599d68f5b21f6b806ec183848bd402f56fe61ca"
+  },
+  "sixCompletedFrozenWorkMapRowsNote": "The six COMPLETED_FROZEN primary work-map rows are an assignment category, not the separate original six-proof tuple or a count of the current seven-row aggregate.",
+  "source": {
+    "commit": "427b1010707ff4566a54b2acb0392e9e702b14d9",
+    "evidenceSha256": "2f2686c8938a65825aa78a612446c784a3fb07e6f124333664a98164ccf6790e",
+    "fingerprintSha256": "53ce2b7db8c1816359c1c7632d3515efab4a9a1d8e341c5faa163148e1362633",
+    "runtime": {
+      "architecture": "x64",
+      "node": "v22.23.3",
+      "platform": "linux"
+    },
+    "sourceInputsSha256": "16808a50c76bd1db408925d30a8e2d1b5c90436cfeff8b918cb61f7d702765be",
+    "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+    "tree": "3017879bf5b1137030916eb455ea829f94b32641"
+  },
+  "status": "VALIDATED_PARTIAL_CANONICAL_ADMISSION",
+  "targets": [
+    {
+      "checkIds": [
+        "canonical.complete-record-carrier-shapes",
+        "canonical.content-complete-record-distinction",
+        "canonical.source-family-content-complete-distinction"
+      ],
+      "dispositionAtCapturedTuple": "CONFORMANT_PROVEN",
+      "nreqId": "NREQ-7b1cd2debadb570b49fe041bd444592f",
+      "reviewRepositoryRelativePath": "verification/requirement-coverage-NREQ-7b1cd2debadb570b49fe041bd444592f-20261012.json",
+      "reviewSha256": "5ebe724355c027ad622da5a0e2daaa04bca89bd724c6351792a92c71aa3826fd",
+      "sourceLineSha256": "b6dc4278eba0b77d47190a27e473be50c1bd1a29c7282aa3cebbe93f6fcd964f"
+    },
+    {
+      "checkIds": [
+        "canonical.utf8-no-bom-byte-routes"
+      ],
+      "dispositionAtCapturedTuple": "CONFORMANT_PROVEN",
+      "nreqId": "NREQ-be0ecfa19d607c0df242b048d6ef63bf",
+      "reviewRepositoryRelativePath": "verification/requirement-coverage-NREQ-be0ecfa19d607c0df242b048d6ef63bf-20261012-current-candidate-renewal.json",
+      "reviewSha256": "e5aa3ba06f8c4ae8d1ef26d187f206cda534b52f146698bd75b00ef49f095870",
+      "sourceLineSha256": "0b0f1de963804c1eeb888da7a2b2e1b818c703823a3e117b4eccd6ed3f8f3a07"
+    },
+    {
+      "checkIds": [
+        "canonical.safe-integer-and-typed-string"
+      ],
+      "dispositionAtCapturedTuple": "CONFORMANT_PROVEN",
+      "nreqId": "NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb",
+      "reviewRepositoryRelativePath": "verification/requirement-coverage-NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb-20261012-current-candidate-renewal.json",
+      "reviewSha256": "71a72ac8d5c2c8949f2de597346945eed577da997d87f1e8794ecdbc3f5a6c31",
+      "sourceLineSha256": "e17eda37620c3017ac470eaf42989140e74944e89206e2c9ecf51fb78bb872a2"
+    },
+    {
+      "checkIds": [
+        "canonical.unsigned-scalar-key-order"
+      ],
+      "dispositionAtCapturedTuple": "CONFORMANT_PROVEN",
+      "nreqId": "NREQ-853a934199459ed6bf419687ca08ba34",
+      "reviewRepositoryRelativePath": "verification/requirement-coverage-NREQ-853a934199459ed6bf419687ca08ba34-20261012-current-candidate-renewal.json",
+      "reviewSha256": "2fd9ac84509fac206d03b6ab9cea2d61a9ff1dcf4bbae9725d57090471ea7370",
+      "sourceLineSha256": "6cd002e410cce68e03f5b46b09436696f71111cd2df5ad887d8476e0083c3775"
+    },
+    {
+      "checkIds": [
+        "canonical.exact-string-scalars-and-lines"
+      ],
+      "dispositionAtCapturedTuple": "CONFORMANT_PROVEN",
+      "nreqId": "NREQ-d6f8519fc2d36e59e4eba26af0442d14",
+      "reviewRepositoryRelativePath": "verification/requirement-coverage-NREQ-d6f8519fc2d36e59e4eba26af0442d14-20261012-current-candidate-renewal.json",
+      "reviewSha256": "a35afbeddaa567c6867057bf261ca2859271366ef4c6e5ecdbd1919ed40b5bc2",
+      "sourceLineSha256": "03cb01d5ae34c69335090d3607bb7f3380f6e4eba8070ee4ffa5cba9cb32d751"
+    },
+    {
+      "checkIds": [
+        "canonical.exact-json-escapes"
+      ],
+      "dispositionAtCapturedTuple": "CONFORMANT_PROVEN",
+      "nreqId": "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+      "reviewRepositoryRelativePath": "verification/requirement-coverage-NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf-20261012-current-candidate-renewal.json",
+      "reviewSha256": "d1de2023de87e890dc76473e5f176eeb799f02b51716a1a3bc53d504c9879991",
+      "sourceLineSha256": "6ceea161cf4fc12d52f66189110a6aae635278efe3442751a653794c8e81c68f"
+    },
+    {
+      "checkIds": [
+        "canonical.id-literal-payload-and-sha160"
+      ],
+      "dispositionAtCapturedTuple": "CONFORMANT_PROVEN",
+      "nreqId": "NREQ-e74693ce28b14adb92ef359ccec7bb2b",
+      "reviewRepositoryRelativePath": "verification/requirement-coverage-NREQ-e74693ce28b14adb92ef359ccec7bb2b-20261012-current-candidate-renewal.json",
+      "reviewSha256": "51c69597829252dc002f9b62b91771dfe91ef7bbdc68e39c85cb3a4c5ae31d16",
+      "sourceLineSha256": "cc1adfaf4adf818c9ef8ac1a6d1680bf2070cd2176b6a3cffbe40312d1e01cde"
+    }
+  ]
+}

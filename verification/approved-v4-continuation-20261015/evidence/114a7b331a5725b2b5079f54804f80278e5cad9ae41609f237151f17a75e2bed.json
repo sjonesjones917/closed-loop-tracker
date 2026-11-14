@@ -1,0 +1,91 @@
+{
+  "schema": "closed-loop-additive-source-impact-queue-delta/1",
+  "status": "SEVEN_XML_IDENTITY_DISPUTES_RESOLVED_WITH_ATTRIBUTED_TECHNICAL_GOVERNOR",
+  "priorQueueDelta": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-009/combined-queue-delta.json",
+    "sha256": "27fa2a321bf519169227b6989f89bd1303cda89e13eaca6d5309b32214d84204",
+    "byteLength": 86657
+  },
+  "removedUnexaminedIds": [],
+  "resolvedExaminedDisputeIds": [
+    "NREQ-c0a2fa84e2aafe674742a0bb98c40e02",
+    "NREQ-1d38d63af6b54ccbd3b493fd1710aa31",
+    "NREQ-e884202d174fe47a8627a7e666bc0428",
+    "NREQ-bc228ccef26a4be8f45f955182946def",
+    "NREQ-d23cb763a799dfed6fefce0b7bc11867",
+    "NREQ-ea225a5482fb0bf87e4c39973d85e801",
+    "NREQ-a5b5a48eee5274111eb40dbcf6123f3f"
+  ],
+  "perMemberNewDisposition": [
+    {
+      "predecessorNormativeRequirementId": "NREQ-c0a2fa84e2aafe674742a0bb98c40e02",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-85fa0a7b7c1ce1c53e9215deb04f8d5e",
+      "recordPointer": "/0"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-1d38d63af6b54ccbd3b493fd1710aa31",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-98c0ef169caf2ae6e95178e3d43e2ea9",
+      "recordPointer": "/1"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-e884202d174fe47a8627a7e666bc0428",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-c10710af44c28997cedb05ef67fa89f2",
+      "recordPointer": "/2"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-bc228ccef26a4be8f45f955182946def",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-75ef70adf08a273c0fa5551f4fa274f0",
+      "recordPointer": "/3"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-d23cb763a799dfed6fefce0b7bc11867",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-e928649e5b19fef64b69080205effeda",
+      "recordPointer": "/4"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-ea225a5482fb0bf87e4c39973d85e801",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-ae095992721b327f67fc1945c8948a8d",
+      "recordPointer": "/5"
+    },
+    {
+      "predecessorNormativeRequirementId": "NREQ-a5b5a48eee5274111eb40dbcf6123f3f",
+      "successorDisposition": "CHANGED",
+      "successorNormativeRequirementId": "NREQ-5d65539e51b219cb7beba461a7b521f2",
+      "recordPointer": "/6"
+    }
+  ],
+  "deltaCounts": {
+    "RETAINED": 0,
+    "CHANGED": 7,
+    "BLOCKED": -7
+  },
+  "combinedCounts": {
+    "RETAINED": 3153,
+    "CHANGED": 944,
+    "BLOCKED": 3389
+  },
+  "remainingUnexaminedEntries": 3389,
+  "remainingExaminedStatusFieldDisputes": 0,
+  "remainingOriginalXmlAmbiguityEntries": 0,
+  "denominator": 7486,
+  "denominatorReduced": false,
+  "proofPromoted": false,
+  "inheritedConditionalGovernorRequirements": [
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/stage14-reviewed-resolution-successor/effective-governor-link.json",
+      "sha256": "c9e10ce00b5030e24d28ddab4f6d405f881e9fb9e5bfc936c33a71c15e0dd1f1",
+      "byteLength": 5418
+    }
+  ],
+  "conditionalGovernorRequirement": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+    "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+    "byteLength": 7671
+  }
+}

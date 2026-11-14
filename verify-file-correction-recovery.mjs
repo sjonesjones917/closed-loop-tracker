@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import {projectStoreRuntime} from './test-project-store-runtime.mjs';
+import {projectStoreRuntime,bindHandoffReviewUiState} from './test-project-store-runtime.mjs';
 import {responseFixture,OBJECTIVE} from './operator-journey-fixtures.mjs';
 const faultName=process.argv.find(arg=>arg.startsWith('--fault='))?.slice(8),fault=faultName==='input-invalidation'?{file:'workflow-engine.js',id:faultName,before:'if(hasPriorWork)invalidateStageForAuthorityChange',after:'if(false)invalidateStageForAuthorityChange'}:faultName==='pending-impact'?{file:'project-store.js',id:faultName,before:'if(!active(replacement)||!engine.isActiveRecord(replacement))add',after:'if(false)add'}:null;
 const r=projectStoreRuntime({fault}),{core,engine,prompts,ingestion,store,copy,runtime}=r,schema=runtime.closedLoopWorkflowSchema,cases=[],note=name=>cases.push({name,result:'PASS'});
@@ -24,6 +24,7 @@ let source=fs.readFileSync(process.env.APP_SOURCE||'app-core.js','utf8');if(faul
  ];
  runtime.document={querySelectorAll:()=>nodes};runtime.window={scrollX:0,scrollY:0};runtime.CSS={escape:value=>String(value)};
  Object.assign(runtime,{current:p,fileSelectionDrafts:{},operationSelection:{},runSelection:{},replacementReview:null,clone:copy});
+bindHandoffReviewUiState(runtime,{source});
  vm.runInContext(extract('const VIEW_NAVIGATION_CONTROL_IDS=','function selectSavedView(')+'\nglobalThis.productionCaptureView=captureView;',runtime);
  const captured=runtime.productionCaptureView();
  assert.equal(captured.drafts['#accepted-refinement-reason']?.value,'keep me','HISTORY_NAVIGATION_DRAFT_ORACLE: ordinary workflow drafts must still be captured');

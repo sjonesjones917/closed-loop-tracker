@@ -9,6 +9,44 @@ globalThis.dispatchEvent=globalThis.dispatchEvent||(()=>true);
 for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js','prompt-engine.js','response-ingestion.js'])createVerifierRuntime.loadScript(globalThis,fs.readFileSync(new URL('./'+file,import.meta.url),'utf8'),{filename:file});
 const core=globalThis.closedLoopCore,schema=globalThis.closedLoopWorkflowSchema,engine=globalThis.closedLoopWorkflowEngine,prompts=globalThis.closedLoopPromptEngine,ingestion=globalThis.closedLoopResponseIngestion,hash=globalThis.closedLoopHash;
 const value=(record,name)=>engine.recordValue(record,name),id=record=>engine.recordId(record,'operationReservations');
+// Section 35.6: unavailable secure randomness cannot reserve an operation.
+// Use a separate realm so the fault never changes another verifier's crypto.
+{
+  const runtime=createVerifierRuntime({Event:globalThis.Event,dispatchEvent:()=>true});
+  for(const file of ['workbook.js','hash.js','workflow-schema.js','test-runtime.js','workflow-engine.js'])createVerifierRuntime.loadScript(runtime,fs.readFileSync(new URL('./'+file,import.meta.url),'utf8'),{filename:file});
+  const workflow=runtime.closedLoopWorkflowEngine,secureCrypto=runtime.crypto,cases=[];
+  for(const [caseId,cryptoValue,errorPattern] of [['missing-crypto',null,/getRandomValues/],['missing-getRandomValues',{},/getRandomValues/],['unavailable-getRandomValues',{getRandomValues(){throw new Error('CONTROLLED_CSPRNG_UNAVAILABLE');}},/CONTROLLED_CSPRNG_UNAVAILABLE/]]){
+    const project=runtime.closedLoopCore.createBlankState('JOB-CSPRNG-'+caseId);workflow.ensureShape(project);workflow.recalculate(project);
+    const before=JSON.stringify(project);runtime.crypto=cryptoValue;
+    assert.throws(()=>workflow.reserveOperation(project,{stage:1,operation:'COMPLETE',scope:{projectRevision:Number(project.revision||0),inputVersion:project.job.CURRENT_INPUT_VERSION}}),errorPattern,'CSPRNG_UNAVAILABLE_ORACLE: '+caseId);
+    assert.equal(JSON.stringify(project),before,'CSPRNG_ATOMIC_RESERVATION_ORACLE: '+caseId);
+    cases.push({caseId,blocked:true,projectUnchanged:true});
+  }
+  const byteLengths=[];runtime.crypto={getRandomValues(bytes){byteLengths.push(bytes.byteLength);return secureCrypto.getRandomValues(bytes);}};
+  const project=runtime.closedLoopCore.createBlankState('JOB-CSPRNG-CONTROL');workflow.ensureShape(project);workflow.recalculate(project);
+  const before=Number(project.revision||0),reservation=workflow.reserveOperation(project,{stage:1,operation:'COMPLETE',scope:{projectRevision:Number(project.revision||0),inputVersion:project.job.CURRENT_INPUT_VERSION}}),nonce=workflow.recordValue(reservation,'CHALLENGE_NONCE');
+  assert.deepEqual(byteLengths,[16],'CSPRNG_128_BIT_SOURCE_ORACLE');assert.match(nonce,/^[a-f0-9]{32}$/);assert.equal(project.revision,before+1);assert.equal(workflow.records(project,'operationReservations').length,1);
+  console.log(JSON.stringify({reservationRandomness:{schema:'closed-loop-reservation-randomness/1',synthetic:true,actualBrowser:false,cases,control:{randomSource:'crypto.getRandomValues',requestedByteLengths:byteLengths,nonceHexLength:nonce.length,reservationCount:1,revisionDelta:project.revision-before}}}));
+}
+if(process.argv.includes('--nonce-availability-only'))process.exit(0);
+// Section25.2: exact previously committed command identity/payload may replay
+// before stale-revision rejection. Different stale commands never execute.
+function verifyGenericCommandIdempotency(){
+ const p=core.createBlankState('JOB-GENERIC-COMMAND-IDEMPOTENCY');engine.ensureShape(p);p.revision=7;
+ let executions=0;const expected={receiptId:'CONTROLLED-ORIGINAL-RECEIPT',outcome:'COMMITTED'};
+ const options={commandType:'CONTROLLED_COMMAND',target:'CONTROLLED_TARGET',expectedRevision:7,payload:{value:'ORIGINAL'},execute(){executions++;p.revision++;return structuredClone(expected);}};
+ const first=engine.executeIdempotentCommand(p,options);assert.deepEqual(first,expected,'GENERIC_COMMAND_COMMIT_ORACLE');assert.equal(p.revision,8);assert.equal(executions,1);
+ const before=hash.sha256Value(p),receipts=p.projectData.commandReceipts.length;
+ assert.equal(engine.executeIdempotentCommand(p,options),first,'GENERIC_COMMAND_EXACT_RETRY_ORACLE');assert.equal(hash.sha256Value(p),before);assert.equal(executions,1);assert.equal(receipts,1);
+ for(const [name,changed]of [['different-payload',{...options,payload:{value:'CHANGED'}}],['different-command',{...options,commandType:'OTHER_COMMAND'}]]){
+  assert.throws(()=>engine.executeIdempotentCommand(p,changed),/Expected project revision is stale\./,'GENERIC_COMMAND_STALE_REJECTION_ORACLE: '+name);
+  assert.equal(executions,1,'GENERIC_COMMAND_NO_EXECUTION_ORACLE: '+name);assert.equal(hash.sha256Value(p),before,'GENERIC_COMMAND_NO_MUTATION_ORACLE: '+name);assert.equal(p.projectData.commandReceipts.length,receipts);
+ }
+ return {exactRetryReturnedOriginal:true,staleDifferentPayloadRejected:true,staleDifferentCommandRejected:true,executions,receipts,synthetic:true,boundary:'Direct generic production command/receipt dispatcher with an independently expected revision-advancing callback; no native storage CAS or real external action.'};
+}
+const genericCommandIdempotency=verifyGenericCommandIdempotency();
+if(process.argv.includes('--generic-command-controls-only')){console.log(JSON.stringify({genericCommandIdempotency,focused:true,passed:true}));process.exit(0);}
+
 // Export must allocate application-owned context identity without asking the
 // operator to name a chat. External-provider facts must remain unclaimed.
 {
@@ -24,6 +62,23 @@ const value=(record,name)=>engine.recordValue(record,name),id=record=>engine.rec
   assert(!project.projectData.history.some(r=>r.type==='FRESH_CONTEXT_REGISTERED'),'Automatic allocation must not fabricate a human registration action.');
   for(const [stage,operation] of [[9,'COMPLETE'],[12,'VERIFY'],[17,'VERIFY'],[19,'VERIFY'],[23,'COMPLETE'],[24,'COMPLETE']]){
     const fixture=reservationScopeFixture({core,schema,engine},schema.STAGE_OPERATION_REGISTRY[stage+':'+operation],{omitReferences:['contextId']}),p=fixture.project;p.stages[stage-1].status='COMPLETE';p.stages[stage-1].gate={complete:true};
+    if(operation==='VERIFY'){
+      // A scope-dimension fixture supplies identities independently. A verifier
+      // handoff additionally needs the run's actual iteration/candidate binding.
+      const iterationId=fixture.scope.iterationId||fixture.scope.confirmationIterationId,candidateId=fixture.scope.candidateId;
+      const iteration=engine.records(p,'iterations').find(row=>engine.recordId(row,'iterations')===iterationId);
+      const run=engine.records(p,'runs').find(row=>engine.recordId(row,'runs')===fixture.scope.runId);
+      assert(iteration&&run&&candidateId,'VERIFIER_RUN_FIXTURE_IDENTITY_ORACLE');
+      assert(!engine.recordsForIteration(p,'runs',iterationId).includes(run),'VERIFIER_RUN_FIXTURE_MISSING_BINDING_CONTROL');
+      iteration.fields.CANDIDATE_ID=iteration.CANDIDATE_ID=candidateId;
+      iteration.scope={...engine.currentScope(p),iterationId,candidateId};
+      engine.refreshRecordHashes(iteration,'iterations');
+      run.fields.ITERATION_ID=run.ITERATION_ID=iterationId;
+      run.fields.CANDIDATE_ID=run.CANDIDATE_ID=candidateId;
+      run.scope={...engine.scopeForIteration(p,iterationId),iterationId,candidateId};
+      engine.refreshRecordHashes(run,'runs');
+      assert(engine.recordsForIteration(p,'runs',iterationId).includes(run),'VERIFIER_RUN_FIXTURE_CURRENT_BINDING_ORACLE');
+    }
     const result=prompts.reserveAndBuildPromptRecord(p,stage,{operation,scope:fixture.scope},{owningTabInstance:'TAB-AUTOMATIC-CONTEXT'});
     assert(result.prompt.scope.contextId,`Stage ${stage} still requires manual reviewer-context bookkeeping.`);
     const reviewer=engine.records(p,'freshContexts').find(r=>engine.recordId(r,'freshContexts')===result.prompt.scope.contextId);
@@ -97,7 +152,7 @@ function prepareAuthoritative(p,pr,envelope){const text=JSON.stringify(envelope)
   let p=transportProject('JOB-RESERVATION-HUMAN-ANSWER');const {pr}=reserveAndSave(p),prepared=prepareAuthoritative(p,pr,humanQuestionEnvelope(p,pr));assert(prepared.validation.valid&&prepared.proposal);p=ingestion.commit(prepared.project,prepared.proposal.proposalId,{operator:'VERIFY'}).project;const request=p.projectData.humanInputRequests.at(-1),answered=ingestion.answerHumanInput(p,{[request.requestId]:'Controlled answer'},{operator:'VERIFY'}),replacement=answered.project.projectData.generatedPrompts.find(x=>x.instructionId===answered.generatedPromptIds[0]);assert(replacement?.transportBindingRequired,'SAVE_HUMAN_INPUT replacement prompt must be reservation-bound.');assert.notEqual(replacement.operationReservationId,pr.operationReservationId);assert(answered.project.projectData.generatedPrompts.find(x=>x.instructionId===pr.instructionId)?.invalidatedBy,'SAVE_HUMAN_INPUT must invalidate the prior prompt.');
 }
 
-console.log(JSON.stringify({reservationContract:'PASS',targetSlot:target,reservationRevision:value(r,'RESERVATION_REVISION'),finalState:value(r,'STATUS'),externalResponseTransportBound:true,atomicReservationPromptCommit:true,replacementTransportLifecycle:true}));
+console.log(JSON.stringify({reservationContract:'PASS',genericCommandIdempotency,targetSlot:target,reservationRevision:value(r,'RESERVATION_REVISION'),finalState:value(r,'STATUS'),externalResponseTransportBound:true,atomicReservationPromptCommit:true,replacementTransportLifecycle:true}));
 
 // A second response to an already rejected attempt is a normal validation failure,
 // not a second terminal-state transition. Its findings must reach the correction prompt.

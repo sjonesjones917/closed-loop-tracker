@@ -1,0 +1,95 @@
+{
+  "schema": "closed-loop-fresh-source-only-input-manifest/1",
+  "status": "FROZEN_INPUTS_FOR_TWO_INDEPENDENT_FORK_NONE_PASSES",
+  "sourceInputs": [
+    {
+      "role": "BASE_SOURCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+      "byteLength": 309482,
+      "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "physicalLineCount": 5658
+    },
+    {
+      "role": "SUCCESSOR_SOURCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "byteLength": 369901,
+      "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "physicalLineCount": 5851
+    },
+    {
+      "role": "EXACT_APPROVED_V4",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/verification/approved-owner-decisions-v4-20261015.txt",
+      "byteLength": 65481,
+      "sha256": "aa966b7ac8f38f66b046ce796ab55de5c69dc3f8485f6bba499e32442e29476f",
+      "physicalLineCount": 216
+    },
+    {
+      "role": "APPROVAL_PROVENANCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only-approval-provenance.json",
+      "byteLength": 1715,
+      "sha256": "87652453a6e2875bac77abbabfaed9e81b59c55ddeb66dcaf7a822634aad8fb2",
+      "physicalLineCount": 22
+    },
+    {
+      "role": "INSERTION_MAP",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only-insertion-map.json",
+      "byteLength": 6936,
+      "sha256": "01c66373e254d319a6ae6f7a3292de55389eb363b84e5253199913b5496cef33",
+      "physicalLineCount": 172
+    }
+  ],
+  "indexing": {
+    "physicalLines": "One-based LF-delimited physical lines; the final split sentinel after the final LF is not a new physical source line. Preserve the final blank physical line.",
+    "byteOffsets": "Zero-based absolute UTF-8 byte offsets with exclusive end. Never use UTF-16 code-unit offsets.",
+    "lineSha256": "SHA-256 of exact line UTF-8 bytes excluding LF, including all other original characters.",
+    "sourceSpanSha256": "SHA-256 of the exact specified byte slice.",
+    "canonicalPaths": "Use the supplied role/path and source hash; do not infer identity from a filename."
+  },
+  "assignment": {
+    "draft": "Independently extract all inserted source obligations and their retained-source/context/cross-reference effects from only these five sources.",
+    "review": "Independently perform the same task without reading draft output, code/tests, candidate atoms, prior implementation analysis or adapter design.",
+    "reconciliation": "Start only after both outputs freeze. A distinct reconciler compares both completed outputs and the governing source; authoritative old entry mapping is a later separate input, not part of either blind pass."
+  },
+  "requiredOutputShape": {
+    "schema": "closed-loop-approved-insertion-source-delta/1",
+    "role": "DRAFT or INDEPENDENT_REVIEW",
+    "actorId": "actual canonical task identity",
+    "contextId": "actual fresh context identity",
+    "scope": "EXACT_V4_INSERTION_AND_RETAINED_SOURCE_IMPACT_ONLY",
+    "inputs": "Exact list of all source files actually read, including path, SHA256 and byte length; any unexpected input must be disclosed",
+    "sourceIdentity": {
+      "baseSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "successorSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "approvedProposalSha256": "aa966b7ac8f38f66b046ce796ab55de5c69dc3f8485f6bba499e32442e29476f"
+    },
+    "independence": {
+      "draftManifestReceived": "Boolean actual fact; independent review must be false",
+      "otherContributorOutputRead": "Boolean actual fact; both independent-phase outputs must be false",
+      "implementationOrTestsRead": "Boolean actual fact; must be false",
+      "fullOldSourceReviewClaim": false
+    },
+    "coverage": {
+      "successorInsertionRanges": "All seven exact current line ranges, totaling 193 lines",
+      "sourceRangesActuallyRead": "Array of {role,startLine,endLine}; include every target and transitive governing passage actually used",
+      "unreadOrUnresolvedSourceDependencies": "Explicit list; no silent complete claim"
+    },
+    "lineClassifications": "Array, one row for each of the 193 inserted lines: {successorLine,proposalLineOrNull,rawText,lineSha256,classification,reason,governingSourceReferences}. classification is NORMATIVE, BLANK, STRUCTURAL_HEADING, STRUCTURAL_TABLE or UNRESOLVED. A structural heading/table can still govern obligations; record its effect rather than discarding it. Closing inserted formatting blanks have proposalLineOrNull=null.",
+    "obligations": "Array of independently identified distinct duties/prohibitions: {localId,atomicKey,statement,requirementKind,primarySourceLocation:{role,startLine,endLine,lineSha256,controllingText},sourceSpans:[{startByte,endByte,text,sha256}],contextSourceLocations:[{role,startLine,endLine,lineSha256,controllingText}],conditions,expectedSourceMeaning,unresolvedIssues}. Do not allocate authoritative NREQ IDs or add owner/test/proof claims. primary lines are successor source; scope spans are exact source bytes on the primary line; additional required qualifiers are context references.",
+    "sourceContexts": "Array of {localId,sourceLocation,classification,reason,governedLocalObligationIds,exactGoverningSourceRanges}. classification is STRUCTURAL_REQUIREMENT_CONTEXT or HISTORICAL_NONNORMATIVE_CONTEXT only when justified; unresolved context is separate. Never broaden a range across inserted lines without an explicit semantic decision.",
+    "retainedSourceImpacts": "Array of {impactId,baseSourceLocations,successorSourceLocations,triggeringApprovedClauseReferences,disposition,priorMeaning,currentMeaning,addedOrChangedGovernors,reason,unresolvedIssues}. dispositions: PRESERVED_WITHOUT_NEW_CONTEXT, ADDED_REQUIRED_COMPONENT, ADDED_OR_CHANGED_GOVERNING_CONTEXT, CHANGED_PROPOSITION, UNRESOLVED. Identify effects by exact source occurrences; original atom IDs are not supplied to these blind passes and are mapped later by a distinct reconciler. Do not mark unexamined old material unaffected.",
+    "crossReferenceInteractions": "Array of {interactionId,referenceText,referenceSourceLocation,resolvedBaseSourceRanges,resolvedSuccessorSourceRanges,relationship,sourceMeaningInteraction,impactIds,unresolvedIssues}. Resolve every operative reference needed to interpret the approved clauses, including actual target/currentness/evidence authority and inherited limits.",
+    "unresolvedFindings": "Explicit array of source ambiguities, missing references or possible scope conflicts. Empty only after the bounded actual source pass finds none.",
+    "claims": {
+      "implementationConformance": false,
+      "releaseAcceptance": false,
+      "fullCurrentAtomicManifestCompleteness": false,
+      "boundedDeltaReadingComplete": "Actual Boolean fact"
+    }
+  },
+  "authorityLimits": [
+    "The owner approved exact v4 for implementation and verification. Approval does not establish implementation or runtime proof.",
+    "Do not treat prior proposal review as the required independent atomic extraction.",
+    "Do not infer a fresh full-source review from this bounded amendment/impact pass.",
+    "Do not inspect any other file in the parent design directory. Ask for exact source passages if needed rather than reading implementation artifacts."
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "candidate": "cdc4614f86d65d1b278008b60e668ab630f08b86",
+  "onlyCatalogChange": "migration.current-profile.expectedDescription",
+  "canonicalSuiteUnchanged": true,
+  "runtimeAndBindingsUnchanged": true,
+  "migrationNegativeCases": 379,
+  "receiptExpectation": {
+    "jsonStable": true,
+    "observationCount": 8,
+    "retainedEmittedReportsChecked": false,
+    "allRetainedObservationsPassed": null,
+    "receiptCreated": false
+  },
+  "newReceiptCreated": false
+}

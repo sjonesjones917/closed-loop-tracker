@@ -1,0 +1,2456 @@
+[
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-1637-1637",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1637,
+      "endLine": 1637,
+      "startByte": 122801,
+      "endByte": 122880,
+      "lineSha256": "fa9d3616de7425fc2c9a844ab279c5aa90325ae6b167828dc505fd75fd14f113",
+      "controllingText": "A. Insert after §18's unknown-key sentence: closed-loop-human-input-fallback/1"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 1639,
+        "endLine": 1650
+      }
+    ],
+    "reason": "Exact named subsection scope, excluding adjacent independent insertions and excluding the heading itself as a duplicate atomic command. The same-line/table clauses remain operative.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-38af020b1d3dbf7b60a5c9319efdf3c6",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2041-2041",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2041,
+      "endLine": 2041,
+      "startByte": 145511,
+      "endByte": 145574,
+      "lineSha256": "6946200f6b0b68ceca2ad6b36412692b194d87fde7ce8a4756e81ed4d8ce2711",
+      "controllingText": "B. Insert after §21.17: target-availability reference contract"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2043,
+        "endLine": 2050
+      }
+    ],
+    "reason": "Exact named subsection scope, excluding adjacent independent insertions and excluding the heading itself as a duplicate atomic command. The same-line/table clauses remain operative.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-c456030028a4185f1bfe3cb0d4021a81",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2052-2052",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2052,
+      "endLine": 2052,
+      "startByte": 149641,
+      "endByte": 149691,
+      "lineSha256": "803f92423eac8c679e2e669e0d41bc743183f2ae79d34ee02cd9943366423b32",
+      "controllingText": "D. Insert after §21.17: residual native semantics"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2054,
+        "endLine": 2086
+      }
+    ],
+    "reason": "Exact named subsection scope, excluding adjacent independent insertions and excluding the heading itself as a duplicate atomic command. The same-line/table clauses remain operative.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-1e7b7e57e12e6e5c843ab24f9e091e90",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2056-2056",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2056,
+      "endLine": 2056,
+      "startByte": 150072,
+      "endByte": 150120,
+      "lineSha256": "b9c9e86971e61d76f5afa80806e88eb03a630cb415c65332b9e7df6c325b2c64",
+      "controllingText": "D1. Collections, equality and primitive outputs."
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2057,
+        "endLine": 2059
+      }
+    ],
+    "reason": "Exact named subsection scope, excluding adjacent independent insertions and excluding the heading itself as a duplicate atomic command. The same-line/table clauses remain operative.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-62c556c6543562c765701f05895d503d",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2061-2061",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2061,
+      "endLine": 2061,
+      "startByte": 151804,
+      "endByte": 151816,
+      "lineSha256": "314490f048fe0394b8ec6963666e154b1c852be34fa0b909da92d34d03551d01",
+      "controllingText": "D2. Numbers."
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2062,
+        "endLine": 2069
+      }
+    ],
+    "reason": "Exact named subsection scope, excluding adjacent independent insertions and excluding the heading itself as a duplicate atomic command. The same-line/table clauses remain operative.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-3a560357882c1603591f74ade2fb750b",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2071-2071",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2071,
+      "endLine": 2071,
+      "startByte": 155744,
+      "endByte": 155758,
+      "lineSha256": "c0ebcf4af5bc413a4642236113e2c84eeb5f67762fec4f1eda358cef02a0f5b7",
+      "controllingText": "D3. Selectors."
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2072,
+        "endLine": 2073
+      }
+    ],
+    "reason": "Exact named subsection scope, excluding adjacent independent insertions and excluding the heading itself as a duplicate atomic command. The same-line/table clauses remain operative.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-f11044a6fa6c67479a8b35148721ad14",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2075-2075",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2075,
+      "endLine": 2075,
+      "startByte": 157424,
+      "endByte": 157453,
+      "lineSha256": "9ad12a7bf78f2ba316547efa6566deb23449d275f66eec64e8b1129945e01079",
+      "controllingText": "D4. Text, CSV, XML and regex."
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2076,
+        "endLine": 2083
+      }
+    ],
+    "reason": "Exact named subsection scope, excluding adjacent independent insertions and excluding the heading itself as a duplicate atomic command. The same-line/table clauses remain operative.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-64c8e92efc2859e3313a6e6ae1f6e531",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2085-2085",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2085,
+      "endLine": 2085,
+      "startByte": 163252,
+      "endByte": 163276,
+      "lineSha256": "6ea43650d6bf4339402371b7732681d026bc374a734ebd535bb63dec06e5485b",
+      "controllingText": "D5. Errors and identity."
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2086,
+        "endLine": 2086
+      }
+    ],
+    "reason": "Exact named subsection scope, excluding adjacent independent insertions and excluding the heading itself as a duplicate atomic command. The same-line/table clauses remain operative.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-6dbfbe98ea51a03150f9def93ab091fd",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-4055-4055",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 4055,
+      "endLine": 4055,
+      "startByte": 274758,
+      "endByte": 274853,
+      "lineSha256": "c50d9d7d3259ebc6bbc97175ada3d833c13e7121c42c7e2638aa84ab7955c6b8",
+      "controllingText": "E. Insert after §38.1 expectedVarianceContracts: closed-loop-expected-variance-normalization/1"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 4057,
+        "endLine": 4065
+      }
+    ],
+    "reason": "Exact named subsection scope, excluding adjacent independent insertions and excluding the heading itself as a duplicate atomic command. The same-line/table clauses remain operative.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-5c5cd9c059691b65254de32c14cd90f5",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-1187-1187",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1187,
+      "endLine": 1187,
+      "startByte": 88258,
+      "endByte": 88342,
+      "lineSha256": "e5f9d7c3fdcdda07a428980dc8717b877abd3b2426cd93fdafe949f8d4074dd2",
+      "controllingText": "F. R02: exact operation minima and narrow reconciliation of existing deferred routes"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 1189,
+        "endLine": 1201
+      }
+    ],
+    "reason": "Exact named subsection scope, excluding adjacent independent insertions and excluding the heading itself as a duplicate atomic command. The same-line/table clauses remain operative.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-ba3a3d139af2fadd960e04b8b1bf87c0",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-1189-1189",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1189,
+      "endLine": 1189,
+      "startByte": 88344,
+      "endByte": 88480,
+      "lineSha256": "d338439cca19562d7103c89f8e051c760a3634934bf8113a6e928d2d313f1a32",
+      "controllingText": "F1. Insert after the Stage30 line of the §14.6 closed stage-operation list, before “No other stage-operation combination is valid.”"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 1191,
+        "endLine": 1201
+      }
+    ],
+    "reason": "Exact named subsection scope, excluding adjacent independent insertions and excluding the heading itself as a duplicate atomic command. The same-line/table clauses remain operative.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-075f0c8ec312475e877b7f1026374e77",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2524-2524",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2524,
+      "endLine": 2524,
+      "startByte": 181854,
+      "endByte": 181922,
+      "lineSha256": "a6cae9235e4c168ad08812c24ac838790db777ec0a6a8c0c6dbb49c6ddf41b9e",
+      "controllingText": "F2. Insert after §26.6: closed-loop-external-input-binding-minima/1"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Exact named subsection scope, excluding adjacent independent insertions and excluding the heading itself as a duplicate atomic command. The same-line/table clauses remain operative.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-b447941efccdf5b7347f921d0cb76e3c",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2526-2526",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2526,
+      "endLine": 2526,
+      "startByte": 181924,
+      "endByte": 182044,
+      "lineSha256": "bb92610c822c5bf7a2fdf6b920338378e9e02d27a15cfc5dbdae81511eb5e3e3",
+      "controllingText": "MINIMUM_INPUT_BINDING_BASIS is EXTERNALLY_SUPPORTED for the external route of each pair in the following closed mapping:"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2527,
+        "endLine": 2543
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Exact named subsection scope, excluding adjacent independent insertions and excluding the heading itself as a duplicate atomic command. The same-line/table clauses remain operative.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-332cb7e24d8ed221d73053108f7a7b6c",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2527-2527",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2527,
+      "endLine": 2527,
+      "startByte": 182045,
+      "endByte": 182095,
+      "lineSha256": "33216763c7a924949cb26cb58682662c421db08337b1ba2f27af44ecd8e59018",
+      "controllingText": "01 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_INTAKE;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2527,
+        "endLine": 2527
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-fc7d8f9e80ecba1c6b0eee0fb59c3fec",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2528-2528",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2528,
+      "endLine": 2528,
+      "startByte": 182096,
+      "endByte": 182157,
+      "lineSha256": "d665c70a6e4d27a9481942afa37cd662241da65b92a62453a0b9686b0d2ae25b",
+      "controllingText": "02 COMPLETE, SEARCH_ADEQUACY_REVIEW, RECONCILE_SOURCE_SEARCH;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2528,
+        "endLine": 2528
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-a3ec352f4d36f9f1d14d1d64967e4c31",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2529-2529",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2529,
+      "endLine": 2529,
+      "startByte": 182158,
+      "endByte": 182210,
+      "lineSha256": "713ea9826748a6c26a147e15167763e86f8ba0f08ea3c33aa9ae211a72d3582e",
+      "controllingText": "03 COMPLETE, SEMANTIC_CHALLENGE, RECONCILE_RESEARCH;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2529,
+        "endLine": 2529
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-82431193d7b36120465c3e99735d14a7",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2530-2530",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2530,
+      "endLine": 2530,
+      "startByte": 182211,
+      "endByte": 182291,
+      "lineSha256": "9bb82fffc3d230b4a130e588fcecef0bfae6871e3560db3dfc740a3f88b8982d",
+      "controllingText": "04 COMPLETE, DISPOSITION_CHALLENGE, ATOMICITY_CHALLENGE, RECONCILE_REQUIREMENTS;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2530,
+        "endLine": 2530
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-1176338026644a995a3edc2b22fa984c",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2531-2531",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2531,
+      "endLine": 2531,
+      "startByte": 182292,
+      "endByte": 182348,
+      "lineSha256": "a1ac65c62b30d54541c999bde46ac34ab82c7a7a1d9e8e3e7726fec653d0fcce",
+      "controllingText": "05 COMPLETE, SEMANTIC_REVIEW, RECONCILE_REQUIREMENT_SET;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2531,
+        "endLine": 2531
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-e699a1e078b09ad785feb36962b44170",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2532-2532",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2532,
+      "endLine": 2532,
+      "startByte": 182349,
+      "endByte": 182405,
+      "lineSha256": "9137066cfdca735086086d428d601880c0e66766b18ad18b6e3424ee8087e1cc",
+      "controllingText": "06 COMPLETE, PROOF_REVIEW, RECONCILE_VERIFICATION_SUITE;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2532,
+        "endLine": 2532
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-d4cf62a22d47b045fbb624fc383317d2",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2533-2533",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2533,
+      "endLine": 2533,
+      "startByte": 182406,
+      "endByte": 182463,
+      "lineSha256": "0e9c80e38deb12739a852db48049f70c7e553e4d34c96de6b82938d066c8fb0d",
+      "controllingText": "07 COMPLETE, EXECUTE_FAILURE_TEST when externally routed;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2533,
+        "endLine": 2533
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-e14b574adcd618d7fa22a2df129ac3d3",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2534-2534",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2534,
+      "endLine": 2534,
+      "startByte": 182464,
+      "endByte": 182543,
+      "lineSha256": "2c5f3dd313e840dfffbae6650e2b816f1c9243392600162aa125def486e24c3f",
+      "controllingText": "08 COMPLETE; 09 COMPLETE; 11 EXECUTE_RUN; 12 VERIFY; 13 COMPARE; 14 ROOT_CAUSE;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2534,
+        "endLine": 2534
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-10b87212f4ccbb961a141b19203f5f78",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2535-2535",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2535,
+      "endLine": 2535,
+      "startByte": 182544,
+      "endByte": 182599,
+      "lineSha256": "e464d30566cb0899659c5a38a4913f8e5141a4e12c91b679b6c1cc3c932b852e",
+      "controllingText": "15 COMPLETE, EXECUTE_REGRESSION when externally routed;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2535,
+        "endLine": 2535
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-c5ccfcb60c9913661ee03f007b9cc569",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2536-2536",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2536,
+      "endLine": 2536,
+      "startByte": 182600,
+      "endByte": 182611,
+      "lineSha256": "1111a14710d579c6114acc05c5b99beca57001ff46396b2e274fc446a754afbc",
+      "controllingText": "16 CORRECT;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2536,
+        "endLine": 2536
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-08c2b7a87bc6d008eb32e8c9979d5836",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2537-2537",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2537,
+      "endLine": 2537,
+      "startByte": 182612,
+      "endByte": 182677,
+      "lineSha256": "7991bb3d1f0547df58eef045499574d0d0d6316904996d8d3729ca504418231f",
+      "controllingText": "17 EXECUTE_RUN, VERIFY, COMPARE, ROOT_CAUSE, REGRESSION, CORRECT;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2537,
+        "endLine": 2537
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-f8382c293c3c27eeff7107e76e2a1670",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2538-2538",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2538,
+      "endLine": 2538,
+      "startByte": 182678,
+      "endByte": 182728,
+      "lineSha256": "275df22f2cdf2b141ff77ac2172660b8c0986f0f1e4c2563efcf94094a007df3",
+      "controllingText": "19 EXECUTE_RUN, VERIFY, COMPARE (always external);"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2538,
+        "endLine": 2538
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-67a0020896782486b9571a7861996f4d",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2539-2539",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2539,
+      "endLine": 2539,
+      "startByte": 182729,
+      "endByte": 182778,
+      "lineSha256": "8bb14a20480559943aec78d3ed0e670354665dc88b0adcca2c1243c6219db678",
+      "controllingText": "19 REGRESSION_VERIFY only when externally routed;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2539,
+        "endLine": 2539
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-229f967e8972fdf01d9aa401e0fa4309",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2540-2540",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2540,
+      "endLine": 2540,
+      "startByte": 182779,
+      "endByte": 182856,
+      "lineSha256": "77817ca489340aa960230e6b777641351d79dd70de8671a596be1374dabcbcc6",
+      "controllingText": "21 COMPLETE; 22 EXECUTE_EXTERNAL_TEST; 23 COMPLETE; 24 COMPLETE; 25 COMPLETE;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2540,
+        "endLine": 2540
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-3de0f5045fc02757ff9ba8294fa8a3fd",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2541-2541",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2541,
+      "endLine": 2541,
+      "startByte": 182857,
+      "endByte": 182897,
+      "lineSha256": "3d25762ab31ac1b58e3a49cc80bad693c94355db69be665910c76054513de05c",
+      "controllingText": "26 COMPLETE, SEMANTIC_REVIEW, RECONCILE;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2541,
+        "endLine": 2541
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-5779d86bfa4a5c2c5218e765fc18cb9e",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2542-2542",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2542,
+      "endLine": 2542,
+      "startByte": 182898,
+      "endByte": 182950,
+      "lineSha256": "0e24da4d50b947692d0bdee61fd15ef5124d362c96d502b69e97a1c890de2137",
+      "controllingText": "27 ADVISORY_REVIEW; 29 INVESTIGATE_MISSING_EVIDENCE;"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2542,
+        "endLine": 2542
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-fdb1dbf0dae0d110e48c3be73483eee9",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-2543-2543",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2543,
+      "endLine": 2543,
+      "startByte": 182951,
+      "endByte": 183042,
+      "lineSha256": "4351b37e5f83f62243aedd93678e9fbbe35213f72b9d7c6657ce1ffbe05fc8c8",
+      "controllingText": "and, only when externally routed, every one of the 38 exact conditional pairs listed in F1."
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2526,
+        "endLine": 2526
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2543,
+        "endLine": 2543
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2545,
+        "endLine": 2545
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2549,
+        "endLine": 2549
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "startLine": 2551,
+        "endLine": 2551
+      }
+    ],
+    "reason": "Operative closed route mapping header/row supplies exact stage-operation scope and applicable external minimum; all pair duties are expanded independently.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-d3a23126a4e313c11edfb5ac1a46b374",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-EXACT_APPROVED_V4-1-11",
+    "classification": "HISTORICAL_NONNORMATIVE_CONTEXT",
+    "sourceLocation": {
+      "role": "EXACT_APPROVED_V4",
+      "sourceSha256": "aa966b7ac8f38f66b046ce796ab55de5c69dc3f8485f6bba499e32442e29476f",
+      "startLine": 1,
+      "endLine": 11,
+      "startByte": 0,
+      "endByte": 1536,
+      "lineSha256": [
+        "aaf06d4cd2829ff2383f86696527a6289be5a38ccf3f916214c834953a02d9f8",
+        "c0a3724ce515deb1ba0834c5527e4569b428bad1a20e4f86432e6f9363d233aa",
+        "b756d29510fc64afa0183366ab744f84f9ba4fbe5156dddcace8842acef7c2e4",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "a8ad352c881d4c11e08ee81b2aeb28f77115929e3a9383d57c7fc09d2adddc54",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "dffa4968e5f691350e87033e5b43e130521e57fbc75b0d900e8fa4708787523a",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "29b2ee22b1ce4447b43db73dc7ba6ee6f4bc2ac87285b187bb1d6075343c6002",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "a2b470fbaa52733ac23a8204d48d6a987903a0cc056d97e2fd9a25c848be073a"
+      ],
+      "controllingText": "FIVE SOURCE DECISIONS — EXACT PROPOSED CLAUSES, REVISION 4\nStatus: PROPOSED ONLY. Not approved, applied, implemented or accepted.\nPrepared: 2026-10-15 UTC. Repository: sjonesjones917/closed-loop-tracker.\n\nThis revision is the exact technical companion to owner-decisions-v4.txt. The five decisions are R01 (C/C1), R02 (F1/F2), R05 (D), R06 (A/B), and R07 (E). The letter labels are stable clause cross-references, not a request to approve the obsolete v2 bundle or any existing code.\n\nA–E below, excluding the newly inserted C1 addendum, are copied byte-for-byte from v2's proposed normative insertions, SHA-256 2316404a6382c431f43603cc6b5998f45439c61ea4d41664c04856be782c4755. Their result-bearing choices remain unapproved; existing source-mandated duties repeated for context are not new owner decisions. F retains the exact revision-3 correction to cover the complete 88 external routes and explicitly reconcile the 38 historically adopted conditional pairs. C1 adds the exact named ZIP/ZIP64 raw-unit mapping and bounded recursive intake profile, with counting semantics requiring owner approval. Only the exact text below is proposed; no pinned implementation or unspecified format adapter is incorporated by reference.\n\nCurrent controlling Part B is 309482 bytes, SHA-256 8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883. Independent decision review 4be85b90a774ffdf21aa002b3375d54b4d2bfa3d7c79a425fdc7751ec7665984 remains fixed and is not approval of this revision.\n\nBEGIN EXACT PROPOSED NORMATIVE INSERTIONS"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [],
+    "reason": "Original proposal framing and post-insertion review/history references are historical context. The subsequent exact approval establishes source-choice adoption; it grants no current implementation or proof acceptance.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-92b34f08c946a89834a1dc82df366482",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-EXACT_APPROVED_V4-206-216",
+    "classification": "HISTORICAL_NONNORMATIVE_CONTEXT",
+    "sourceLocation": {
+      "role": "EXACT_APPROVED_V4",
+      "sourceSha256": "aa966b7ac8f38f66b046ce796ab55de5c69dc3f8485f6bba499e32442e29476f",
+      "startLine": 206,
+      "endLine": 216,
+      "startByte": 61957,
+      "endByte": 65480,
+      "lineSha256": [
+        "e3ef68b5f259c1d2c8b4f53f9203bb096ffc9683c816226fef5f8da76ed96fd5",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "e4aaca6696a0d705275f3237d8ac20ff078dbad122b0eec2625b87fb3cfc1cab",
+        "38c7e76132eedaf26b6a1375a6a1849f0a69d55fe319bc18cdcdb5f64a5580e2",
+        "61ca683a1c43a5c76856921b3a1392e0debe1dce7cd5ebb9f0b58c3a4520e4a1",
+        "c274ec9ec6ca04ac482d308de5ae55355e66770178e4af44598a6fdcd02e3b6d",
+        "ae530166aed5543b8c5455c8d79d9b04e3275a1d9365317568450f4149c3d692",
+        "28fcfdd49b1f13eafea62867914b1b6967325fd5fa86fbf0bb53deddb08f1ab5",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "96f1c2d3932539da0144e1d2ed7a95e94ebca75d1e218643b5c85d0b043ea5c3",
+        "df7281918ec2ab58176d06750c1a28934669accbcd58678882210f962d2a8505"
+      ],
+      "controllingText": "END EXACT PROPOSED NORMATIVE INSERTIONS\n\nSOURCE AND HISTORY CROSS-REFERENCES (REVIEW CONTEXT, NOT EXTRA ADOPTED TEXT)\nR01/C/C1: Part B §§6.5A, 19.9 (archive intake safety), 21.12, 34.1–34.3. Existing challenge thresholds and preservation duties are unchanged. C1 fixes only the mechanically available ZIP/ZIP64 mapping identified in the bounded capability inventory; it does not authorize arbitrary structured-format mappings or claim their proof. project-store.js:2916–2956 supplies the bounded ZIP structural/DEFLATE/integrity mechanics; workflow-schema.js:2338,2345–2352 supplies the pinned transport ceilings. Transport role checks, nonauthoritative order/comments and nonrecursive payload policy are not adopted as intake accounting. C1 instead makes order, comments, recursive traversal, additive byte accounting and its intake profile explicit proposed choices. workflow-engine.js:1822–1897 and app-core.js:1337 show the current human/UTF-8-only intake path; wiring the reviewed mapping and repairing MIME/BOM/lossy-decode undercounting remain engineering work. All these referenced runtime bytes match frozen f92 and successor 2933.\nR02/F: Part B §§14.5–14.7, 23–23.1, 26.6, 29.13–29.14, 32.4–32.5. The original §32.4A at historical commit 2891d856 explicitly introduced later conditional execution. verification/approved-deferred-compatibility-20261005.json records “Approve” for the exact narrow compatibility proposal; that proposal's SHA-256 is 06c888569c9eaca414bde1926940cf596838fc2dd12c4ff7d4295e05d27ea22f. It explicitly preserves owning writers and later receipt-only operations. The exact replacement adoption on October14 omits old §§16.1A/32.4A without authorizing runtime deletion. F1 resolves only the 38-pair current closed-set omission with explicit preserved limits; it does not relabel historical proof as current.\nR05/D: Part B §§21.3–21.17 and 34.1–34.3. All 27 required primitives already have implementation witness coverage; that does not decide the remaining observable rules or prove them over their whole domains. This revision approves no runtime descriptor wholesale.\nR06/A/B: Part B §§14.5, 16.1, 18, 21.17 and 29.12–29.14. The existing eight human controls, authority, proof language and timing remain. Only the missing closed value/default/reference choices are proposed. Reference creation is handled by the application, not the owner.\nR07/E: Part B §§26.5, 29.15, 31, 38.1 and Stages06/13/18/19. Rationale remains optional. No new comparison threshold or human semantic-review gate is introduced.\n\nIMPLEMENTATION BOUNDARY\nApproval would authorize adopting these exact choices and the implementation/verification needed to enforce them. It would not approve the superseded supplement, current implementation, historic evidence, any format mapping other than exact C1, CI success, merging, deployment or release readiness. Existing tests and negative controls remain required. Changed meanings require exact registry/language/producer identities and affected-proof invalidation or demonstrated lossless migration; unchanged compliant mechanisms are preserved. Current findings stay open until genuine adoption, implementation, independent review and the applicable verification establish their resolution. The three missing native dispatch/receipt paths are source-required technical work, not additional owner-designed policy and not a flag-only repair. No code, source, fixture or acceptance record has been changed by preparing this proposal."
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [],
+    "reason": "Original proposal framing and post-insertion review/history references are historical context. The subsequent exact approval establishes source-choice adoption; it grants no current implementation or proof acceptance.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-e024e86278b078acd5bbcd7ee4e929b1",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-APPROVAL_PROVENANCE-3-21",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "APPROVAL_PROVENANCE",
+      "sourceSha256": "87652453a6e2875bac77abbabfaed9e81b59c55ddeb66dcaf7a822634aad8fb2",
+      "startLine": 3,
+      "endLine": 21,
+      "startByte": 65,
+      "endByte": 1712,
+      "lineSha256": [
+        "ed12c5d026b8bfff27280a2b1a3f54d0d6e2532bb7d92a60224160632515a3ac",
+        "1792f83100fd6884f9fbb471c1ec199a372cb21fcff7665c72fac055c021483b",
+        "b93c99d311ffeb9f4e67c07aa6d97e9f9c36124adf49d68c56b68fb3d3b4d452",
+        "3e3ae098703f20a3c7f403b099a364a4462e9ad829b356636ba541bb008a6fe7",
+        "bc63dde8496879f831ff8af8c21eed7ac29882e820bf46ee7176c4064056c1b9",
+        "c89010938133e41ee6017fd91ebbe12ab07e7de4437f102587a920d8187ffeb0",
+        "c2c2dee9f502af0cc8548f9cd263a70a977637c89d9f3e78dc0648190759a887",
+        "0753dedf3ec5a7a9a6dedbba8f4e1e965f263afe87a34db8dd19caf296ed0b74",
+        "ff8cb698396e13fea03e53ae5bdf57e750c987bb5eb678007a699e064cc1f856",
+        "04fc902cae135bec82e4080bb93c84fc751238e4814fccabfa0f627bde12962e",
+        "3288a136ca3e7c8564fedd3322a308b2d045f273db5055e2e2aea1f82d16218e",
+        "4222b6f1ba40080511921f78364a02ae07978c14de3ba3faa183071287ea198f",
+        "9ea49f5d643eecaabc22b987bd68b10c92befab7c8c7755f726a82386ca126dd",
+        "bbead3124d9a78795621e5d4f67fec4efc2f329c59b7b1ba4124e3cb08b8aaed",
+        "de7eab45d5671dea79733f126c6cc3e7661b154ae122685f167ef6fefa7577c1",
+        "3288a136ca3e7c8564fedd3322a308b2d045f273db5055e2e2aea1f82d16218e",
+        "57f7431f1bbf87ad2b12577e493f1f33db2e7f1d5414a7dc64100f3baf101a56",
+        "15b3cadfc387fe5cb1d3c8acb337aad2caa2b8b5d3bb529026cc2ccfcf3c38b2",
+        "1ee205de4b1138a2a978eabef02f443fc69f6187c33eb75d8dfc32ea82ad81c5"
+      ],
+      "controllingText": "  \"approval\": {\n    \"requestMessageId\": \"Sentinel_0b56149405008191bfa011f4ac8c50c7\",\n    \"approvalMessageId\": \"Sentinel_758903605ba881919f8f43d503096713\",\n    \"approvalMessageExact\": \"👍🏻yes\",\n    \"requestMessageExact\": \"CI is now blocked by five unresolved behavior rules. The attached revision 4 gives concrete recommendations for input counting, evidence requirements, native-test semantics, clarification/target references, and variance handling.\\n\\nImportant proposed limits: ZIP processing stops at 27 members or 67 MiB expanded data and reports incomplete coverage; numeric JSON spellings such as 1.0 and 1e0 return UNDETERMINED. These are choices requiring your approval.\\n\\nDo you approve revision 4 for implementation and verification, or want exceptions? Approval won’t accept unfinished code or waive CI. Independent repairs continue while you decide.\",\n    \"attachmentLibraryIds\": [\n      \"libfile_ddd633041f248191a56963ec22371282\",\n      \"libfile_a8f9abf04aa48191a468535516a66e96\"\n    ],\n    \"scope\": \"Exact revision 4 for implementation and verification; no implementation, CI, release, merge or deployment acceptance inferred\"\n  },\n  \"approvedProposal\": {\n    \"path\": \"verification/approved-owner-decisions-v4-20261015.txt\",\n    \"byteLength\": 65481,\n    \"sha256\": \"aa966b7ac8f38f66b046ce796ab55de5c69dc3f8485f6bba499e32442e29476f\"\n  },\n  \"baseSourceSha256\": \"8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883\",\n  \"currentCandidateSourceSha256\": \"3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9\",\n  \"qualification\": \"Source-choice approval only; no implementation or current proof acceptance.\""
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [],
+    "reason": "Supplied exact approval provenance identifies later owner approval of revision4 for implementation/verification only. It binds source choices and explicitly excludes implementation/CI/release/merge/deployment acceptance.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-e04117564fcb155475e0a4a1df9303cb",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-SUCCESSOR_SOURCE-1201-1201-FRAGMENT-3f3522e7ec4d",
+    "classification": "HISTORICAL_NONNORMATIVE_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1201,
+      "endLine": 1201,
+      "startByte": 90966,
+      "endByte": 91452,
+      "lineSha256": "1d3b0a4e9994a7476aec22051a93997fdde7e855c5dc498f5cee8eeceed45e95",
+      "controllingText": "This is the explicit current-source inclusion of exactly the 38 previously adopted conditional pairs. It preserves their bounded authority; it does not adopt every omitted historical clause, widen their writer permissions, migrate old evidence into current proof, or certify that any implementation or execution conforms. Historical approval identifies the preserved lineage only. Each current result must independently satisfy the current governing source and exact current identities."
+    },
+    "selectedText": "Historical approval identifies the preserved lineage only.",
+    "governingOccurrenceSets": [],
+    "reason": "Only the quoted historical fragment is nonnormative; adjacent operative limitations on the same physical line remain normative.",
+    "proofInheritance": false,
+    "sourceRole": "AMENDMENT_OR_AUTHORITY_CONTEXT",
+    "sourceContextIdentity": "CTX-2966f93b6a9dacbbe076c637d2a7e047",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-BASE_SOURCE-367-382",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 367,
+      "endLine": 382,
+      "startByte": 21808,
+      "endByte": 22277,
+      "lineSha256": [
+        "ebe9ccdb3468d908a3c89d52d9acf6cd3e952447eea89e86bbfdbaa41fa1e44f",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "5f32c4a874a5f9099d6a6500301a858e622950f01f214d6a8080ecaf9408f76d",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "6bbb086eb4582308952b2fec614df278f103faca16f240e4f45611a29d84e507",
+        "928645f029c8ccc4bfeb166787ead3452d261522526432824e6b8b03abc9a189",
+        "c48b268a5d50e1cee960ade29e7156f729f3bebd362de0f597b7e086eb2489aa",
+        "2acee70eff17ae6e9c32280772ace89165292f88810a0f715a95935514625f0c",
+        "d2fd077ab515b2c8f6aa12e51294a43fce678c9eedfc98a1c359712bf70a5c83",
+        "229aa7065551960721ec45da7860a2c13716b57bdc33669dfc538cdd4ad6c5bf",
+        "1405d3730da9ca5d32ed609a685c3b7d704e5fa082ee262a661c4228fb1f8bee",
+        "634230101caa54501950edca327244c8ff63559f387b02fee6759b72a2070ef5",
+        "d4368f7b0d0595c667e263c29c341fe50092a163f658967f07095497a1c564de",
+        "992a4ac6051bf49bf1dee4161649aca9371c51432cfaca325ff76c34ea16e700",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "e13eb308abdd8ba2d7325e9f6eec8037e9b3e2f962091f1bd12598e39c2654e3"
+      ],
+      "controllingText": "6.5 Stage 01 coverage accounting\n\nThe Stage 01 accounting model MUST have two distinct layers.\n\nRaw-input accounting\nThe application owns:\n- raw text-field identities;\n- message or entry identities;\n- artifact identities;\n- file hashes;\n- byte ranges, pages, paragraphs, sections, or deterministic chunks where available;\n- raw-input version;\n- raw-input completeness;\n- whether every raw unit was included in the Stage 01 context or exact handoff.\n\nSemantic extraction"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "baseStartLine": 367,
+        "baseEndLine": 382,
+        "successorStartLine": 367,
+        "successorEndLine": 382,
+        "lineCount": 16,
+        "sha256": "7940ba3d03ef38ba01c58c110a83f636c6a146dfe9b37cfb66224da1685475d6"
+      }
+    ],
+    "reason": "This exact retained source passage supplies context for the amendment. Its original occurrence set is transported without inserted clauses. This reference does not decide every predecessor entry in the passage unaffected.",
+    "proofInheritance": false,
+    "sourceRole": "RETAINED_SOURCE_REFERENCE",
+    "sourceContextIdentity": "CTX-23e1c5c8f5b4cd37dbcfc0b0f72e2c9a",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-BASE_SOURCE-416-420",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 416,
+      "endLine": 420,
+      "startByte": 24672,
+      "endByte": 25994,
+      "lineSha256": [
+        "8a39d2896101b756e60ac444032073b65d7be3ea44d0b312860d355021ffa6fd",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "18ec86350d93447631f1dbdff5b85f81d25c32ba3491f4aa538a4cdd789f0ece",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "1d285a82d049e9b64ec44e8a8781576d6fe4b9429ab6390633f7160765368f20"
+      ],
+      "controllingText": "6.5A Raw-unitization contract\n\nRaw-input accounting MUST use one versioned RAW_UNITIZATION_VERSION — current value closed-loop-raw-units/1 — with deterministic media-specific unit rules. Text-message boundaries, structured text units, document pages and sections where mechanically available, archive members, embedded documents, native images and media, unsupported-format whole-file fallbacks, and source locations receive stable application-owned unit identities.\n\nThe unitization contract explicitly defines treatment of comments, annotations, tracked changes, metadata, embedded objects, inaccessible content, and unsupported formats. A supported subdivision cannot be replaced by one whole-file unit merely to make coverage vacuous. SEMANTIC_CHALLENGE_LIMITS/1 triggers a challenge when any one of these thresholds is exceeded: 1,048,576 stored bytes in one text or document artifact; 100 mechanically countable pages; 20 supplied files or archive members; 500 raw units; or 5,242,880 aggregate supplied bytes. A material uncovered unit, broad exclusion, INACCESSIBLE_OR_BLOCKED material, material uncertainty, contradiction, or operator request triggers regardless of size. These limits are centralized, versioned, and acceptance-tested and may be lowered but not raised without a new contract-profile identity."
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "baseStartLine": 416,
+        "baseEndLine": 420,
+        "successorStartLine": 416,
+        "successorEndLine": 420,
+        "lineCount": 5,
+        "sha256": "ac8cae0f0095518841f968e8ac229bd21b4690ec552be5424945520bdeca1ee9"
+      }
+    ],
+    "reason": "This exact retained source passage supplies context for the amendment. Its original occurrence set is transported without inserted clauses. This reference does not decide every predecessor entry in the passage unaffected.",
+    "proofInheritance": false,
+    "sourceRole": "RETAINED_SOURCE_REFERENCE",
+    "sourceContextIdentity": "CTX-a350e9d4672c903aea8a3e429eecce09",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-BASE_SOURCE-1078-1080",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1078,
+      "endLine": 1080,
+      "startByte": 59295,
+      "endByte": 59366,
+      "lineSha256": [
+        "9508b748861e2f10a2fcd0143d5f26375ff42a6328f5e8860d804e8b7ba6ccd9",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "ca6caddcf45cf93f33cec970468424fbafc7744bfef17eaefe9f49aa13017f0e"
+      ],
+      "controllingText": "14.6 Closed stage-operation registry\n\nThe exact stage-operation set is:"
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "baseStartLine": 1078,
+        "baseEndLine": 1080,
+        "successorStartLine": 1152,
+        "successorEndLine": 1154,
+        "lineCount": 3,
+        "sha256": "5e0ec20871b91c422eba7bdca817c01f9ac207242d1fda864390906032b7d7ed"
+      }
+    ],
+    "reason": "This exact retained source passage supplies context for the amendment. Its original occurrence set is transported without inserted clauses. This reference does not decide every predecessor entry in the passage unaffected.",
+    "proofInheritance": false,
+    "sourceRole": "RETAINED_SOURCE_REFERENCE",
+    "sourceContextIdentity": "CTX-eaf891fcb65776660640bba399777408",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-BASE_SOURCE-1521-1545",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1521,
+      "endLine": 1545,
+      "startByte": 91303,
+      "endByte": 92115,
+      "lineSha256": [
+        "2341b6fd2828587924c99fa2b7baf36707e17d587664d536421e2ddb5027d2cd",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "68addbc6beb013a2dd5618d8ddba26d7ed0ed7fa7a094371046a95a1bb6ddf42",
+        "1d4e7758bd58a5f0b05f0584bcc9554c39e5e5c2b31dc6e1a8f12b5755959cc9",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "6bd5ba2590e66858a76a968c8d4fa56e3d5aa8d7d38fa8ca2b783879b511998b",
+        "184a55f49fab8916df8827c76b8e5568f3265c9875aaab578c8668293953df96",
+        "8cff36033264d8e5f66ecee0582875fa7fb5298bec5ceca25985e091001f5cf7",
+        "d4503009c983c815815b6eb8e4cf94bf552388509c92863774d3337b2ad1718f",
+        "ea2bc18960dde354f7e892ea6c512a515b36ad14210dfff0aaf12270d39277ac",
+        "d961cce6712c5a60092cfbe277964717df3c000051ec6899d25d2294c0d7bf03",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "aebdf7c7c0a55e61d65488d34db451cf14af871822bdba955c8057a5f8bf85f4",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "4eb5450d0e396cedd1e8d8aafe68905fa3fdef9b9506a69277099d3cb9401e54",
+        "6412b87e0db357cda175c62be11e408226736b0a99933c238aa53d091514d937",
+        "359cb15a5d06cb779f21be3b9944c5b96879849a3e2cd80885c69281ef2ccdcf",
+        "d3ee6e83c3802cc8b9a2e7e96ebfd07b46ba73a1a54656323310ab5b2fa1423f",
+        "4f6a5dd018047b207d4eb31dabf67b161804f4852f1f1c22435b43e500f42296",
+        "785ac210577bdf81d3a2a1e7cc278714e443210e61beb33f62c6d0e6a8759951",
+        "1a22213a782b15e441371cc18768c9d461c640218dc9942ef2844ebd3f2bfba4",
+        "cc1f0517c2f6e5f6296121c956638e866a504d1996e31986ceb42a4a69a0e0dd",
+        "aa003030c99eb1ed7efdc16af4ed2a3ab48b34f6ecf6855ce5ac10ebc1f5aa2c",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "ffb9008a893ee02afb99a65ca72780661a74827341e5735da71afbf9f6715d8b"
+      ],
+      "controllingText": "18. Human clarification\n\nThe human interacts conversationally.\nThe human MUST NOT be required to construct final-machine JSON during clarification.\n\nFor every stage:\n- the agent may ask genuinely human-only questions conversationally;\n- the agent must not ask for available facts again;\n- the agent must not ask for facts reliably obtainable from authorized materials or research;\n- later-discovered human-only decisions are asked at the stage where they become necessary;\n- one strict final JSON response file is returned only when the stage is ready.\n\nhumanInputRequests is the final structured fallback, not the normal conversation format.\n\nSupported fallback controls are:\n- TEXT\n- LONG_TEXT\n- BOOLEAN\n- NUMBER\n- CHOICE\n- MULTI_CHOICE\n- DATE\n- FILE_REFERENCE\n\nUnknown keys in humanInputRequests are rejected."
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "baseStartLine": 1521,
+        "baseEndLine": 1545,
+        "successorStartLine": 1611,
+        "successorEndLine": 1635,
+        "lineCount": 25,
+        "sha256": "cc305ecafe39d1ba1c12247b70dc59539c66bc6d61bac866a9c63af67a1e9909"
+      }
+    ],
+    "reason": "This exact retained source passage supplies context for the amendment. Its original occurrence set is transported without inserted clauses. This reference does not decide every predecessor entry in the passage unaffected.",
+    "proofInheritance": false,
+    "sourceRole": "RETAINED_SOURCE_REFERENCE",
+    "sourceContextIdentity": "CTX-233ecc5300f044a7419937a94c2abbfc",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-BASE_SOURCE-1676-1683",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 1676,
+      "endLine": 1683,
+      "startByte": 101013,
+      "endByte": 101338,
+      "lineSha256": [
+        "d1e214000fbffb04f3737a8b3171f249b193330d90dc3128418d2a86e342e3e3",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "2767b97bfa745bf8b93b7f0999de61546092b73e308b350ce0d37e46fae1b84e",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "5faf064528cd6dec8e0a8600e58ad2936bb32c1b407d905547067cbf222c6204",
+        "193d28cce60a0fa455ea5e690a724fae2d2d69680f969e2d0896c6e864570325",
+        "92a3046c8cd0cdaa13502c6f7afe8eb64d752872c990dc0313ed22df95deb3a1",
+        "6a63980670a7a0ba638bca78e79400ce14aeb55d78d0e717782abc6e07b6cc2e"
+      ],
+      "controllingText": "21. Closed Loop Test IR\n\n21.1 Purpose\n\nAn AI verification architect designs the test.\nThe application owns the test language, validates the test, and executes every faithfully expressible mechanical test.\nThe AI acts as a compiler targeting an application-owned declarative language.\nThe AI does not invent runtime semantics."
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "baseStartLine": 1676,
+        "baseEndLine": 1683,
+        "successorStartLine": 1781,
+        "successorEndLine": 1788,
+        "lineCount": 8,
+        "sha256": "25a3590d79e6cadb18381b1b2fe07c687b1840f05db75975106b174be9089977"
+      }
+    ],
+    "reason": "This exact retained source passage supplies context for the amendment. Its original occurrence set is transported without inserted clauses. This reference does not decide every predecessor entry in the passage unaffected.",
+    "proofInheritance": false,
+    "sourceRole": "RETAINED_SOURCE_REFERENCE",
+    "sourceContextIdentity": "CTX-b5e10879b2196c534baf1408cdc65d48",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-BASE_SOURCE-2366-2370",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 2366,
+      "endLine": 2370,
+      "startByte": 128122,
+      "endByte": 129096,
+      "lineSha256": [
+        "ce4d37aff119ce693d6e37173edd0986310babc42dc43a91a5f86905ace2130c",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "16de094f91ab4806e187aa9137a90446fd3466137b07f4c9f1e5440073582508",
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "80ea0650234a1d7cb4eef3d76e5dc6d7db8096cc255192f19f63c2fed7f0e84f"
+      ],
+      "controllingText": "26.6 Dimensioned independence\n\nIndependence is recorded separately for APPLICATION_SESSION_DISTINCTNESS, APPLICATION_INPUT_ISOLATION, USER_TRANSFER_CONFORMITY, EXTERNAL_CONTEXT_IDENTIFIER_DISTINCTNESS, PROVIDER_CONTEXT_INDEPENDENCE, EXECUTOR_OR_REVIEWER_ROLE_SEPARATION, and ENVIRONMENT_INDEPENDENCE where required. APPLICATION_ESTABLISHED means only that application-observable dimensions required by the contract are satisfied. Distinct IDs do not prove hidden provider-state independence. A required UNKNOWN dimension blocks or leaves the result undetermined.\n\nEvery external operation contract declares MINIMUM_INPUT_BINDING_BASIS from APPLICATION_OBSERVED, VERIFIED_EXTERNAL, EXTERNALLY_SUPPORTED, and SELF_ASSERTED. An echoed manifest identity and per-member digests establish at most EXTERNALLY_SUPPORTED. SELF_ASSERTED or UNKNOWN cannot satisfy an operation whose contract requires byte-exact input possession, and gates derive admissibility from the recorded basis."
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "baseStartLine": 2366,
+        "baseEndLine": 2370,
+        "successorStartLine": 2518,
+        "successorEndLine": 2522,
+        "lineCount": 5,
+        "sha256": "ef6a90722a667707a6e90ac988c795a7191edb898161d04652d1fa4f38a8f177"
+      }
+    ],
+    "reason": "This exact retained source passage supplies context for the amendment. Its original occurrence set is transported without inserted clauses. This reference does not decide every predecessor entry in the passage unaffected.",
+    "proofInheritance": false,
+    "sourceRole": "RETAINED_SOURCE_REFERENCE",
+    "sourceContextIdentity": "CTX-6f48081635ceb2d905054f8ee66e4af5",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-BASE_SOURCE-3868-3872",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "BASE_SOURCE",
+      "sourceSha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "startLine": 3868,
+      "endLine": 3872,
+      "startByte": 218054,
+      "endByte": 218306,
+      "lineSha256": [
+        "b7b57454f0b04007bce4ea73ab62df9d52470e6fe0df65bb1dd1e2eddbfd89d7",
+        "d1257d63f5e6be9bff067209ec058830342e1f95641b1dce4adde170e45e148d",
+        "d9cc8ed19a0bb1ccddf15a030f695bb46948089e735d2f4794099b4b6c060ce0",
+        "654642ad4d58469f881f98c5a40f810d05c24a1f8b9659dcc9111aa13975b76a",
+        "87848a18bcf5561b16d02943c35e83d76fbb4cb6d7258e3dc70e804e51e2a632"
+      ],
+      "controllingText": "expectedVarianceContracts\n- ID: VARIANCE_CONTRACT_ID\n- Stage: 6\n- Policy: REPLACE_CURRENT_STAGE_SET\n- AGENT owns proposed semantic dimensions and rationale; APPLICATION owns identity, normalized contract, frozen timing, scope, hash, and evaluation use."
+    },
+    "selectedText": null,
+    "governingOccurrenceSets": [
+      {
+        "baseStartLine": 3868,
+        "baseEndLine": 3872,
+        "successorStartLine": 4049,
+        "successorEndLine": 4053,
+        "lineCount": 5,
+        "sha256": "194da74f6378266773b12d2c3036e427928c3aa0438e2627473c4b3a311f69b8"
+      }
+    ],
+    "reason": "This exact retained source passage supplies context for the amendment. Its original occurrence set is transported without inserted clauses. This reference does not decide every predecessor entry in the passage unaffected.",
+    "proofInheritance": false,
+    "sourceRole": "RETAINED_SOURCE_REFERENCE",
+    "sourceContextIdentity": "CTX-31440aafe96d5f3254010ca8aa174cd9",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-FRAGMENT-1195-1",
+    "classification": "HISTORICAL_NONNORMATIVE_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1195,
+      "endLine": 1195,
+      "startByte": 88812,
+      "endByte": 89452,
+      "lineSha256": "4261764a656b9d882e224ba5af8337f653a6b313052ccc7ca199700be42e1180",
+      "controllingText": "These are the existing later-than-owning-stage deferred failure-test and regression execution routes. A pair is available only for a current accepted definition and its current accepted, independently reviewed execution-test binding, with established definition/test/fixture/target/outcome compatibility, the declared earliest executable stage reached, and the required current target-availability and phase conditions TRUE. Unknown, stale or unavailable prerequisites block; a legitimately future definition remains visible and unexecuted. Timing, compatibility and authority cannot be supplied by this list or inferred from a route label."
+    },
+    "selectedText": "These are the existing later-than-owning-stage deferred failure-test and regression execution routes.",
+    "reason": "The first sentence identifies later-than-owning-stage lineage and scope, while operative prerequisites are separate clauses on the same line.",
+    "governingOccurrenceSets": [],
+    "proofInheritance": false,
+    "sourceContextIdentity": "CTX-fd795da3c4e4b9389ee2dcd452c7f57b",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-FRAGMENT-1201-4",
+    "classification": "HISTORICAL_NONNORMATIVE_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 1201,
+      "endLine": 1201,
+      "startByte": 90966,
+      "endByte": 91452,
+      "lineSha256": "1d3b0a4e9994a7476aec22051a93997fdde7e855c5dc498f5cee8eeceed45e95",
+      "controllingText": "This is the explicit current-source inclusion of exactly the 38 previously adopted conditional pairs. It preserves their bounded authority; it does not adopt every omitted historical clause, widen their writer permissions, migrate old evidence into current proof, or certify that any implementation or execution conforms. Historical approval identifies the preserved lineage only. Each current result must independently satisfy the current governing source and exact current identities."
+    },
+    "selectedText": "Historical approval identifies the preserved lineage only.",
+    "reason": "Historical approval establishes lineage only. This is a provenance limitation, not current execution proof.",
+    "governingOccurrenceSets": [],
+    "proofInheritance": false,
+    "sourceContextIdentity": "CTX-62d225e1903e0421402f471cf0a05cb7",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "canonicalId": "CONTEXT-FRAGMENT-2083-14",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "sourceLocation": {
+      "role": "SUCCESSOR_SOURCE",
+      "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "startLine": 2083,
+      "endLine": 2083,
+      "startByte": 161982,
+      "endByte": 163250,
+      "lineSha256": "e6964acdd1b58638b1309cf9f6b77872aa4587cb3070404b6bf0502b1c139871",
+      "controllingText": "Remaining result-bearing argument/output closure: BYTE_COMPARE is exact length-and-byte equality of two byte inputs, with no ordering/operator default. ASSERT_MATCH asserts the same Boolean regex result as REGEX using actual/pattern/optional flags; ordered assertions use the exact ordering above. Each assertion yields only SATISFIED or VIOLATED on valid data, with other terminal dispositions propagated as D5 states. The optional message on assertions is a non-null string, absent by default, used only as diagnostic text and never to alter a result. SORT/UNIQUE require arrays and return arrays; MIN/MAX/SUM require arrays as stated. HASH_SHA256 requires bytes; REGEX requires string value/pattern; selectors require a string path and the defined structured value. Unknown optional arguments and implicit operand/binding selection are prohibited. Authoring shortcuts remain permitted only when they compile to the identical explicit §21.3 DAG and named ports. No extra primitive, alternate successful result type or undeclared default is authorized by registry publication. These additions close the result-bearing choices identified in the bounded argument/port omission comparison; the full generated registry still receives the independent §§2.2/14.5 review."
+    },
+    "selectedText": "These additions close the result-bearing choices identified in the bounded argument/port omission comparison",
+    "reason": "Bounded comparison coverage statement is scope context; it does not itself discharge the separately extracted independent registry review.",
+    "governingOccurrenceSets": [],
+    "proofInheritance": false,
+    "sourceContextIdentity": "CTX-27b03bf97fc05003d27475bf9867da8f",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 422,
+        "endLine": 422,
+        "startByte": 25996,
+        "endByte": 26063,
+        "sha256": "fb3b4d9da0c294972c7a79e094f75e0115fae9df2d2532aa7f7f9587fcd77f9f",
+        "text": "C. Insert after §6.5A: normative algorithm closed-loop-raw-units/1"
+      }
+    ],
+    "statement": "closed-loop-raw-units/1",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "reason": "The heading fixes the named contract or exact subsection scope; it does not independently command creation of an extra field, record, or identifier.",
+    "governingScope": {
+      "startLine": 422,
+      "endLine": 446
+    },
+    "canonicalId": "COUNT-CTX-L422",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/0"
+    },
+    "sourceContextIdentity": "CTX-a5a275837a5de54c1184698dc0ca1204",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 448,
+        "endLine": 448,
+        "startByte": 34349,
+        "endByte": 34406,
+        "sha256": "503f0d8534bf3d5bbd3b3cce8b5e64e28d0638b498c1b3b422fe1115bbe3f41f",
+        "text": "C1. Named structured mapping: closed-loop-raw-units-zip/1"
+      }
+    ],
+    "statement": "closed-loop-raw-units-zip/1",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "reason": "The heading fixes the named contract or exact subsection scope; it does not independently command creation of an extra field, record, or identifier.",
+    "governingScope": {
+      "startLine": 448,
+      "endLine": 494
+    },
+    "canonicalId": "COUNT-CTX-L448",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/1"
+    },
+    "sourceContextIdentity": "CTX-602d45d5436d9b13d9485493e7b964ee",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 451,
+        "endLine": 451,
+        "startByte": 34651,
+        "endByte": 34673,
+        "sha256": "9c328d65139ea56542fdbc1b4f6292e3b0f55c8f30aef136db9114db5ef03c89",
+        "text": "Scope and preservation"
+      }
+    ],
+    "statement": "Scope and preservation",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "reason": "The heading fixes the named contract or exact subsection scope; it does not independently command creation of an extra field, record, or identifier.",
+    "governingScope": {
+      "startLine": 451,
+      "endLine": 454
+    },
+    "canonicalId": "COUNT-CTX-L451",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/2"
+    },
+    "sourceContextIdentity": "CTX-7ce82430241867ceef0edf0af5b73bf2",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 456,
+        "endLine": 456,
+        "startByte": 36292,
+        "endByte": 36324,
+        "sha256": "97515b67c3b4389dfea67887da9081cb7ee3b5b1fda2fa614101f7c81e2be841",
+        "text": "Recognition and bounded decoding"
+      }
+    ],
+    "statement": "Recognition and bounded decoding",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "reason": "The heading fixes the named contract or exact subsection scope; it does not independently command creation of an extra field, record, or identifier.",
+    "governingScope": {
+      "startLine": 456,
+      "endLine": 459
+    },
+    "canonicalId": "COUNT-CTX-L456",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/3"
+    },
+    "sourceContextIdentity": "CTX-426d6cbf5ba301a45385c41100cd8abb",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 461,
+        "endLine": 461,
+        "startByte": 40783,
+        "endByte": 40812,
+        "sha256": "51a0f2a5dec3c9eaa15ce67ec5a2178991db7734757316d787a61ef20d9d105d",
+        "text": "Occurrence identity and order"
+      }
+    ],
+    "statement": "Occurrence identity and order",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "reason": "The heading fixes the named contract or exact subsection scope; it does not independently command creation of an extra field, record, or identifier.",
+    "governingScope": {
+      "startLine": 461,
+      "endLine": 475
+    },
+    "canonicalId": "COUNT-CTX-L461",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/4"
+    },
+    "sourceContextIdentity": "CTX-99dd9bc9213eb6e8569f35f75d4f5f50",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 477,
+        "endLine": 477,
+        "startByte": 46663,
+        "endByte": 46684,
+        "sha256": "206bee00d9c0ded1b3ce9591b97b6403eab82e4c4a8c2c1e7dfc52c94117c226",
+        "text": "Recursive child media"
+      }
+    ],
+    "statement": "Recursive child media",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "reason": "The heading fixes the named contract or exact subsection scope; it does not independently command creation of an extra field, record, or identifier.",
+    "governingScope": {
+      "startLine": 477,
+      "endLine": 480
+    },
+    "canonicalId": "COUNT-CTX-L477",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/5"
+    },
+    "sourceContextIdentity": "CTX-686058eecb3b59a958d6feaf9c970605",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 482,
+        "endLine": 482,
+        "startByte": 48198,
+        "endByte": 48221,
+        "sha256": "2f2f00691ef1cc8cc1241bd5a286a950f8356cbb43c917a4063382d1954f5146",
+        "text": "Counting and thresholds"
+      }
+    ],
+    "statement": "Counting and thresholds",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "reason": "The heading fixes the named contract or exact subsection scope; it does not independently command creation of an extra field, record, or identifier.",
+    "governingScope": {
+      "startLine": 482,
+      "endLine": 483
+    },
+    "canonicalId": "COUNT-CTX-L482",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/6"
+    },
+    "sourceContextIdentity": "CTX-a885d6fa5a3870b44b67b7679f64a955",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 485,
+        "endLine": 485,
+        "startByte": 49210,
+        "endByte": 49237,
+        "sha256": "3ff87c368f3ea2af1fc793bc02cfc952fee4cb7f9a2ebd5dad420d557ed3dc31",
+        "text": "Failure and unknown content"
+      }
+    ],
+    "statement": "Failure and unknown content",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "reason": "The heading fixes the named contract or exact subsection scope; it does not independently command creation of an extra field, record, or identifier.",
+    "governingScope": {
+      "startLine": 485,
+      "endLine": 494
+    },
+    "canonicalId": "COUNT-CTX-L485",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/7"
+    },
+    "sourceContextIdentity": "CTX-0f69bbe5e2b400091716e3ce3637314f",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 424,
+        "endLine": 424,
+        "startByte": 26065,
+        "endByte": 26652,
+        "sha256": "4a555abf5f67317278c80573e8c60350da989fe209755ddab63123206955f72a",
+        "text": "The unit universe is structural accounting. Retain the exact originating input and artifact bytes; no normalized projection replaces them or asserts inspection. Each unit binds the input version, supplied occurrence, exact structural location and source-value hash. Enumerate roots in their retained source occurrence order; within a structured value visit arrays in index order and object keys in unsigned Unicode-scalar order. A canonical mirror of the same originating field is visited only once, using the originating field; separately supplied equal values are separate occurrences."
+      }
+    ],
+    "statement": "The unit universe is structural accounting.",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "reason": "This sentence defines the accounting domain; operational preservation/identity and no-semantic-inspection duties are retained separately.",
+    "governingScope": {
+      "startLine": 424,
+      "endLine": 494
+    },
+    "canonicalId": "COUNT-CTX-STRUCTURAL",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/8"
+    },
+    "sourceContextIdentity": "CTX-cc7933f155cc3f752dbdaf2c970e52a2",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 434,
+        "endLine": 434,
+        "startByte": 30117,
+        "endByte": 30324,
+        "sha256": "3a15e765ad46f7f28dba9fb032e37a25b1d25b668db6b3d3288c15f73cafabea",
+        "text": "Source hashes and binding are closed as follows. C(x) means the exact UTF-8 bytes of §34.1 canonical JSON; H(b) means lowercase SHA-256 hexadecimal of exact bytes b. Source-value hash preimages by kind are:"
+      }
+    ],
+    "statement": "Source hashes and binding are closed; the following rows define source-value preimages by kind.",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "reason": "The closed-table introduction governs the actual definitions, rather than supplying a free-standing action.",
+    "governingScope": {
+      "startLine": 434,
+      "endLine": 442
+    },
+    "canonicalId": "COUNT-CTX-HASH-TABLE",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/9"
+    },
+    "sourceContextIdentity": "CTX-63d676780d4000ade3764d94e09f8c06",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 449,
+        "endLine": 449,
+        "startByte": 34407,
+        "endByte": 34649,
+        "sha256": "f561233673f0198819e3ef1684c1ed93e9fb962afbc9b025360be40cc3b68967",
+        "text": "Insert immediately after C's common raw-unit rules. This is the only structured-media mapping added by this revision. It makes the following counting choices explicit; the existence of a transport parser alone did not authorize these choices."
+      }
+    ],
+    "statement": "Insert immediately after C's common raw-unit rules.",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "reason": "Editorial placement determines that C1 inherits C. The sole-new-mapping limitation remains a normative obligation.",
+    "governingScope": {
+      "startLine": 448,
+      "endLine": 494
+    },
+    "canonicalId": "COUNT-CTX-PLACEMENT",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/10"
+    },
+    "sourceContextIdentity": "CTX-b84094fb34dc77ce3c08b77609f1647b",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 449,
+        "endLine": 449,
+        "startByte": 34407,
+        "endByte": 34649,
+        "sha256": "f561233673f0198819e3ef1684c1ed93e9fb962afbc9b025360be40cc3b68967",
+        "text": "Insert immediately after C's common raw-unit rules. This is the only structured-media mapping added by this revision. It makes the following counting choices explicit; the existence of a transport parser alone did not authorize these choices."
+      }
+    ],
+    "statement": "The approved text makes the counting choices explicit; the prior transport parser alone had not authorized them.",
+    "classification": "HISTORICAL_NONNORMATIVE_CONTEXT",
+    "reason": "Explanatory chronology is historical; the actual normative nonauthorization rule is separately retained from line 430.",
+    "governingScope": {
+      "startLine": 448,
+      "endLine": 494
+    },
+    "canonicalId": "COUNT-CTX-CHOICE-HISTORY",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/11"
+    },
+    "sourceContextIdentity": "CTX-f2feef3cc3e85ef5ff4b613db7ad35f2",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 459,
+        "endLine": 459,
+        "startByte": 37447,
+        "endByte": 40781,
+        "sha256": "c93a102ad5030b7f2be69e49d28c674a111a836f5fa3f9eea3bd388301544165",
+        "text": "Use a centralized, versioned intake profile closed-loop-raw-units-zip-limits/1. Its bounds are: 27 cumulative central-directory entries across the entire selected input-version archive-mapping pass, including every supplied root and recursively decoded child; 67108864 bytes per expanded member; 70254592 cumulative reserved-or-produced expanded bytes; 140509184 cumulative archive bytes submitted to decoding (count a nested archive again when it is submitted); compression ratio at most 1100 per member; filename byte length at most 65535; canonical path depth at most 128; maximum archive nesting level 27 with the supplied archive at level 1; and one cumulative elapsed-worker deadline of 600000 ms for that entire input-version archive-mapping pass. The entry budget is charged on exposure before expansion, including unsupported/blocked entries; the maximum depth cannot bypass that budget. Expansion and byte accounting are checked before allocation and incrementally, against both declared and actual lengths; declared metadata never substitutes for verified bytes. The expansion safety counter reserves each declared output length before allocation; actual production within that reservation does not charge the same byte twice, while any additional produced byte must first fit and consume remaining budget. Every produced/reserved byte remains charged even if later CRC, validation or decoding fails; no refund, reset or retry can escape the pass-wide ceiling. It includes every child occurrence at every depth, including a nested archive's bytes as its parent's output and its own children separately. This work-safety counter is distinct from the semantic aggregate-byte review sum, which includes only actually verified retained child bytes. The archive-byte sum counts each archive occurrence once when submitted to decoding. The same original per-archive structural and byte checks remain; a bound can stop processing earlier, never authorize weaker checking. These ceilings reuse the current default decoder's 27 entries, 64 MiB file bound, 64 MiB + 1 MiB response + 2 MiB manifest total, twice-total archive bound, ratio/name/path/work bounds; the intake profile assigns those generic ceilings without granting any response.json/manifest.json role or larger filename-specific allowance. Transport recursiveExpansion=false and maxNestingDepth=0 remain response-transport rules, not intake accounting rules. A lower already-applicable storage/worker bound still stops work and remains explicitly blocked; it must not silently change this profile or yield favorable completeness. The exact profile-hash preimage is C({\"version\":\"closed-loop-raw-units-zip-limits/1\",\"scope\":\"INPUT_VERSION_PASS\",\"maxEntries\":27,\"maxEntryBytes\":67108864,\"maxExpandedBytes\":70254592,\"maxArchiveBytes\":140509184,\"maxCompressionRatio\":1100,\"maxFilenameBytes\":65535,\"maxPathDepth\":128,\"maxNestingDepth\":27,\"workerTimeoutMs\":600000}); its SHA-256 is the profile hash. The retained unitization derivation binds the owning input version, mapping ID, this exact profile ID/hash, actual counters and completion/blocker status; changed profile or source invalidates reuse under the existing derivation rules. Repeated equal roots and members are charged separately. Any future profile change follows existing versioning and acceptance requirements."
+      }
+    ],
+    "statement": "The stated intake ceilings reuse generic current decoder ceilings, without importing transport roles or special filename allowances.",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "reason": "Numerical ceiling obligations are explicit in the same line. This sentence records their provenance, not a second set of quotas.",
+    "governingScope": {
+      "startLine": 459,
+      "endLine": 459
+    },
+    "canonicalId": "COUNT-CTX-LIMIT-ORIGIN",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/12"
+    },
+    "sourceContextIdentity": "CTX-d885f200a8bf27215f6820a9f4dfd98f",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 483,
+        "endLine": 483,
+        "startByte": 48222,
+        "endByte": 49208,
+        "sha256": "0b9f08d3b454bfbbf319f65959505262242e4c38ff144744fa34c6cc4f3373a6",
+        "text": "Every emitted inventory, member, metadata, comment and content unit participates in C's unchanged greater-than-500 raw-unit trigger. The supplied-file/archive-member count includes the supplied archive occurrence once and each enumerated child member occurrence once; metadata/comments do not add file occurrences. For the existing aggregate-supplied-byte challenge, count each retained file occurrence's actual bytes once: the original compressed archive plus each verified expanded child occurrence at every recursive depth; do not count metadata byte spans again or deduplicate equal occurrences. Apply the existing per-text/document and mechanically countable-page thresholds to eligible original/child content by their existing rules. This additive count can trigger review sooner than treating an archive as one opaque file; no threshold value is raised or reduced. Storage/expansion safety budgets remain separate from these review triggers and retain their original enforcement."
+      }
+    ],
+    "statement": "Additive accounting can trigger review sooner than opaque-file accounting.",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "reason": "This is a consequence of the explicit formulas, not an extra numeric threshold or separate operation.",
+    "governingScope": {
+      "startLine": 483,
+      "endLine": 483
+    },
+    "canonicalId": "COUNT-CTX-COUNT-CONSEQUENCE",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/13"
+    },
+    "sourceContextIdentity": "CTX-38886f62cff69ebe774f946be17ebf19",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 494,
+        "endLine": 494,
+        "startByte": 52905,
+        "endByte": 53482,
+        "sha256": "1785e14d6310a2ad84b5ea0ec1351a2c6fce3d70b3649fb377845fa37591e921",
+        "text": "This mapping adopts accounting order, unit granularity, raw-name/metadata/comment identity, additive counts, recursive traversal and its explicit bounded intake profile only. It does not adopt arbitrary parser output as normative truth, authorize an unbounded parser or relaxed safety policy, establish semantic inspection, waive current evidence requirements, or accept historical coverage proof. Implementation must expose the required exact locators/bytes from the existing decoder without changing its retained safety predicates; actual boundary and fault tests remain due."
+      }
+    ],
+    "statement": "C1 adopts only accounting order, unit granularity, raw-name/metadata/comment identity, additive counts, recursive traversal, and its explicit bounded intake profile.",
+    "classification": "STRUCTURAL_REQUIREMENT_CONTEXT",
+    "reason": "This is the exact adoption-scope boundary, governing the explicit prohibitions and retained proof duties on the same line.",
+    "governingScope": {
+      "startLine": 448,
+      "endLine": 494
+    },
+    "canonicalId": "COUNT-CTX-ADOPTION-BOUNDARY",
+    "entryKind": "SOURCE_CONTEXT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/sourceContexts/14"
+    },
+    "sourceContextIdentity": "CTX-450194f009b0e3aae51d8f874dd9ec88",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 416,
+        "endLine": 420,
+        "startByte": 24672,
+        "endByte": 25994,
+        "sha256": "ac8cae0f0095518841f968e8ac229bd21b4690ec552be5424945520bdeca1ee9",
+        "text": "6.5A Raw-unitization contract\n\nRaw-input accounting MUST use one versioned RAW_UNITIZATION_VERSION — current value closed-loop-raw-units/1 — with deterministic media-specific unit rules. Text-message boundaries, structured text units, document pages and sections where mechanically available, archive members, embedded documents, native images and media, unsupported-format whole-file fallbacks, and source locations receive stable application-owned unit identities.\n\nThe unitization contract explicitly defines treatment of comments, annotations, tracked changes, metadata, embedded objects, inaccessible content, and unsupported formats. A supported subdivision cannot be replaced by one whole-file unit merely to make coverage vacuous. SEMANTIC_CHALLENGE_LIMITS/1 triggers a challenge when any one of these thresholds is exceeded: 1,048,576 stored bytes in one text or document artifact; 100 mechanically countable pages; 20 supplied files or archive members; 500 raw units; or 5,242,880 aggregate supplied bytes. A material uncovered unit, broad exclusion, INACCESSIBLE_OR_BLOCKED material, material uncertainty, contradiction, or operator request triggers regardless of size. These limits are centralized, versioned, and acceptance-tested and may be lowered but not raised without a new contract-profile identity."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 424,
+        "endLine": 424,
+        "startByte": 26065,
+        "endByte": 26652,
+        "sha256": "4a555abf5f67317278c80573e8c60350da989fe209755ddab63123206955f72a",
+        "text": "The unit universe is structural accounting. Retain the exact originating input and artifact bytes; no normalized projection replaces them or asserts inspection. Each unit binds the input version, supplied occurrence, exact structural location and source-value hash. Enumerate roots in their retained source occurrence order; within a structured value visit arrays in index order and object keys in unsigned Unicode-scalar order. A canonical mirror of the same originating field is visited only once, using the originating field; separately supplied equal values are separate occurrences."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 434,
+        "endLine": 442,
+        "startByte": 30117,
+        "endByte": 33226,
+        "sha256": "7f1658a5546166b2c3accfdef17a8ffca06852fa69c40909a1e8aa66e2588a59",
+        "text": "Source hashes and binding are closed as follows. C(x) means the exact UTF-8 bytes of §34.1 canonical JSON; H(b) means lowercase SHA-256 hexadecimal of exact bytes b. Source-value hash preimages by kind are:\n- HUMAN_TEXT_LINE or HUMAN_TEXT_WHOLE: C({\"type\":\"STRING\",\"value\":s}), where s is the exact emitted line excluding its terminator, or the entire whitespace-only nonempty string respectively. Physical line number and original field pointer retain position; retained originating bytes preserve terminators.\n- HUMAN_SCALAR: C({\"type\":t,\"value\":v}), where t is the declared scalar type and v its exact canonical value; no string coercion. Null/absent values remain excluded as above.\n- ARTIFACT_INVENTORY: C({\"byteLength\":n,\"contentSha256\":h}), where n is exact byte length and h=H(exact artifact bytes). If bytes are unavailable, both values are null; asserted length/digest remains source context, never substituted for observed bytes. The unit remains inaccessible/blocked, with its retained occurrence/locator binding.\n- PHYSICAL_SPAN: the exact original byte span including its terminator, without canonical JSON wrapping. Its locator binds zero-based byte start and exclusive end plus the one-based page/line coordinates.\n- STRUCTURAL_NODE: C({\"nodeKind\":k,\"status\":q,\"value\":v}), where k and v are the exact kind and canonical source value fixed by the authorized format mapping, and q is ACCESSIBLE or INACCESSIBLE_OR_BLOCKED. Inaccessible nodes have v=null; exact exposed parent/locator and k remain bound. No invented serialization of an adapter object is permitted.\n- STRUCTURAL_TEXT_SPAN: exact UTF-8 bytes of the mapped exact textual leaf's physical span, including its terminator. The authorized mapping identifies the leaf and its exact extraction; no silent whitespace normalization is allowed.\n\nEach unit's binding hash preimage is C({\"algorithm\":\"closed-loop-raw-units/1\",\"inputVersion\":V,\"occurrence\":O,\"kind\":K,\"locator\":L,\"sourceValueSha256\":S}). V is the exact owning input-version identity string; O is the ordered zero-based safe-integer path of supplied root and, where applicable, child-member occurrence indices; K is exactly one of the seven uppercase kinds above; S is the corresponding source-value hash. L is an ordered locator array: human units use [originating JSON pointer, one-based physical line] or [originating JSON pointer] for whole strings/scalars; inventories use []; whole-file spans use [startByte,endByte,page,line]; structural nodes use [normative format mapping ID, exact mapping locator]; structural textual spans append [startByte,endByte,page,line] to their structural-leaf locator. Byte offsets for a structural textual leaf refer to its exact UTF-8 extraction. The source-value hash alone does not identify the occurrence: binding hash plus retained input/source supplies the exact type, location and occurrence. These accounting hashes/locators are not §34.2 canonical record IDs. Distinct roots are numbered in retained source occurrence order, including separately supplied identical roots; a canonical mirror does not receive a second root number."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 446,
+        "endLine": 446,
+        "startByte": 33753,
+        "endByte": 34347,
+        "sha256": "8e228f3357803b33eef576f4bcc014514feee7c84c21e6edfab6665287ff9d56",
+        "text": "Deduplicate only repeated accounting references to the same occurrence, kind, location and exact source-value hash. Never merge distinct supplied occurrences, even with identical hashes. Order and retained source identity determine stable accounting references; canonical record IDs still use §34.2. Count the entire resulting unit universe, including inventory, structural and inaccessible units, when applying the unchanged §6.5A limits. The raw-unit challenge condition is strictly greater than 500, not greater than or equal to 500; every other size-independent trigger remains effective."
+      }
+    ],
+    "appliesTo": "All C/C1 accounting duties",
+    "meaning": "The same selected input-version occurrence universe, exact preserved source, canonical hash and unit-binding definitions govern each local case. No content hash substitutes for occurrence identity; units feed unchanged §6.5A triggers.",
+    "canonicalId": "COUNT-GOV-COMMON-IDENTITY",
+    "entryKind": "GOVERNING_CONTEXT_CONTRACT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/governingContextContracts/0"
+    },
+    "sourceContextIdentity": "CTX-3b0801d84de63568384d37b3b773a412",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 426,
+        "endLine": 432,
+        "startByte": 26654,
+        "endByte": 30115,
+        "sha256": "a61f4c625e3a314880b95176dc9cd3a65347c6f1b074f76c10c5dbad7a7ee0ee",
+        "text": "For human text and string-valued structured human input, CRLF, CR and LF delimit physical lines. Retain original line positions. Emit each line containing a character other than U+0009–U+000D or U+0020; if a nonempty string has no such line, emit that entire string as one unit. Empty strings, null and absent scalar values emit no content unit. Other scalar leaves emit one unit retaining their declared type and value. Original blank lines and exact original text remain available to the mandatory semantic reader even when the line projection emits no separate blank-line unit.\n\nFor every supplied artifact occurrence, emit one inventory unit. Where exact bytes are valid UTF-8 and the text projection re-encodes to those exact bytes, also emit physical content units: scan left to right, treating CRLF as one terminator and otherwise CR, LF or form feed as a terminator; each unit contains the span through its terminator. Retain every nonempty span, including blank lines; emit a final unterminated span if present, but no zero-length trailing span. Coordinates start at page 1/line 1; form feed increments page and resets line to 1, other terminators increment line. BOM bytes, if present, remain part of the exact projection, not silently removed. This rule is accounting, not a claim that every UTF-8 artifact's media semantics have been parsed.\n\nFor a mechanically supported structured-media subdivision, emit one structural unit per exposed page, section, archive member, embedded document/object, comment, annotation, tracked change or metadata object, using its exact parent and source locator; traverse children in source order, breaking any absent source-order tie by unsigned Unicode-scalar locator order. Recurse into textual leaves using the physical-content rule and into child media using this rule. A structural node is counted once per occurrence/location/kind; a node's structural unit and its descendant content units are distinct. Preserve inaccessible exposed nodes as INACCESSIBLE_OR_BLOCKED; do not fabricate children. Detailed coverage requires a closed format mapping that is part of this named versioned normative algorithm or an explicitly identified versioned normative format mapping authorized under §34.3. Merely publishing an implementation descriptor does not authorize such semantics. The mapping must fix node kinds, source locators, ordering, exact canonical source values and child extraction. This insertion adds no format-specific adapter or mapping. A claim of supported detailed coverage without that normative mapping is blocked; genuinely unsupported formats retain the fallback below. A mechanically available subdivision cannot be suppressed or relabeled unsupported to avoid that blocker.\n\nSubdivision is additive: an exact UTF-8 whole-file projection emits its physical spans even when a supported structured mapping also emits structural nodes and textual leaves. Whole-file spans, structural nodes and structural textual-leaf spans have distinct kinds and locators and are all counted; overlap in underlying bytes does not deduplicate these different accounting obligations. Each archive-member or embedded-file occurrence emits both its parent structural occurrence unit and its own child inventory unit, followed by its own supported content/subdivisions. A textual leaf is not a child file and gets no inventory unit. Repeated references to the same emitted unit still deduplicate under the rule below."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 444,
+        "endLine": 444,
+        "startByte": 33228,
+        "endByte": 33751,
+        "sha256": "0b58e1ce0a2a0e6b713698e7024a4284e37e5cc84136ce4c4871749f5fcf1a51",
+        "text": "An image/media occurrence without a supported finer subdivision uses its inventory unit as its whole-media unit. A format with no supported mechanically available subdivision likewise uses its inventory unit as the whole-file fallback, with an explicit unsupported/unavailable-subdivision basis and the original bytes retained. These fallbacks neither prove inspection nor remove existing material uncertainty/blockers. Comments, annotations, tracked changes, metadata and embedded content are not discarded as nonsemantic."
+      }
+    ],
+    "appliesTo": "Human-unit, artifact physical-span, structural-unit and fallback duties",
+    "meaning": "Use the media-specific eligibility, terminator and empty/blank distinctions. Structured subdivision is additive; only authorized mappings permit detailed coverage; unsupported fallback never suppresses available subdivision or removes material blockers.",
+    "canonicalId": "COUNT-GOV-C-CONTENT-ELIGIBILITY",
+    "entryKind": "GOVERNING_CONTEXT_CONTRACT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/governingContextContracts/1"
+    },
+    "sourceContextIdentity": "CTX-77eb10164736ed8b7465d1ca70285574",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 448,
+        "endLine": 449,
+        "startByte": 34349,
+        "endByte": 34649,
+        "sha256": "6fe7096069d31d77f8c8d1909100a783b003c7a0d1dfd79d9ea0dbb959a13d14",
+        "text": "C1. Named structured mapping: closed-loop-raw-units-zip/1\nInsert immediately after C's common raw-unit rules. This is the only structured-media mapping added by this revision. It makes the following counting choices explicit; the existence of a transport parser alone did not authorize these choices."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 452,
+        "endLine": 454,
+        "startByte": 34674,
+        "endByte": 36290,
+        "sha256": "8c590fca3266a837a3a81e85d77a3cc029c0f9b3ff6f02ccf3c8676e715ac9c0",
+        "text": "Apply this mapping to a supplied ZIP occurrence for which the application can use its existing bounded closed-loop-inbound-zip/1 structural decoder. Preserve the exact compressed archive bytes, their original supplied occurrence, byte length and SHA-256. Expanded member bytes are verified immutable child copies; they never replace the original archive. Decode and retain bytes only in the existing isolated in-memory/Blob/storage path. No member is extracted to a filesystem, executed, followed as a link, or used as a path outside that path-safe storage authority.\n\nThe supported decoding subset is ordinary single-volume ZIP and the decoder's bounded ZIP64 forms, with stored or DEFLATE compression, permitted data descriptors, UTF-8 or CP437 names and the decoder's validated Unicode-path extras. Keep its existing checks for complete consistent local/central headers, exact boundaries, safe noncolliding canonical paths, actual expanded lengths, CRC and SHA-256, permitted flags/extras and resource/platform bounds. Encrypted entries, split volumes, self-extracting prefixes, directory/link/device/special entries, unsupported compression/extra fields and ambiguous or colliding paths do not become supported through this mapping. The exact intake safety profile below and existing worker isolation remain effective. The response transport contract remains unchanged. A resource or platform failure is not reclassified as an unsupported format to bypass a blocker. Intake uses this decoder's structural/byte validation, not the inbound response's manifest, response.json role or attachment-admission semantics."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 459,
+        "endLine": 459,
+        "startByte": 37447,
+        "endByte": 40781,
+        "sha256": "c93a102ad5030b7f2be69e49d28c674a111a836f5fa3f9eea3bd388301544165",
+        "text": "Use a centralized, versioned intake profile closed-loop-raw-units-zip-limits/1. Its bounds are: 27 cumulative central-directory entries across the entire selected input-version archive-mapping pass, including every supplied root and recursively decoded child; 67108864 bytes per expanded member; 70254592 cumulative reserved-or-produced expanded bytes; 140509184 cumulative archive bytes submitted to decoding (count a nested archive again when it is submitted); compression ratio at most 1100 per member; filename byte length at most 65535; canonical path depth at most 128; maximum archive nesting level 27 with the supplied archive at level 1; and one cumulative elapsed-worker deadline of 600000 ms for that entire input-version archive-mapping pass. The entry budget is charged on exposure before expansion, including unsupported/blocked entries; the maximum depth cannot bypass that budget. Expansion and byte accounting are checked before allocation and incrementally, against both declared and actual lengths; declared metadata never substitutes for verified bytes. The expansion safety counter reserves each declared output length before allocation; actual production within that reservation does not charge the same byte twice, while any additional produced byte must first fit and consume remaining budget. Every produced/reserved byte remains charged even if later CRC, validation or decoding fails; no refund, reset or retry can escape the pass-wide ceiling. It includes every child occurrence at every depth, including a nested archive's bytes as its parent's output and its own children separately. This work-safety counter is distinct from the semantic aggregate-byte review sum, which includes only actually verified retained child bytes. The archive-byte sum counts each archive occurrence once when submitted to decoding. The same original per-archive structural and byte checks remain; a bound can stop processing earlier, never authorize weaker checking. These ceilings reuse the current default decoder's 27 entries, 64 MiB file bound, 64 MiB + 1 MiB response + 2 MiB manifest total, twice-total archive bound, ratio/name/path/work bounds; the intake profile assigns those generic ceilings without granting any response.json/manifest.json role or larger filename-specific allowance. Transport recursiveExpansion=false and maxNestingDepth=0 remain response-transport rules, not intake accounting rules. A lower already-applicable storage/worker bound still stops work and remains explicitly blocked; it must not silently change this profile or yield favorable completeness. The exact profile-hash preimage is C({\"version\":\"closed-loop-raw-units-zip-limits/1\",\"scope\":\"INPUT_VERSION_PASS\",\"maxEntries\":27,\"maxEntryBytes\":67108864,\"maxExpandedBytes\":70254592,\"maxArchiveBytes\":140509184,\"maxCompressionRatio\":1100,\"maxFilenameBytes\":65535,\"maxPathDepth\":128,\"maxNestingDepth\":27,\"workerTimeoutMs\":600000}); its SHA-256 is the profile hash. The retained unitization derivation binds the owning input version, mapping ID, this exact profile ID/hash, actual counters and completion/blocker status; changed profile or source invalidates reuse under the existing derivation rules. Repeated equal roots and members are charged separately. Any future profile change follows existing versioning and acceptance requirements."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 462,
+        "endLine": 464,
+        "startByte": 40813,
+        "endByte": 42442,
+        "sha256": "8a4b0903ca8ddfc4e0abacb884590cebe1a44cffac715aecfa11eafbbc1d9d89",
+        "text": "Let P be the parent archive's C occurrence path, already bound to the owning input version. Number central-directory entries from zero in their exact central-directory order, not local-file-offset order, canonical-filename order or extraction completion order. The child occurrence for entry i is P followed by i. Different supplied archives and different nested occurrences remain distinct even when bytes or names are equal. Local/central identity validation is still required; choosing central-directory order for accounting does not weaken it.\n\nUse the base C unit kinds STRUCTURAL_NODE, ARTIFACT_INVENTORY, PHYSICAL_SPAN and STRUCTURAL_TEXT_SPAN only; do not add canonical record families or a second unit-ID scheme. Every archive, member, metadata, extra and comment structural node uses occurrence P of the archive being mapped; child inventories/content and recursively mapped child archive nodes use P followed by i. Every ZIP structural unit's locator is [\"closed-loop-raw-units-zip/1\", locatorValue], where locatorValue is one of the exact ordered arrays below. All offsets and lengths are nonnegative safe integers measured in the parent archive's original bytes; an index is a zero-based safe integer. A node with verified source bytes has status ACCESSIBLE. Its C source-value hash is H(C({\"nodeKind\":k,\"status\":\"ACCESSIBLE\",\"value\":v})); the outer binding hash uses the unchanged C input-version/occurrence/kind/locator/source-value preimage. Exact raw bytes below use lowercase hexadecimal, preserving every byte without character decoding. Metadata offsets/bytes belong to the archive, not to a reserialized ZIP."
+      }
+    ],
+    "appliesTo": "All C1 ZIP duties",
+    "meaning": "C1 alone is the new mapping. It inherits C exact accounting while preserving original archive/child bytes, bounded structural decoding, path isolation, shared pass limits, exact parent/child occurrence assignment and original-byte locators.",
+    "canonicalId": "COUNT-GOV-C1-INHERITANCE",
+    "entryKind": "GOVERNING_CONTEXT_CONTRACT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/governingContextContracts/2"
+    },
+    "sourceContextIdentity": "CTX-b6b83631cf74c60b13b41ccb3411f015",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 457,
+        "endLine": 457,
+        "startByte": 36325,
+        "endByte": 37445,
+        "sha256": "9e4c4defab17cefea45e5b26ceb08a2941d2ec35567133989ba876b7abe29dfb",
+        "text": "Apply the same recognition test to each supplied root and each verified expanded child. A byte candidate exists if the first four bytes are a ZIP local-header, EOCD, ZIP64 EOCD or ZIP64-locator signature (respectively hexadecimal 504b0304, 504b0506, 504b0606, 504b0607), or if the EOCD signature 504b0506 occurs anywhere in the last min(byteLength,65557) bytes. Also attempt validation when a supplied filename ends with .zip under ASCII case-insensitive comparison, or the supplied media type, before a semicolon and after ASCII whitespace trim/case-fold, is application/zip or application/x-zip-compressed. Names and media types can require an attempt but cannot suppress a byte candidate or establish success. A random signature or claimed filename can never create successful ZIP coverage: the complete retained structural, boundary, path and integrity checks decide that. Missing bytes retain an unavailable inventory/blocker; they do not establish absence of ZIP structure. Noncandidate bytes without a ZIP claim do not receive ZIP nodes through speculation; C's other available accounting rules remain applicable."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 475,
+        "endLine": 475,
+        "startByte": 45824,
+        "endByte": 46661,
+        "sha256": "abfe12518b8a25c1f0d680dc3e1e6b8a07d2a9e36956262f8d6b3b9f62b57f00",
+        "text": "5. One child ARTIFACT_INVENTORY with occurrence P followed by i and inventory locator [], binding the actual expanded byte length and H(expanded bytes) by C. Then emit that child's exact verified UTF-8 physical spans when C permits them, using offsets in the expanded child bytes, and apply the recursive rule below before proceeding to entry i+1. A recursively mapped child archive uses this already-emitted inventory and physical spans without emitting them a second time. The ZIP_MEMBER structural node and child inventory are different accounting obligations and both count. Metadata/comment nodes are not child files and do not receive inventory units. This mapping creates no semantic XML/JSON/CSV/Office/PDF section or annotation units from a member's contents; plain supported UTF-8 spans do not claim such parsing or inspection."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 478,
+        "endLine": 480,
+        "startByte": 46685,
+        "endByte": 48196,
+        "sha256": "b81469b46ebfae5885182eab44876b5d2405f326ac3a579556037b15e2d65d60",
+        "text": "For every verified expanded child, apply the byte/claim recognition test above. A ZIP candidate is mapped recursively by this same mapping, in depth-first central-directory order, under the entire input-version mapping pass's shared cumulative safety counters and deadline. The expanded child becomes the next archive occurrence P; no new root identity, fresh budget or favorable parent result is substituted. Exact expanded bytes remain retained and bound even when their own ZIP structure is blocked. A ZIP-based document can expose these ZIP members without thereby claiming semantic Office/XML/PDF parsing. A child that is not a ZIP candidate still receives its inventory and applicable exact UTF-8 physical spans under C; this addendum invents no other media mapping.\n\nWhen a depth, entry, byte, ratio, path, name, worker or work bound actually stops a recognized child, retain that child's already exposed member occurrence, inventory and available exact bytes, mark its unresolved subdivision INACCESSIBLE_OR_BLOCKED with the precise cause, and stop the affected expansion safely. It is neither a successful opaque fallback nor proof that children do not exist. Never reset counters for nested ZIPs, invoke unbounded recursive decompression, fabricate descendants, or treat unknown remaining units as zero. A separately supplied copy is a separate root occurrence with its own identity and is charged again to the same input-version pass counters; equality of bytes does not merge it or reset the budget."
+      }
+    ],
+    "appliesTo": "C1 recognition, emission, occurrence, budget and traversal duties",
+    "meaning": "Recognition applies identically to roots and verified children; each child is visited depth-first under shared counters/deadline, with existing inventory/spans reused. Actual stops retain exposed evidence and precise blockers without invented descendants or zero unknown remainder.",
+    "canonicalId": "COUNT-GOV-C1-RECURSION",
+    "entryKind": "GOVERNING_CONTEXT_CONTRACT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/governingContextContracts/3"
+    },
+    "sourceContextIdentity": "CTX-3cfe202cae8660f7a74e1350d6abd4c2",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 486,
+        "endLine": 492,
+        "startByte": 49238,
+        "endByte": 52903,
+        "sha256": "1817553c5d56948f99399a875607b41f65e7355b814515ae83fffe6fff7de476",
+        "text": "A supplied archive always retains its C inventory, exact original bytes when available, and a precise outcome. Distinguish (a) unsupported/encrypted structural features; (b) malformed/truncated/inconsistent structures, bad CRC or changed bytes; (c) unsafe/duplicate/colliding member identities; (d) absent/unreadable required bytes or unavailable decompressor/worker; and (e) resource-limit, timeout or interrupted execution. None is a successful parse or a favorable whole-file completeness result. Keep the exact typed cause and existing recovery route; do not silently drop the failing member, retry with weaker validation or invent child bytes.\n\nOnly fully verified members receive ACCESSIBLE ZIP_MEMBER values with observed expanded hashes/lengths. An exposed member means a central-directory record with the exact central signature and complete in-bounds fixed header, filename, extra area and comment area, within the established central-directory extent and traversal order. Its entry index and central-header offset establish the member locator even when local validation or expansion fails. Preserve each such exposed occurrence, including duplicate names, directories, links and unsupported entries, as INACCESSIBLE_OR_BLOCKED with value=null when it cannot be validated; do not expand it or grant its path authority. It still receives exactly one child ARTIFACT_INVENTORY at P followed by i under C: when verified expanded bytes are unavailable, both byteLength and contentSha256 are null, with an explicit blocked disposition. A claimed member size or digest does not fill these values. Distinct colliding/duplicate central occurrences are never merged to hide them. No child inventory is created for a guessed entry, unparsed count or incomplete/unbounded central record.\n\nPreserve independently established exact metadata and comment spans as their corresponding ACCESSIBLE structural units even when the owning member is blocked; accessibility here concerns the exact metadata bytes, not the member's safe expansion or semantic validity. An extra field receives its specified unit only when its own 4-byte header and full declared payload are in bounds; duplicate/unsupported fields can be preserved as separate observed bytes but still block member admission. If malformed metadata prevents complete field segmentation, preserve the exact whole extra-area bytes as diagnostic provenance on the blocked occurrence, without inventing extra-field units. For a blocked member whose local metadata is not safely established, emit only established central metadata/extras/comments, then its blocked child inventory. This is bounded read-only exposure; it does not relax existing decoder rejection. Unknown remaining structure remains an explicit archive-level blocker, and a smaller observed count cannot discharge it.\n\nA structurally established zero-entry EOCD with zero central-directory size and consistent offsets is a known empty archive, not malformed merely because the existing decoder rejects count=0. Preserve its inventory and exposed control/comment nodes, emit no invented member or child inventory, and record EMPTY_ARCHIVE_DECODER_BOUNDARY as INACCESSIBLE_OR_BLOCKED for detailed decoding under this current parser scope. It does not yield a successful detailed-coverage claim or unsupported-format fallback. A missing or unusable DEFLATE implementation/worker is unavailable evidence, not unsupported ZIP format; preserve originals, established nodes and blocked child inventories. Corrupt bytes, an unsupported feature, unsafe paths, actual resource exhaustion and unavailable machinery retain distinct causes and recovery requirements."
+      }
+    ],
+    "appliesTo": "C1 ZIP unit eligibility, values, status, ordering and coverage duties",
+    "meaning": "Only fully verified members get accessible member values. Complete safely established central records may still expose blocked occurrences and exactly one null-valued child inventory. Preserve only established metadata; local-unknown and malformed-extra branches limit emission. Known-empty and unavailable-machinery branches remain blocked and never gain favorable fallback.",
+    "canonicalId": "COUNT-GOV-C1-EXPOSURE-EXCEPTIONS",
+    "entryKind": "GOVERNING_CONTEXT_CONTRACT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/governingContextContracts/4"
+    },
+    "sourceContextIdentity": "CTX-7953c620c6e385e5803883a8a8863b85",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  },
+  {
+    "sourceLocations": [
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 466,
+        "endLine": 475,
+        "startByte": 42444,
+        "endByte": 46661,
+        "sha256": "3954d176e892edbd6e33a6a7b69583c7064bee8d2dc805a50c1e29dc839063b6",
+        "text": "Emit the parent's inventory and any applicable exact whole-file UTF-8 spans under C first. Then emit the following archive-level nodes in increasing original byte-offset order:\n- ZIP_CONTROL_RECORD for each present end-of-central-directory fixed record, ZIP64 end record and ZIP64 locator. locatorValue is [\"CONTROL\", recordType, offset]; recordType is EOCD, ZIP64_EOCD or ZIP64_LOCATOR. v has exactly recordType, offset, byteLength and rawHex. The ordinary EOCD record excludes its following archive-comment bytes; ZIP64 records use the exact validated decoder-supported record extent.\n- ZIP_ARCHIVE_COMMENT only when the EOCD archive-comment length is nonzero. locatorValue is [\"ARCHIVE_COMMENT\", offset]. v has exactly offset, byteLength and rawHex for all declared comment bytes. An empty comment creates no comment unit. No character-set guess or interpretation makes comment bytes executable or favorable evidence.\n\nThen, for every entry i in central-directory order, emit in this exact order:\n1. One ZIP_MEMBER structural node, with occurrence P and locatorValue [\"MEMBER\", i, centralHeaderOffset]. Its v has exactly index, centralHeaderOffset, localHeaderOffset, rawFilename, rawFilenameHex, canonicalPath, compressionMethod, compressedByteLength, compressedSha256, expandedByteLength, expandedSha256 and crc32. rawFilename is the decoder's exact decoded central name before path normalization; rawFilenameHex retains its exact original name bytes. canonicalPath is the separately validated safe canonical path, never a replacement for the raw name. compressionMethod is integer 0 or 8; both digests are H of the actual compressed data span and actual verified expanded bytes respectively; crc32 is the verified unsigned integer. No timestamp, name or claimed digest substitutes for observed member bytes.\n2. ZIP_MEMBER_METADATA nodes for the central fixed header, local fixed header and data descriptor if present, in that order. locatorValue is [\"MEMBER_METADATA\", i, recordType, offset], with recordType CENTRAL_HEADER, LOCAL_HEADER or DATA_DESCRIPTOR. v has exactly recordType, offset, byteLength and rawHex. Central and local fixed-header extents are 46 and 30 bytes respectively; the descriptor extent is the exact 12/16/20/24-byte form validated by the existing decoder. Filename, extras and comment bytes are excluded from these fixed-header units because their exact representations are bound separately.\n3. One ZIP_EXTRA_FIELD node per actually present local extra field, followed by one per actually present central extra field; preserve byte order within each area, including separately present equal fields in the two areas. locatorValue is [\"EXTRA_FIELD\", i, area, ordinal, offset], with area LOCAL or CENTRAL and ordinal zero-based within that area. v has exactly area, headerId, offset, byteLength and rawHex. byteLength and rawHex cover the full 4-byte ID/length header plus its declared payload. Existing duplicate/unsupported/malformed-extra rejection is unchanged. No decoded timestamp, UID, Unicode name or other extra interpretation replaces its exact source bytes.\n4. ZIP_MEMBER_COMMENT only when the central entry's comment length is nonzero. locatorValue is [\"MEMBER_COMMENT\", i, offset]. v has exactly offset, byteLength and rawHex. Empty comments create no comment unit. These bytes are counted even though comments have no transport authority.\n5. One child ARTIFACT_INVENTORY with occurrence P followed by i and inventory locator [], binding the actual expanded byte length and H(expanded bytes) by C. Then emit that child's exact verified UTF-8 physical spans when C permits them, using offsets in the expanded child bytes, and apply the recursive rule below before proceeding to entry i+1. A recursively mapped child archive uses this already-emitted inventory and physical spans without emitting them a second time. The ZIP_MEMBER structural node and child inventory are different accounting obligations and both count. Metadata/comment nodes are not child files and do not receive inventory units. This mapping creates no semantic XML/JSON/CSV/Office/PDF section or annotation units from a member's contents; plain supported UTF-8 spans do not claim such parsing or inspection."
+      },
+      {
+        "role": "SUCCESSOR_SOURCE",
+        "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+        "sourceSha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+        "startLine": 478,
+        "endLine": 478,
+        "startByte": 46685,
+        "endByte": 47457,
+        "sha256": "1ed750e08a32947e0541f40cd8f81b4eec00bf486774901f6be52d12dd3941c6",
+        "text": "For every verified expanded child, apply the byte/claim recognition test above. A ZIP candidate is mapped recursively by this same mapping, in depth-first central-directory order, under the entire input-version mapping pass's shared cumulative safety counters and deadline. The expanded child becomes the next archive occurrence P; no new root identity, fresh budget or favorable parent result is substituted. Exact expanded bytes remain retained and bound even when their own ZIP structure is blocked. A ZIP-based document can expose these ZIP members without thereby claiming semantic Office/XML/PDF parsing. A child that is not a ZIP candidate still receives its inventory and applicable exact UTF-8 physical spans under C; this addendum invents no other media mapping."
+      }
+    ],
+    "appliesTo": "Archive/member/metadata/comment/inventory/content emission duties",
+    "meaning": "Archive-level nodes follow parent inventory/spans and are sorted by original offset; members follow central-directory order with the specified internal sequence, then recursive child processing before the next member. This complete ordered table supplies the forward references at lines 466 and 470.",
+    "canonicalId": "COUNT-GOV-C1-EMISSION-ORDER",
+    "entryKind": "GOVERNING_CONTEXT_CONTRACT",
+    "proofInheritance": false,
+    "sourceDecision": {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/counting-review/reconciliation.json",
+      "sha256": "ad6e97033b8b620c84be902355d1a9fbed74df6fb2937c3af809956b19802b2a",
+      "jsonPointer": "/governingContextContracts/5"
+    },
+    "sourceContextIdentity": "CTX-4909248a4a02f5d906ac92e5c8c7c966",
+    "identityStatus": "FRESH_SOURCE_RECONCILIATION_CONTEXT_IDENTITY",
+    "originalReviewInheritance": false
+  }
+]

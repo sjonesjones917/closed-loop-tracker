@@ -1,0 +1,35 @@
+{
+  "schema": "closed-loop-source-citation-correction-freeze/1",
+  "status": "FROZEN",
+  "inputs": [
+    {
+      "path": "/tmp/clrt-source-final-archives/retained-impact-021-deliverable-manifest.json",
+      "sha256": "4979613b530c02b38a3b80a9973a74fbeb68dbdba20248ba7d8a98c4457d2590",
+      "byteLength": 5101
+    },
+    {
+      "path": "/tmp/clrt-source-final-archives/retained-impact-021-frozen-payloads.tar.gz",
+      "sha256": "25318dc98628bebe9d14d40c762d7429d383d3bb1705821c25872e48bd79df09",
+      "byteLength": 152655
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "byteLength": 369901
+    }
+  ],
+  "outputs": [
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-021-citation-successor-001/citation-correction.json",
+      "sha256": "ca046409d41600837b2a368c8e913e05b73b70129f8c02e6db35b315db4986ea",
+      "byteLength": 7220
+    },
+    {
+      "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/retained-impact-021-citation-successor-001/reconcile.py",
+      "sha256": "853feabda32ed1fd102c5a2933b965930c1875788d6a318e1b42910069ae674f",
+      "byteLength": 5138
+    }
+  ],
+  "exactPriorValuesChecked": true,
+  "originalsPreserved": true
+}

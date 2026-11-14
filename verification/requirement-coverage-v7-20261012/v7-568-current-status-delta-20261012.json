@@ -1,0 +1,492 @@
+{
+  "boundedAssignments": {
+    "runtimeOneTimeIntentSixGroupClosure": {
+      "access": "Private closure/output remains private and must be retrieved and verified under authorized access before use as evidence.",
+      "action": "Determine from existing records whether these six groups share an exact technical owner/action/typed predecessor family; otherwise keep distinct missing edges. No source edit, test, or PASS implied.",
+      "currentMissingEdge": "Each base row has an empty typed predecessor list and no recorded technical owner reference; distinct candidate owner labels remain in the private schedule.",
+      "groups": [
+        {
+          "groupIndexInSealedSchedulingSnapshot": 57,
+          "nreqId": "NREQ-4abce0fe91bcf2e15be186f6c17be50e",
+          "packageId": "RUNTIME697-OWNREVIEW-8b62b1a6debebf476721",
+          "portableWorkMapRef": {
+            "jsonPointer": "/rows/1169",
+            "path": "complete-work-map.json.gz",
+            "sha256": "6daa30fa4e240e7a62716531db6882eeb04611d59dd4334e4037a5a8a8c39608"
+          }
+        },
+        {
+          "groupIndexInSealedSchedulingSnapshot": 120,
+          "nreqId": "NREQ-60973b1cd0d556d8dcb2a2f6bca23049",
+          "packageId": "RUNTIME697-OWNREVIEW-fc31a3b49ce217adba88",
+          "portableWorkMapRef": {
+            "jsonPointer": "/rows/1533",
+            "path": "complete-work-map.json.gz",
+            "sha256": "6daa30fa4e240e7a62716531db6882eeb04611d59dd4334e4037a5a8a8c39608"
+          }
+        },
+        {
+          "groupIndexInSealedSchedulingSnapshot": 121,
+          "nreqId": "NREQ-fe2e351db9316fea7cc9a20176101298",
+          "packageId": "RUNTIME697-OWNREVIEW-f985c481905cff6c730c",
+          "portableWorkMapRef": {
+            "jsonPointer": "/rows/3975",
+            "path": "complete-work-map.json.gz",
+            "sha256": "6daa30fa4e240e7a62716531db6882eeb04611d59dd4334e4037a5a8a8c39608"
+          }
+        },
+        {
+          "groupIndexInSealedSchedulingSnapshot": 130,
+          "nreqId": "NREQ-e79565dfa6a3e482413467304bcdbdc0",
+          "packageId": "RUNTIME697-OWNREVIEW-0284938fd982faf97b80",
+          "portableWorkMapRef": {
+            "jsonPointer": "/rows/3604",
+            "path": "complete-work-map.json.gz",
+            "sha256": "6daa30fa4e240e7a62716531db6882eeb04611d59dd4334e4037a5a8a8c39608"
+          }
+        },
+        {
+          "groupIndexInSealedSchedulingSnapshot": 156,
+          "nreqId": "NREQ-c8a6bd826006ce2ecf827ed093c7e682",
+          "packageId": "RUNTIME697-OWNREVIEW-73400a99245bc4eb943d",
+          "portableWorkMapRef": {
+            "jsonPointer": "/rows/3140",
+            "path": "complete-work-map.json.gz",
+            "sha256": "6daa30fa4e240e7a62716531db6882eeb04611d59dd4334e4037a5a8a8c39608"
+          }
+        },
+        {
+          "groupIndexInSealedSchedulingSnapshot": 157,
+          "nreqId": "NREQ-a84ef0bd19d42c914f7dd473967e764c",
+          "packageId": "RUNTIME697-OWNREVIEW-2df71b08b969e30f48bb",
+          "portableWorkMapRef": {
+            "jsonPointer": "/rows/2653",
+            "path": "complete-work-map.json.gz",
+            "sha256": "6daa30fa4e240e7a62716531db6882eeb04611d59dd4334e4037a5a8a8c39608"
+          }
+        }
+      ],
+      "owner": "content_record_final_source_review",
+      "privateEvidenceRefSha256": "8fd16548211052cd5399c511156c5713bf57010ea821f99b8c6788a150b44e95",
+      "sharedAssertionFamily": "verify-one-time-intent-intake.mjs",
+      "status": "ADMITTED_BOUNDED_SEMANTIC_OWNING_CLOSURE_NOT_EXECUTION_READY_NOT_PASS"
+    },
+    "stage01Closures": [
+      {
+        "boundedAction": "bounded existing assertion/receipt semantic linkage closure",
+        "groupIndexInSealedSchedulingSnapshot": 118,
+        "nreqId": "NREQ-f7afca4b77d3e6258ca8463a66527777",
+        "owner": "extension_binding_controls",
+        "packageId": "RUNTIME697-OWNREVIEW-5acd1d97138af18a65b5",
+        "portableWorkMapRef": {
+          "jsonPointer": "/rows/3873",
+          "path": "complete-work-map.json.gz",
+          "sha256": "6daa30fa4e240e7a62716531db6882eeb04611d59dd4334e4037a5a8a8c39608"
+        },
+        "status": "ADMITTED_BOUNDED_CLOSURE_NOT_EXECUTION_READY_NOT_PASS"
+      },
+      {
+        "boundedAction": "bounded existing assertion/receipt semantic linkage closure",
+        "groupIndexInSealedSchedulingSnapshot": 155,
+        "nreqId": "NREQ-1f02d42985fa54734443195296ded338",
+        "owner": "extension_binding_controls",
+        "packageId": "RUNTIME697-OWNREVIEW-84d78d5605d2abf4d57d",
+        "portableWorkMapRef": {
+          "jsonPointer": "/rows/473",
+          "path": "complete-work-map.json.gz",
+          "sha256": "6daa30fa4e240e7a62716531db6882eeb04611d59dd4334e4037a5a8a8c39608"
+        },
+        "status": "ADMITTED_BOUNDED_CLOSURE_NOT_EXECUTION_READY_NOT_PASS"
+      },
+      {
+        "boundedAction": "required-file/uninspected-file owning-test closure",
+        "groupIndexInSealedSchedulingSnapshot": 153,
+        "nreqId": "NREQ-9ac939eae62af18448913abc7b918156",
+        "owner": "extension_regression_review",
+        "packageId": "RUNTIME697-OWNREVIEW-36fb82020135f9047d17",
+        "portableWorkMapRef": {
+          "jsonPointer": "/rows/2447",
+          "path": "complete-work-map.json.gz",
+          "sha256": "6daa30fa4e240e7a62716531db6882eeb04611d59dd4334e4037a5a8a8c39608"
+        },
+        "status": "ADMITTED_BOUNDED_CLOSURE_NOT_EXECUTION_READY_NOT_PASS"
+      },
+      {
+        "boundedAction": "required-file/uninspected-file owning-test closure",
+        "groupIndexInSealedSchedulingSnapshot": 154,
+        "nreqId": "NREQ-b93018abdc51f726e3040b6322316326",
+        "owner": "extension_regression_review",
+        "packageId": "RUNTIME697-OWNREVIEW-4ab2c5e92fa8eef7d068",
+        "portableWorkMapRef": {
+          "jsonPointer": "/rows/2933",
+          "path": "complete-work-map.json.gz",
+          "sha256": "6daa30fa4e240e7a62716531db6882eeb04611d59dd4334e4037a5a8a8c39608"
+        },
+        "status": "ADMITTED_BOUNDED_CLOSURE_NOT_EXECUTION_READY_NOT_PASS"
+      }
+    ]
+  },
+  "createdUtc": "2026-10-12T18:08:45Z",
+  "currentPrimitiveProofSnapshot": {
+    "access": "PRIVATE_EVIDENCE_REF; digest and identifiers are portable but evidence bytes are not included.",
+    "evidenceSha256": "c200931f82a1e74b1e6ff3213e52d3f851f9230f87ad6ea62d93cd4d0780b169",
+    "fingerprintSha256": "b0efd4884f33c2445ad556c0aa5e8b208c4a6854dd3eee422bf87ec1578b41a9",
+    "nreqIds": [
+      "NREQ-5fd38e249cabfceace66e3488d9bef39",
+      "NREQ-7b1cd2debadb570b49fe041bd444592f",
+      "NREQ-be0ecfa19d607c0df242b048d6ef63bf",
+      "NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb",
+      "NREQ-853a934199459ed6bf419687ca08ba34",
+      "NREQ-d6f8519fc2d36e59e4eba26af0442d14",
+      "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+      "NREQ-e74693ce28b14adb92ef359ccec7bb2b",
+      "NREQ-00589ac7ea403394eff5f3f58cd27738"
+    ],
+    "primitiveProofAtUtc": "2026-10-12T18:02:37.222Z",
+    "sourceCommit": "427b1010707ff4566a54b2acb0392e9e702b14d9",
+    "sourceInputsSha256": "6a9e7bf813683956ceb56945d5b6fe756ccf06bafe88c5594436d261e2437f1e",
+    "startedAtUtc": "2026-10-12T18:02:30.418Z",
+    "status": "PRIMITIVE_PROOF_RECORDED_SOURCE_BOUND_NOT_COMPLETED_AGGREGATE_OR_RELEASE_PROOF"
+  },
+  "portableHandoffRemediation": {
+    "accounting": {
+      "adequacyCountsChanged": false,
+      "contextualSeparateIds": 67,
+      "substantiveUniqueNreqIds": 3999
+    },
+    "digestBoundHistory": {
+      "excludeLocalAppendedSha256": "b1abad8050132af8d42adecc2fd1b1a9bfd5a2075e7b3b11b17ce7245f2dd0b8",
+      "preserveContinuation": {
+        "path": "verification/complete-system-repair-continuation-20261012.md",
+        "remote777GitBlobSha1": "31e21e3915ad070bee80da69f5ac5922f4bc9909"
+      },
+      "preservePath": "verification/complete-system-repair-20261007.md",
+      "preservePublishedSha256": "69a2e2e885d972ae5d42b1671a48221c4db29102a10462355b7567349f9a2e24",
+      "rule": "Do not overwrite the digest-bound historical record; preserve the already-published sanitized continuation."
+    },
+    "fixtureLocators": {
+      "occurrences": 62,
+      "opaqueTokens": 6,
+      "originalValuesIncluded": false,
+      "qualification": "Controlled synthetic fixture provenance was inspected; publication uses opaque tokens because prior records did not certify original locator values for public distribution."
+    },
+    "frozenSourceBoundAdmission": {
+      "aggregateSha256": "74df753acb356dbe0063781366c8643627199fc28c78af74e701729c6799fbb4",
+      "consumerReceiptSha256": "491cf5e10e7bb91bdb86541a176e49b05847a9323b9a72be4aa8472dbd1a0ea8",
+      "consumerRecordSha256": "841b8a56fa76c0fb56867d9029f71cb7631cf8734c543b159da62400fcec78bf",
+      "fingerprintSha256": "b0efd4884f33c2445ad556c0aa5e8b208c4a6854dd3eee422bf87ec1578b41a9",
+      "interpretation": "Nine is the whole-clause-proven numerator. Six owner receipts validate many scoped assertions; neither six nor nine is a count of all consumer coverage.",
+      "limits": "Source-bound default consumer/canonical readback only; no full CI, release, browser, deployment, live, physical, or 3,999-row proof.",
+      "ownerReceiptCount": 6,
+      "sourceInputsSha256": "6a9e7bf813683956ceb56945d5b6fe756ccf06bafe88c5594436d261e2437f1e",
+      "targetNreqIds": [
+        "NREQ-5fd38e249cabfceace66e3488d9bef39",
+        "NREQ-7b1cd2debadb570b49fe041bd444592f",
+        "NREQ-be0ecfa19d607c0df242b048d6ef63bf",
+        "NREQ-ab9ab7c7ba110dfd3e0a5f8f5c9908cb",
+        "NREQ-853a934199459ed6bf419687ca08ba34",
+        "NREQ-d6f8519fc2d36e59e4eba26af0442d14",
+        "NREQ-dba22c5f93e4359c4b7d4ebdd9799dbf",
+        "NREQ-e74693ce28b14adb92ef359ccec7bb2b",
+        "NREQ-00589ac7ea403394eff5f3f58cd27738"
+      ],
+      "totalSubstantive": 3999,
+      "wholeClauseProvenNumerator": 9
+    },
+    "historicalSourceHashQualification": {
+      "currentMatches": 40,
+      "explicitRecordedSourceReferences": 59,
+      "historicalMismatches": [
+        {
+          "currentSha256": "2d743fe29a8265b1142520dddef2ffddca7ea8ad1b75112b115d613fa2c6d88d",
+          "path": "test-comparison-materiality.mjs",
+          "recordedSha256": "33de341262ca21350e5c5ad6a7faa60e76f99920455270af18828807ee0923f3"
+        },
+        {
+          "currentSha256": "ee548041d3ce4debca822a3b39b6f2d70490bbe7ff6427c668f61151bebff761",
+          "path": "test-handoff-policy.mjs",
+          "recordedSha256": "9297217c7be2de48f90a66c389f28bb0f7dadf8c23aa629f67b6d6e62281ea22"
+        },
+        {
+          "currentSha256": "462397c71d275a31058e098a65f2477434c1cea22233543250a37b03b8b1d582",
+          "path": "test-specification-field-registry.mjs",
+          "recordedSha256": "064ebc232eaa07ce51587de4233e075c97824b15b953f1f7d925195f6d0f7f05"
+        },
+        {
+          "currentSha256": "e2d4765992580f41e6574c3dd9715c812ea805e68b4562600e4382b22852b85f",
+          "path": "verify-complete.mjs",
+          "recordedSha256": "af148aa4817b8b3dee01e0675357ea8b26024f9ce1926ab4e7461c12b3b567c1"
+        },
+        {
+          "currentSha256": "2e16dff40694f62859d053cd5d321bb471ed35b72aed327d6e61ad011026e592",
+          "path": "verify-cross-run-comparison.mjs",
+          "recordedSha256": "3d15af3c7f4a2a33468355e96ead6d7ca11f828cd4305e500e21228c67256304"
+        },
+        {
+          "currentSha256": "5147d03b5a00170d55137b3d7f2e1e2098e2e022757438d5ece7c071a56173ac",
+          "path": "verify-due-stage-timing.mjs",
+          "recordedSha256": "a61c1f495f6c2d487097486732231d2d43297b7f0143cec4d482424aacc6833d"
+        },
+        {
+          "currentSha256": "af7e45779774571c48b3c91d16b1a6e39a37e88c85347087e8962f2f8a10571b",
+          "path": "verify-full-cycle.mjs",
+          "recordedSha256": "7d84034094b9c65e71ef594d70e3466ce5360b992d042d73253fa34bc00b582e"
+        },
+        {
+          "currentSha256": "8b45995f028ab01eb317785f776495e94d124b515e19c8c2c11b2689452ecba8",
+          "path": "verify-project-lifecycle-full.mjs",
+          "recordedSha256": "cde5bcfa56e44a0da24eba302f3b0f75c86035ee66312e842da0da18a58354cf"
+        },
+        {
+          "currentSha256": "a5beb78c239b96ea30077fdbf7c675f16005f99139fee92b5951ec3195f679a0",
+          "path": "verify-reservation-contract.mjs",
+          "recordedSha256": "d90035bced2ff5abb4c562f9bfa8c91d79db368c1f460d926bfae6668dbcfca8"
+        },
+        {
+          "currentSha256": "8602f8e4d4d30c04c6841fad900e64b4726915bde0238b54b66db9fb531f5bec",
+          "path": "verify-response-authority-integrity.mjs",
+          "recordedSha256": "611af857339053f606a2f43ce540801b3a5bd39a6cbd29c30275d5558b41e150"
+        },
+        {
+          "currentSha256": "9a9c20b5ab23186aee419fa5f69c56baec4dad9657ae8325497d600944373bf6",
+          "path": "verify-root-cause-correction.mjs",
+          "recordedSha256": "a41c1f2872f9990eba7461c966dbcb90fb63158c8a00088f6c118df2f16475b7"
+        },
+        {
+          "currentSha256": "c4c63d4d5e9e6361d3ad5e808af7c719c04909acb9df4923b4505f3621246652",
+          "path": "verify-semantic-invariant.mjs",
+          "recordedSha256": "7df519d3bf209a17234398df0ffcd8c5326b3de124d2f88071d3a914901e5d82"
+        },
+        {
+          "currentSha256": "2de5f4af6d8306cd0d3a3d7374c2e1a59e60a64ed68fec55d50448a661f1a87c",
+          "path": "verify-semantic-operation-boundaries.mjs",
+          "recordedSha256": "f8ecdcbaf2418ab19fd6b18ef7db127690e920e933bfb2060b24e87ac2b5c9d8"
+        },
+        {
+          "currentSha256": "388cfcf78fed22035c7545173d0aa8d299d10885b8f9461c12fd316acf77509e",
+          "path": "verify-stage-contract-closure.mjs",
+          "recordedSha256": "34bf379a0b6acdbdb07158b8ecc833b498ec39832fdc5b9f34a08913607e6777"
+        },
+        {
+          "currentSha256": "55b4345ba61fd20afb4b601dd7d6d53487f8bfbb60f5ced1538de1f382ed9d23",
+          "path": "verify-stage-operation-registry.mjs",
+          "recordedSha256": "9e0c4c32addedcc1eb35eb1e5e62bd62d58168e0ce822b6e25457ad5bfeb4003"
+        },
+        {
+          "currentSha256": "c17b27aa4b95a97dad57833120dedc7655a1d0ce25728964eba2ad9998468b52",
+          "path": "verify-stage-prompts-complete.mjs",
+          "recordedSha256": "223fbc5d864256485e5f5c8e93a4a4e92f285502e112bc12e8b43ba308b8750c"
+        },
+        {
+          "currentSha256": "2e2c849f4f4377b5afaa1c38129a0d9cc58d0f679fc9c58ade98e6c598dc2919",
+          "path": "verify-stage30-terminal-mobile-boundary.mjs",
+          "recordedSha256": "18de253cbaccaddaed5d24881c842cd3223aabb4479f33271e0d48b75a9181d1"
+        },
+        {
+          "currentSha256": "d8cace348c7f7786173aca7a0735e9a19880e148fa08afc1a9fd40034b96c174",
+          "path": "verify-state-release-contract.mjs",
+          "recordedSha256": "7ef36ce9cb2634222b57770adb0c7e7953d92ee288dc6b33fd21157dfe9d57bc"
+        },
+        {
+          "currentSha256": "f333a4f6eb1d67e278fb0d3a4650c4ecdf85ab7280907057ac5ffefa58407f5c",
+          "path": "verify-verification-routing.mjs",
+          "recordedSha256": "7889c55731448f012d300d3ea733bf279aa3f2b2b9ac0c4a571b9c851ae21cfe"
+        }
+      ],
+      "treatment": "The 19 recorded hashes remain historical identities and are not restamped. Current hashes are applicability observations only and do not renew their proof records."
+    },
+    "privateEvidenceRefs": {
+      "availability": "PRIVATE_SOURCE_ONLY_NOT_INCLUDED",
+      "count": 89,
+      "portableProof": false
+    },
+    "publicationSnapshot": {
+      "activeCi": {
+        "head": "77776ca53eb03734addb08beaa8e6f90828d9e5d",
+        "runId": 38288929237,
+        "snapshotRecordSha256": "27c0b23206d00dde19188eef5d6168b8b6651b1cfc2249ac29d1a55a435fa874",
+        "status": "IN_PROGRESS_AT_RETAINED_SNAPSHOT"
+      },
+      "actualHistoricalPublication": "75bcc72115d9ccb81bb193b636fc1f4052b50f76",
+      "changedPaths": 24,
+      "commitsAhead": 15,
+      "currentPublishedHead": "77776ca53eb03734addb08beaa8e6f90828d9e5d",
+      "qualification": "Retained snapshot only; no new remote query. Re-read head, branch protection and terminal run immediately before publication."
+    },
+    "recordedAtUtc": "2026-10-12T18:50:03.190630+00:00",
+    "scope": "Packaging/readback correction only; no producer, suite, CI, browser, remote query, proof renewal, or source edit.",
+    "untrackedInclusionReview": {
+      "owner": "/root",
+      "paths": [
+        {
+          "bytes": 12348,
+          "path": "test-comparison-materiality-stage19.mjs",
+          "sha256": "654392bfc0381b94861992e02590ad8f7858ffbed7ee8bc2c2474fd0c7b14197"
+        },
+        {
+          "bytes": 24191,
+          "path": "test-comparison-materiality.mjs",
+          "sha256": "2d743fe29a8265b1142520dddef2ffddca7ea8ad1b75112b115d613fa2c6d88d"
+        },
+        {
+          "bytes": 134716,
+          "path": "test-derivation-receipt-contract.mjs",
+          "sha256": "489c2a9068b1b6e29e01ecf3ca45ad061f24f19804525a2efb608649397ce329"
+        },
+        {
+          "bytes": 32129,
+          "path": "test-expected-variance-contract.mjs",
+          "sha256": "610495111f2877b90edfc053a51d0edd5b5310f4e937a534d9c4657a47b48612"
+        },
+        {
+          "bytes": 10425,
+          "path": "test-handoff-authorization-transaction.mjs",
+          "sha256": "6b33b03deef336236709560f323419eb9e1b3591a6c9654507cee4c1c9653620"
+        },
+        {
+          "bytes": 11428,
+          "path": "test-retained-root-native.html",
+          "sha256": "2a5877c7cafc4238ab950b58aa6156787c43d8bef7d2947fbe1c367989c1d806"
+        },
+        {
+          "bytes": 11346,
+          "path": "test-test-ir-canonical-order.mjs",
+          "sha256": "fc907b8f8ade567fc509334c436e0bc759465b6ff9f61dd6eee27fee3b74c3d0"
+        },
+        {
+          "bytes": 57944,
+          "path": "test-test-ir-native-identity.mjs",
+          "sha256": "38ece104992034a31e6250390fbdc6444d34ea4a94fb9f202348e7ca6b9733d6"
+        },
+        {
+          "bytes": 19534,
+          "path": "test-test-ir-native-recovery.mjs",
+          "sha256": "7c96f7c05ce8e9aff47c9ed234cb72323cfdf8742ea3e03f61cacf6e7fd39a4d"
+        },
+        {
+          "bytes": 16189,
+          "path": "test-test-ir-producer-contract.mjs",
+          "sha256": "7c1e2595c34edcba986251b4a5233068f16c96388910fa398f8143c0fb4d5c0e"
+        },
+        {
+          "bytes": 56911,
+          "path": "verification/test-ir-native-contract-repair-20261010.json",
+          "sha256": "29e20a80fa9fcce3acd177c4f72cad881755bfb72338ae1643f34c8bd640f07a"
+        }
+      ],
+      "requiredBeforePublication": true
+    }
+  },
+  "portableMap": {
+    "repositoryRelativePath": "verification/requirement-coverage-v7-20261012/complete-work-map.json.gz",
+    "role": "Existing work map; selected package rows below link into it. No ledger copy or rebuild is included.",
+    "sha256": "6daa30fa4e240e7a62716531db6882eeb04611d59dd4334e4037a5a8a8c39608",
+    "uniqueSubstantiveNreqIds": 3999
+  },
+  "privateAccessLimits": [
+    "Absolute executor and private paths omitted; source evidence is hash-referenced only.",
+    "Opaque digests do not establish byte availability, attribution, or proof.",
+    "The runtime test reference is the basename present in the source record; a more specific repository-relative directory was not recorded."
+  ],
+  "repositoryPublicationContext": {
+    "localSourceCommitSeenByCurrentRun": "427b1010707ff4566a54b2acb0392e9e702b14d9",
+    "localState": "Dirty/unpublished status was the latest recorded proposal context; this delta does not refresh remote state.",
+    "prePushAction": "Root must reconcile fresh remote head and any newly required run before publication; no push or upload is part of this proposal.",
+    "publishedCommit": "75bcc72115d9ccb81bb193b636fc1f4052b50f76",
+    "publishedCommitQualification": "Historical published base; not asserted equal to current local or remote head."
+  },
+  "response34OwnerRunSnapshot": {
+    "ownerChecks": [
+      {
+        "elapsedSeconds": 2.367978926,
+        "endedAt": "2026-10-12T18:02:32.919Z",
+        "receiptSha256": "d09ce0b1cc37734503b3271136802f981dad9de29de09b4691d78b1e395c3724",
+        "startedAt": "2026-10-12T18:02:30.551Z",
+        "status": "PASS_CURRENT_RECEIPT",
+        "suite": "verify-hash.mjs"
+      },
+      {
+        "elapsedSeconds": 1.693507955,
+        "endedAt": "2026-10-12T18:02:34.735Z",
+        "receiptSha256": "fdc5441652b879552121655e3271c6584b3a16977d05cb0ed5c6aed0731607c3",
+        "startedAt": "2026-10-12T18:02:33.041Z",
+        "status": "PASS_CURRENT_RECEIPT",
+        "suite": "verify-stage-contract-closure.mjs"
+      },
+      {
+        "elapsedSeconds": 0.6358575849999998,
+        "endedAt": "2026-10-12T18:02:35.486Z",
+        "receiptSha256": "8534db97c1170b6a7b6188147a2e8407f08174587c33ada1d0e3dc08523fc37c",
+        "startedAt": "2026-10-12T18:02:34.850Z",
+        "status": "PASS_CURRENT_RECEIPT",
+        "suite": "verify-stage-operation-registry.mjs"
+      },
+      {
+        "elapsedSeconds": 10.528544079,
+        "endedAt": "2026-10-12T18:02:47.884Z",
+        "receiptSha256": "bafb01d1317fabd75739804ec0562d2a427a196e071c5c17f97603ed115917f8",
+        "startedAt": "2026-10-12T18:02:37.356Z",
+        "status": "PASS_CURRENT_RECEIPT",
+        "suite": "verify-response-authority-integrity.mjs"
+      },
+      {
+        "elapsedSeconds": 6.9698186920000005,
+        "endedAt": "2026-10-12T18:02:55.000Z",
+        "receiptSha256": "04e037469b5885ec78e879653b54aa191b2772ea2f77d4df7af1a33dc4f4ee71",
+        "startedAt": "2026-10-12T18:02:48.030Z",
+        "status": "PASS_CURRENT_RECEIPT",
+        "suite": "verify-returned-slot-authority.mjs"
+      },
+      {
+        "elapsedSeconds": null,
+        "endedAt": null,
+        "receiptSha256": null,
+        "startedAt": "2026-10-12T18:02:55.165Z",
+        "status": "RUNNING_DEFAULT",
+        "suite": "verify-ingestion.mjs"
+      }
+    ],
+    "preflight": {
+      "elapsedSeconds": 30.65599563799333,
+      "evidenceSha256": "11df198901a6e6de7f42d1c216db1379d5503bfaf1c35b50a3502f6378ca321c",
+      "qualification": "Diagnostic only, not owner admission.",
+      "status": "PASS_DIAGNOSTIC"
+    },
+    "statusAtLastRecordedCheck": "RUNNING_DEFAULT_OWNERS",
+    "verifyIngestionStatus": "RUNNING_DEFAULT at last recorded check; no completion claimed."
+  },
+  "responseTypeBoundaryIntegration": {
+    "focusedControlSeconds": [
+      23.304,
+      9.472
+    ],
+    "integratedAtUtc": "2026-10-12T18:00:09.507898+00:00",
+    "patchSha256": "88c2ac7d6a6b4a3f9aee134d458227faf9b4b59fbe233950fb09e7ea032ae54f",
+    "postSha256": "578d28a95ba9bf21871904b533bcf5f7cf545b7270e49befd84421ec5e2acee6",
+    "preSha256": "38b1ec3c8c1adc8bda012a0e394dc1a9bde8bda7d49e50dcf2b5691a3038b757",
+    "priorSevenProofTupleSha256": "7c2ee7965b94cf244e7655419a7f2cb9e27ec9adb9451cc5aeae361105bdf503",
+    "priorTupleStatus": "HISTORICAL_AFTER_TEST_EDIT_RENEWAL_REQUIRED",
+    "qualification": "Focused integration facts only; no clause adequacy, PASS, or release inference.",
+    "repositoryRelativeAssertionRef": "test-response-type-boundaries.mjs"
+  },
+  "schema": "requirement-coverage-v7-current-scheduling-status-delta/1",
+  "scopeAccounting": {
+    "boundedGroupMemberNreqIds": 2461,
+    "boundedGroups": 568,
+    "conditionalAppendOnlyPackages": 1,
+    "conditionalCiPackages": 2,
+    "contextualSeparate": 67,
+    "fullSubstantiveCount": 3999,
+    "fullSubstantiveUnique": 3999,
+    "scheduleSourceAccess": "PRIVATE_EVIDENCE_REF; digest identifies a frozen source snapshot but does not grant access or constitute evidence.",
+    "scheduleSourceSha256": "ea0113c30ed1f3724925e94cdfe25f092e7c75bacbabc772e2354df92e378171"
+  },
+  "sourceRefs": {
+    "currentProgressSha256": "69c69ecf18873a503df873d2d57a7d150572a4e82bf9be22d9fdc06c1179fcf5",
+    "preflightSha256": "11df198901a6e6de7f42d1c216db1379d5503bfaf1c35b50a3502f6378ca321c",
+    "responseTypeBoundaryIntegrationSha256": "f31c0bc8fbc42ff9466856fe439d40959877d3726ff38bc085fd15c709372e15",
+    "sealed568OverlayV4Sha256": "8fd16548211052cd5399c511156c5713bf57010ea821f99b8c6788a150b44e95",
+    "stage01EdgeClosureSha256": "56b560d30d2037d9de6ff77224220cbb7e0faedc0c2d5897b26616a1b47bb6fb"
+  },
+  "supersedesHistoricalIndexStatus": "Prior index entries remain historical snapshots and are not deleted or rewritten."
+}

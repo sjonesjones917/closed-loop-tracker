@@ -1,0 +1,2702 @@
+[
+  {
+    "predecessorIndex": 196,
+    "predecessorId": "NREQ-e1b235d09f8612aee1608e40b76bf014",
+    "originalStatement": "Within its declared support contract, the application must guarantee that obligations are evaluated only when due under their verification phase and required-by stage",
+    "independentMechanismClass": "ACTUAL_DUE_AND_AVAILABILITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Current source F1 1195 makes availability depend on accepted independently reviewed compatible definition/test/fixture/target/outcome, reached stage and TRUE current conditions. Technical27–29 resolves those preserved relationships under current B proofExpressions only. This exact positive due/readiness predicate consumes that meaning; mere stage arrival, a route label or attaching bytes does not supply every other prerequisite. Preserve original no-premature guard and UNKNOWN states.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 646,
+    "predecessorId": "NREQ-f21a9355877a7bc95316efd3a98fe3fa",
+    "originalStatement": "Every generated prompt must state authority rules",
+    "independentMechanismClass": "CURRENT_AUTHORITY_AND_ADMISSION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The prompt authority/current write-set or submission normalization predicate must apply F1’s current receipt-only target and exact accepted relationship without redefining tests, retirement or unrelated ordinary work. Technical29 resolves that bound execution/receipt interpretation and preserves sole application normalization. It grants no new field/writer/executor and does not replace fixed acceptance-mode rules.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 995,
+    "predecessorId": "NREQ-f1f244c3253dc54162062e46f85b161c",
+    "originalStatement": "An unregistered field is invalid.",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 998,
+    "predecessorId": "NREQ-ea0235a417d78e99a2dcad8ffbd196ae",
+    "originalStatement": "An undeclared default is invalid.",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 999,
+    "predecessorId": "NREQ-c7d3f9ed9a6c570d1791edd63b8fb585",
+    "originalStatement": "An operation writing outside its declared set is invalid.",
+    "independentMechanismClass": "CURRENT_AUTHORITY_AND_ADMISSION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The prompt authority/current write-set or submission normalization predicate must apply F1’s current receipt-only target and exact accepted relationship without redefining tests, retirement or unrelated ordinary work. Technical29 resolves that bound execution/receipt interpretation and preserves sole application normalization. It grants no new field/writer/executor and does not replace fixed acceptance-mode rules.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1036,
+    "predecessorId": "NREQ-b8a0bc33160648c70621d32dfbe2efd3",
+    "originalStatement": "No stage-operation combination outside the exact Section 14.6 set is valid.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1037,
+    "predecessorId": "NREQ-63bf4ea67651b0327c9a272ab3a00997",
+    "originalStatement": "The registry must declare for each listed operation its allowed response types.",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1038,
+    "predecessorId": "NREQ-1c8b878bad5ec4982df3b1353257e4e7",
+    "originalStatement": "The registry must declare for each listed operation its target-slot derivation.",
+    "independentMechanismClass": "BOUND_INPUT_RESERVATION_COMPLETION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current predicate supplies actual target/input identities, bound reservation/retry, receipt completion/scope or current relationships. Technical29 expressly preserves the accepted test/definition/fixture/target/outcome, selected operation/history, current reservation and abandoned/mixed-version rejection. Link only that conditional-route value and relationship. Existing hash-preimage formula, reservation necessity, owning definitions and APPEND_SCOPED policy remain unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1039,
+    "predecessorId": "NREQ-9dbfc73e00968ebe713f4bf6353dabc3",
+    "originalStatement": "The registry must declare for each listed operation its required input families.",
+    "independentMechanismClass": "BOUND_INPUT_RESERVATION_COMPLETION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current predicate supplies actual target/input identities, bound reservation/retry, receipt completion/scope or current relationships. Technical29 expressly preserves the accepted test/definition/fixture/target/outcome, selected operation/history, current reservation and abandoned/mixed-version rejection. Link only that conditional-route value and relationship. Existing hash-preimage formula, reservation necessity, owning definitions and APPEND_SCOPED policy remain unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1040,
+    "predecessorId": "NREQ-3e93f24a86ed0b21ca639a93ef73ab71",
+    "originalStatement": "The registry must declare for each listed operation its writable fields.",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1041,
+    "predecessorId": "NREQ-7a16a326756fb550faf3ee12d32f1474",
+    "originalStatement": "The registry must declare for each listed operation its writable collections.",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1042,
+    "predecessorId": "NREQ-c25fc1db58f0931a9f956db15c7b2954",
+    "originalStatement": "The registry must declare for each listed operation its reservation requirement.",
+    "independentMechanismClass": "BOUND_INPUT_RESERVATION_COMPLETION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current predicate supplies actual target/input identities, bound reservation/retry, receipt completion/scope or current relationships. Technical29 expressly preserves the accepted test/definition/fixture/target/outcome, selected operation/history, current reservation and abandoned/mixed-version rejection. Link only that conditional-route value and relationship. Existing hash-preimage formula, reservation necessity, owning definitions and APPEND_SCOPED policy remain unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1043,
+    "predecessorId": "NREQ-ee72481071133d9fbc1466bd3505f4c3",
+    "originalStatement": "The registry must declare for each listed operation its independence requirement.",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1044,
+    "predecessorId": "NREQ-e5f9ccee03457a46ef32d7929790b88b",
+    "originalStatement": "The registry must declare for each listed operation its completion predicate.",
+    "independentMechanismClass": "BOUND_INPUT_RESERVATION_COMPLETION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current predicate supplies actual target/input identities, bound reservation/retry, receipt completion/scope or current relationships. Technical29 expressly preserves the accepted test/definition/fixture/target/outcome, selected operation/history, current reservation and abandoned/mixed-version rejection. Link only that conditional-route value and relationship. Existing hash-preimage formula, reservation necessity, owning definitions and APPEND_SCOPED policy remain unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1045,
+    "predecessorId": "NREQ-9446fb3dfa90fc837a8c725813b406e3",
+    "originalStatement": "The registry must declare for each listed operation its retry behavior.",
+    "independentMechanismClass": "BOUND_INPUT_RESERVATION_COMPLETION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current predicate supplies actual target/input identities, bound reservation/retry, receipt completion/scope or current relationships. Technical29 expressly preserves the accepted test/definition/fixture/target/outcome, selected operation/history, current reservation and abandoned/mixed-version rejection. Link only that conditional-route value and relationship. Existing hash-preimage formula, reservation necessity, owning definitions and APPEND_SCOPED policy remain unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1046,
+    "predecessorId": "NREQ-2a7c9fd5d8dd2d907493a1ae4c106801",
+    "originalStatement": "The registry must declare for each listed operation whether it is agent, human, or application executed.",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1047,
+    "predecessorId": "NREQ-5f77bd4d76090c076a18e3fce7623663",
+    "originalStatement": "The external-agent operation class is exactly COMPLETE at Stages 01–09, 15, 21, 23, 24, 25, and 26; SEMANTIC_CHALLENGE; RECONCILE_INTAKE; SEARCH_ADEQUACY_REVIEW; RECONCILE_SOURCE_SEARCH; RECONCILE_RESEARCH; DISPOSITION_CHALLENGE; ATOMICITY_CHALLENGE; RECONCILE_REQUIREMENTS; SEMANTIC_REVIEW; RECONCILE_REQUIREMENT_SET; PROOF_REVIEW; RECONCILE_VERIFICATION_SUITE; EXECUTE_RUN; VERIFY; COMPARE; ROOT_CAUSE; REGRESSION; CORRECT; RECONCILE at Stage 26; ADVISORY_REVIEW at Stage 27; EXECUTE_EXTERNAL_TEST; INVESTIGATE_MISSING_EVIDENCE; and EXECUTE_FAILURE_TEST, EXECUTE_REGRESSION, and REGRESSION_VERIFY when externally routed.",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1048,
+    "predecessorId": "NREQ-c37f956fc2099c48743991fd7e609662",
+    "originalStatement": "Every external-agent operation listed in Section 14.6 requires an operation reservation.",
+    "independentMechanismClass": "BOUND_INPUT_RESERVATION_COMPLETION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current predicate supplies actual target/input identities, bound reservation/retry, receipt completion/scope or current relationships. Technical29 expressly preserves the accepted test/definition/fixture/target/outcome, selected operation/history, current reservation and abandoned/mixed-version rejection. Link only that conditional-route value and relationship. Existing hash-preimage formula, reservation necessity, owning definitions and APPEND_SCOPED policy remain unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1049,
+    "predecessorId": "NREQ-12bd76a90a801df5243427d948df4580",
+    "originalStatement": "Every external-agent operation listed in Section 14.6 requires a file-first package.",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1050,
+    "predecessorId": "NREQ-9b986e646de8ab7d9781d02a1d8c9366",
+    "originalStatement": "An external-agent operation responseType must be exactly DATA_PROPOSAL, HUMAN_INPUT_REQUIRED, BLOCKED, or EXECUTION_FAILED as permitted by the operation's field contract.",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1052,
+    "predecessorId": "NREQ-f79183995d668956155a5d6409015042",
+    "originalStatement": "The application-command class is exactly EXECUTE_FAILURE_TEST, EXECUTE_REGRESSION, and REGRESSION_VERIFY when natively routed; FREEZE; CONFIRM_FREEZE; COMPLETE at Stage 18; CONFIRM at Stage 19; FREEZE_BASELINE; RUN_NATIVE_TESTS; RUN_NATIVE_ATTACKS; FREEZE_DELIVERY_CANDIDATE; VERIFY_IDENTITY; CALCULATE_RELEASE; CALCULATE_EVIDENCE_CHAINS; and CALCULATE_TERMINAL.",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1627,
+    "predecessorId": "NREQ-b99d0ed0c1bac277e05d984cc700316e",
+    "originalStatement": "Stages 12, 13, 18, and 19 evaluate only current applicable PREPRODUCT_ITERATION obligations with PER_RUN_REQUIRED TRUE that are due by the relevant stage.",
+    "independentMechanismClass": "ACTUAL_DUE_AND_AVAILABILITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Current source F1 1195 makes availability depend on accepted independently reviewed compatible definition/test/fixture/target/outcome, reached stage and TRUE current conditions. Technical27–29 resolves those preserved relationships under current B proofExpressions only. This exact positive due/readiness predicate consumes that meaning; mere stage arrival, a route label or attaching bytes does not supply every other prerequisite. Preserve original no-premature guard and UNKNOWN states.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1664,
+    "predecessorId": "NREQ-4aed3e62f18cc90d6b3f7312637938e0",
+    "originalStatement": "Stage-operation contracts determine exact required, prohibited, and nullable scope fields.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1692,
+    "predecessorId": "NREQ-cf25cf824db06866df51c0e538fcbc03",
+    "originalStatement": "The single ingestion path rejects before canonical mutation: wrong stage.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1693,
+    "predecessorId": "NREQ-41ab1c200b4ce5c9d1d96613a3e5b264",
+    "originalStatement": "The single ingestion path rejects before canonical mutation: wrong operation.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 1698,
+    "predecessorId": "NREQ-a0db6ddcb33d9af123b08d4d481c8ebd",
+    "originalStatement": "The single ingestion path rejects before canonical mutation: wrong scope.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2275,
+    "predecessorId": "NREQ-eba187e127113120592f8525ebfd19df",
+    "originalStatement": "EXTERNAL_AGENT_TOOL with required substantive capability, required file-input and file-output capabilities, and required bytes available routes to SEND_TO_TOOL_AGENT.",
+    "independentMechanismClass": "ACTUAL_DUE_AND_AVAILABILITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Current source F1 1195 makes availability depend on accepted independently reviewed compatible definition/test/fixture/target/outcome, reached stage and TRUE current conditions. Technical27–29 resolves those preserved relationships under current B proofExpressions only. This exact positive due/readiness predicate consumes that meaning; mere stage arrival, a route label or attaching bytes does not supply every other prerequisite. Preserve original no-premature guard and UNKNOWN states.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 2602,
+    "predecessorId": "NREQ-738a83db820812b41c1dd90e18bd6c25",
+    "originalStatement": "Evidence sufficiency is evaluated only for an obligation DUE_NOW under Section 16.1.",
+    "independentMechanismClass": "ACTUAL_DUE_AND_AVAILABILITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Current source F1 1195 makes availability depend on accepted independently reviewed compatible definition/test/fixture/target/outcome, reached stage and TRUE current conditions. Technical27–29 resolves those preserved relationships under current B proofExpressions only. This exact positive due/readiness predicate consumes that meaning; mere stage arrival, a route label or attaching bytes does not supply every other prerequisite. Preserve original no-premature guard and UNKNOWN states.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3324,
+    "predecessorId": "NREQ-b9ef187b05ce495dc60cd78f70876583",
+    "originalStatement": "The application validates external submissions.",
+    "independentMechanismClass": "CURRENT_AUTHORITY_AND_ADMISSION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The prompt authority/current write-set or submission normalization predicate must apply F1’s current receipt-only target and exact accepted relationship without redefining tests, retirement or unrelated ordinary work. Technical29 resolves that bound execution/receipt interpretation and preserves sole application normalization. It grants no new field/writer/executor and does not replace fixed acceptance-mode rules.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3325,
+    "predecessorId": "NREQ-360d56b72a23c9e802330b7ac07b07be",
+    "originalStatement": "The application normalizes validated external submissions into application-owned canonical results.",
+    "independentMechanismClass": "CURRENT_AUTHORITY_AND_ADMISSION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The prompt authority/current write-set or submission normalization predicate must apply F1’s current receipt-only target and exact accepted relationship without redefining tests, retirement or unrelated ordinary work. Technical29 resolves that bound execution/receipt interpretation and preserves sole application normalization. It grants no new field/writer/executor and does not replace fixed acceptance-mode rules.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3347,
+    "predecessorId": "NREQ-122dd96e92f9701d830e3968de0001e3",
+    "originalStatement": "The suite proves no fixture mutated a canonical user project.",
+    "independentMechanismClass": "ISOLATION_AND_DISTINCT_EXECUTION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Actual preservation/proof of fixture isolation, correct context exclusion or distinct post-correction execution includes the F1 conditional branch. Technical29 preserves actual isolation/input custody, current history activation, distinct PRE/POST executions and target identities, and pending saved work without replay. Preserve all existing fresh-context, canonical-project and unauthorized-target protections; no result or test implementation is accepted here.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3348,
+    "predecessorId": "NREQ-0fb8b3faf06fc6b9a5be5a4df5c420de",
+    "originalStatement": "The suite proves no fixture mutated an unauthorized third-party target.",
+    "independentMechanismClass": "ISOLATION_AND_DISTINCT_EXECUTION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Actual preservation/proof of fixture isolation, correct context exclusion or distinct post-correction execution includes the F1 conditional branch. Technical29 preserves actual isolation/input custody, current history activation, distinct PRE/POST executions and target identities, and pending saved work without replay. Preserve all existing fresh-context, canonical-project and unauthorized-target protections; no result or test implementation is accepted here.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3432,
+    "predecessorId": "NREQ-f7934795a072bfaddc5fdfd347d4f987",
+    "originalStatement": "The closed stage-operation registries must cover every permitted operation in all 30 stages",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3433,
+    "predecessorId": "NREQ-22e44f2d034bd9178f24a92aede0d24f",
+    "originalStatement": "The closed stage-operation registries must cover every semantic suboperation",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3652,
+    "predecessorId": "NREQ-86e80204351b2afe01e4c00f8875c80f",
+    "originalStatement": "The exact permitted operation set for Stage 08 is COMPLETE.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3683,
+    "predecessorId": "NREQ-98a108a46adb8196d40547bd793c25c0",
+    "originalStatement": "The exact permitted operation set for Stage 09 is COMPLETE.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3707,
+    "predecessorId": "NREQ-eca5b6a1b4eb1962470f602f7836e730",
+    "originalStatement": "The exact permitted operation set for Stage 10 is FREEZE.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3732,
+    "predecessorId": "NREQ-0a80ad9071445f4126b5e0af629b2653",
+    "originalStatement": "The exact permitted operation set for Stage 11 is EXECUTE_RUN.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3758,
+    "predecessorId": "NREQ-30b7afb03a07e753ef9cd877f21823fa",
+    "originalStatement": "The exact permitted operation set for Stage 12 is VERIFY.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3784,
+    "predecessorId": "NREQ-d9aeca5190dfef8b3d71be8e20e2f12b",
+    "originalStatement": "The exact permitted operation set for Stage 13 is COMPARE.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3807,
+    "predecessorId": "NREQ-26cad94619ba2ada39cc69cf74d2fd79",
+    "originalStatement": "The exact permitted operation set for Stage 14 is ROOT_CAUSE.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3821,
+    "predecessorId": "NREQ-b78e36e9264163ab65f7816c1b56e23c",
+    "originalStatement": "The exact permitted operation set for Stage 15 is COMPLETE, EXECUTE_REGRESSION.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3825,
+    "predecessorId": "NREQ-cf49d1eac361ab8d57642050794fd6cf",
+    "originalStatement": "Stage 15: Later correction success must come from a distinct later execution.",
+    "independentMechanismClass": "ISOLATION_AND_DISTINCT_EXECUTION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Actual preservation/proof of fixture isolation, correct context exclusion or distinct post-correction execution includes the F1 conditional branch. Technical29 preserves actual isolation/input custody, current history activation, distinct PRE/POST executions and target identities, and pending saved work without replay. Preserve all existing fresh-context, canonical-project and unauthorized-target protections; no result or test implementation is accepted here.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3838,
+    "predecessorId": "NREQ-d3f967af9d14bd2a086265bd4785c203",
+    "originalStatement": "The exact permitted operation set for Stage 16 is CORRECT.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3861,
+    "predecessorId": "NREQ-c658aaff5540212861daa3a8ecb291ac",
+    "originalStatement": "The exact permitted operation set for Stage 17 is FREEZE, EXECUTE_RUN, VERIFY, COMPARE, ROOT_CAUSE, REGRESSION, CORRECT.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3892,
+    "predecessorId": "NREQ-bd3ddbb581246c85183c7fa54c6b01ba",
+    "originalStatement": "The exact permitted operation set for Stage 18 is COMPLETE.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3931,
+    "predecessorId": "NREQ-68811733d297f6457afd4b991ac2d9c6",
+    "originalStatement": "The exact permitted operation set for Stage 19 is CONFIRM_FREEZE, EXECUTE_RUN, VERIFY, COMPARE, REGRESSION_VERIFY, CONFIRM.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3969,
+    "predecessorId": "NREQ-2f8bc1895c25ec40f4ba67fa83aee293",
+    "originalStatement": "The exact permitted operation set for Stage 20 is FREEZE_BASELINE.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 3996,
+    "predecessorId": "NREQ-20c63e26a711eb704bce587d86c181c6",
+    "originalStatement": "The exact permitted operation set for Stage 21 is COMPLETE.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4023,
+    "predecessorId": "NREQ-93d36ffa09054bb8aa49acfc659147fe",
+    "originalStatement": "The exact permitted operation set for Stage 22 is RUN_NATIVE_TESTS, EXECUTE_EXTERNAL_TEST.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4046,
+    "predecessorId": "NREQ-4adb489504dfc1f0fc66020a30ee99fa",
+    "originalStatement": "The exact permitted operation set for Stage 23 is COMPLETE.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4075,
+    "predecessorId": "NREQ-ab10ba7b7619eddbca5c342dbc85104f",
+    "originalStatement": "The exact permitted operation set for Stage 24 is RUN_NATIVE_ATTACKS, COMPLETE.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4098,
+    "predecessorId": "NREQ-db29a77930f2b18ba0926e2efd56189a",
+    "originalStatement": "The exact permitted operation set for Stage 25 is FREEZE_DELIVERY_CANDIDATE, COMPLETE.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4141,
+    "predecessorId": "NREQ-7325023719718637476eb68c845066e2",
+    "originalStatement": "The exact permitted operation set for Stage 26 is COMPLETE, SEMANTIC_REVIEW, RECONCILE.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4170,
+    "predecessorId": "NREQ-fda5a7bed5bc1b2935d4c11326dc554d",
+    "originalStatement": "The exact permitted operation set for Stage 27 is CALCULATE_RELEASE, ADVISORY_REVIEW.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4216,
+    "predecessorId": "NREQ-85595ab462b64e72fee2d7686c73096d",
+    "originalStatement": "The exact permitted operation set for Stage 28 is VERIFY_IDENTITY, CAPTURE_DELIVERY_INTENT.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4264,
+    "predecessorId": "NREQ-6f911f559737007a05e4968aacc45623",
+    "originalStatement": "The exact permitted operation set for Stage 29 is CALCULATE_EVIDENCE_CHAINS, INVESTIGATE_MISSING_EVIDENCE.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4294,
+    "predecessorId": "NREQ-098343cd7dbb4adb20b132abd1b88f70",
+    "originalStatement": "The exact permitted operation set for Stage 30 is CALCULATE_TERMINAL, EXPORT_OR_SHARE_AUTHORIZED_ARTIFACTS, RECORD_DELIVERY_EVIDENCE.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4679,
+    "predecessorId": "NREQ-fb5bcacdc3668beb1eba6b5d4c7caebd",
+    "originalStatement": "The regressionExecutions family belongs to Stage: 15.",
+    "independentMechanismClass": "BOUND_INPUT_RESERVATION_COMPLETION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current predicate supplies actual target/input identities, bound reservation/retry, receipt completion/scope or current relationships. Technical29 expressly preserves the accepted test/definition/fixture/target/outcome, selected operation/history, current reservation and abandoned/mixed-version rejection. Link only that conditional-route value and relationship. Existing hash-preimage formula, reservation necessity, owning definitions and APPEND_SCOPED policy remain unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 4686,
+    "predecessorId": "NREQ-9c5497733425e6c6c46bbc088642591e",
+    "originalStatement": "regressionExecutions: Application must normalize scope.",
+    "independentMechanismClass": "BOUND_INPUT_RESERVATION_COMPLETION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current predicate supplies actual target/input identities, bound reservation/retry, receipt completion/scope or current relationships. Technical29 expressly preserves the accepted test/definition/fixture/target/outcome, selected operation/history, current reservation and abandoned/mixed-version rejection. Link only that conditional-route value and relationship. Existing hash-preimage formula, reservation necessity, owning definitions and APPEND_SCOPED policy remain unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5060,
+    "predecessorId": "NREQ-d576ac9dfa50e5e97d4d84cb2d6334b8",
+    "originalStatement": "Every screen must let the operator determine immediately: Who performs it?",
+    "independentMechanismClass": "SELECTED_ACTION_ACTOR_DISPLAY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The screen identifies the actor for an already selected registered action. Technical29 introduces no executor or actor mapping. Conditional selection/readiness remains separately governed; this display predicate does not itself resolve the execution binding.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5355,
+    "predecessorId": "NREQ-8439f9bcc7de7d46b38d7b71c03c7657",
+    "originalStatement": "The suite must permanently cover the failure: acceptance of an unregistered scope dimension",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5356,
+    "predecessorId": "NREQ-31656b1d6be1f79969ccd575237fb7a8",
+    "originalStatement": "The suite must permanently cover the failure: acceptance of an unregistered stage operation",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5360,
+    "predecessorId": "NREQ-b19996cfdedc5702d5f72382c7eaf2dc",
+    "originalStatement": "The suite must permanently cover the failure: Stage 18 was blocked before target availability by a delivery obligation",
+    "independentMechanismClass": "NO_PREMATURE_DUE_GUARD",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The exact atom prohibits enforcement before valid target availability/stage. Technical27 expressly preserves source-required timing and technical29 keeps future work visible/unexecuted. This narrow temporal guard does not require a specialized compatibility/history interpretation; positive current availability evaluation remains separately linked. Preserve UNKNOWN rather than treat it as absence.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5361,
+    "predecessorId": "NREQ-0adb71b5d3b2108517390099e2bb69d2",
+    "originalStatement": "The suite must permanently cover the failure: Stage 18 was blocked before target availability by a final-product obligation",
+    "independentMechanismClass": "NO_PREMATURE_DUE_GUARD",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The exact atom prohibits enforcement before valid target availability/stage. Technical27 expressly preserves source-required timing and technical29 keeps future work visible/unexecuted. This narrow temporal guard does not require a specialized compatibility/history interpretation; positive current availability evaluation remains separately linked. Preserve UNKNOWN rather than treat it as absence.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5362,
+    "predecessorId": "NREQ-f75608c40ce32a8fe8b6a3f30caea83b",
+    "originalStatement": "The suite must permanently cover this failure: an activation proposition controlled applicability without a proof obligation",
+    "independentMechanismClass": "ACTIVATION_AND_EMPTY_UNIVERSE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "For an affected F1 conditional obligation in this exact current activation/universe predicate, technical27 binds accepted current B proofExpressions and full target/evidence/scope TRUE/FALSE/UNKNOWN meaning; technical29 prevents missing historical support from becoming favorable proof. An absent binding or unknown prerequisite cannot erase that obligation to create an empty denominator. Independent evidence-supported emptiness remains required, and unaffected universes do not acquire an F1 condition.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5399,
+    "predecessorId": "NREQ-71872be81e35a20b307ee26ba99ec409",
+    "originalStatement": "The mandatory deterministic and behavioral suite must verify: External-agent test with capability and bytes → executable.",
+    "independentMechanismClass": "ACTUAL_DUE_AND_AVAILABILITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Current source F1 1195 makes availability depend on accepted independently reviewed compatible definition/test/fixture/target/outcome, reached stage and TRUE current conditions. Technical27–29 resolves those preserved relationships under current B proofExpressions only. This exact positive due/readiness predicate consumes that meaning; mere stage arrival, a route label or attaching bytes does not supply every other prerequisite. Preserve original no-premature guard and UNKNOWN states.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5484,
+    "predecessorId": "NREQ-da06126f64e647a819c9405a2ceeb940",
+    "originalStatement": "The mandatory deterministic and behavioral suite must verify: Attaching the stored verified file restores readiness.",
+    "independentMechanismClass": "ACTUAL_DUE_AND_AVAILABILITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Current source F1 1195 makes availability depend on accepted independently reviewed compatible definition/test/fixture/target/outcome, reached stage and TRUE current conditions. Technical27–29 resolves those preserved relationships under current B proofExpressions only. This exact positive due/readiness predicate consumes that meaning; mere stage arrival, a route label or attaching bytes does not supply every other prerequisite. Preserve original no-premature guard and UNKNOWN states.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5609,
+    "predecessorId": "NREQ-8c86318f540242a7ac8140fb9ce7ed2a",
+    "originalStatement": "The mandatory suite must verify: The application rejects unknown stage-operation combinations",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5610,
+    "predecessorId": "NREQ-071ea2108d545869c39156c716728738",
+    "originalStatement": "The mandatory suite must verify: The application rejects extra operation scope dimensions",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5611,
+    "predecessorId": "NREQ-0d23ba92d10047a4f70dbb26ebecb5ac",
+    "originalStatement": "The mandatory suite must verify: The application rejects missing operation scope dimensions",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5612,
+    "predecessorId": "NREQ-87938461ad20b7fd398d9e2898bb8ab9",
+    "originalStatement": "The mandatory suite must verify: The application rejects stale operation scope dimensions",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5629,
+    "predecessorId": "NREQ-7d55333f055f66e291abf978d649b067",
+    "originalStatement": "The mandatory suite must verify: A deferred target-dependent test becomes due at the first valid target stage.",
+    "independentMechanismClass": "ACTUAL_DUE_AND_AVAILABILITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Current source F1 1195 makes availability depend on accepted independently reviewed compatible definition/test/fixture/target/outcome, reached stage and TRUE current conditions. Technical27–29 resolves those preserved relationships under current B proofExpressions only. This exact positive due/readiness predicate consumes that meaning; mere stage arrival, a route label or attaching bytes does not supply every other prerequisite. Preserve original no-premature guard and UNKNOWN states.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5630,
+    "predecessorId": "NREQ-1a3a584ffcfbf7b900dfc295cac03ba9",
+    "originalStatement": "The mandatory suite must verify: A deferred target-dependent test does not become due before the first valid target stage.",
+    "independentMechanismClass": "NO_PREMATURE_DUE_GUARD",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The exact atom prohibits enforcement before valid target availability/stage. Technical27 expressly preserves source-required timing and technical29 keeps future work visible/unexecuted. This narrow temporal guard does not require a specialized compatibility/history interpretation; positive current availability evaluation remains separately linked. Preserve UNKNOWN rather than treat it as absence.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5711,
+    "predecessorId": "NREQ-f550deb800b8bcfb5b01c076a579c1f0",
+    "originalStatement": "The mandatory deterministic and behavioral suite must verify: An empty denominator passes only with a current independently accepted EMPTY_UNIVERSE determination.",
+    "independentMechanismClass": "ACTIVATION_AND_EMPTY_UNIVERSE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "For an affected F1 conditional obligation in this exact current activation/universe predicate, technical27 binds accepted current B proofExpressions and full target/evidence/scope TRUE/FALSE/UNKNOWN meaning; technical29 prevents missing historical support from becoming favorable proof. An absent binding or unknown prerequisite cannot erase that obligation to create an empty denominator. Independent evidence-supported emptiness remains required, and unaffected universes do not acquire an F1 condition.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5952,
+    "predecessorId": "NREQ-c45c540e9af81c52bbf139bf8efe928e",
+    "originalStatement": "The acceptance suite must at minimum cover wrong scope",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5954,
+    "predecessorId": "NREQ-fcb8d97674633480ac1ae767d16e1844",
+    "originalStatement": "The acceptance suite must at minimum cover invalid types",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5955,
+    "predecessorId": "NREQ-43afb42866619856736650fd5e5c169c",
+    "originalStatement": "The acceptance suite must at minimum cover invalid enums",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5956,
+    "predecessorId": "NREQ-f9fdd1cb22efc755d65892bcff8962f8",
+    "originalStatement": "The acceptance suite must at minimum cover prohibited nulls",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5958,
+    "predecessorId": "NREQ-c6f99cab049151390cb86ae6a0b320b2",
+    "originalStatement": "The acceptance suite must at minimum cover invalid required empties",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5959,
+    "predecessorId": "NREQ-fae5fe9674e74024a962f3aae3d2848d",
+    "originalStatement": "The acceptance suite must at minimum cover unresolved relationships",
+    "independentMechanismClass": "BOUND_INPUT_RESERVATION_COMPLETION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current predicate supplies actual target/input identities, bound reservation/retry, receipt completion/scope or current relationships. Technical29 expressly preserves the accepted test/definition/fixture/target/outcome, selected operation/history, current reservation and abandoned/mixed-version rejection. Link only that conditional-route value and relationship. Existing hash-preimage formula, reservation necessity, owning definitions and APPEND_SCOPED policy remain unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5960,
+    "predecessorId": "NREQ-849bcf78c18c929fba3a81a390cdfac0",
+    "originalStatement": "The acceptance suite must at minimum cover duplicate relationships",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5961,
+    "predecessorId": "NREQ-e37b45b6b765f1b87a34ee0e70c1f3b0",
+    "originalStatement": "The acceptance suite must at minimum cover wrong cardinality",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 5963,
+    "predecessorId": "NREQ-4f004685859d48dcf29b944b21696d18",
+    "originalStatement": "The acceptance suite must at minimum cover stale relationships",
+    "independentMechanismClass": "BOUND_INPUT_RESERVATION_COMPLETION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current predicate supplies actual target/input identities, bound reservation/retry, receipt completion/scope or current relationships. Technical29 expressly preserves the accepted test/definition/fixture/target/outcome, selected operation/history, current reservation and abandoned/mixed-version rejection. Link only that conditional-route value and relationship. Existing hash-preimage formula, reservation necessity, owning definitions and APPEND_SCOPED policy remain unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6037,
+    "predecessorId": "NREQ-4063566749ae080b3946a34dde0c7a75",
+    "originalStatement": "The negative matrix must cover: Unregistered contract negative case: operation",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6038,
+    "predecessorId": "NREQ-23be890e104f9040f4656e1982871e9a",
+    "originalStatement": "The negative matrix must cover: Unregistered contract negative case: scope dimension",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6042,
+    "predecessorId": "NREQ-d81bd1f6edae8d817cd2ceef01c64de5",
+    "originalStatement": "The negative matrix must additionally cover premature due-stage enforcement",
+    "independentMechanismClass": "NO_PREMATURE_DUE_GUARD",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "The exact atom prohibits enforcement before valid target availability/stage. Technical27 expressly preserves source-required timing and technical29 keeps future work visible/unexecuted. This narrow temporal guard does not require a specialized compatibility/history interpretation; positive current availability evaluation remains separately linked. Preserve UNKNOWN rather than treat it as absence.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6043,
+    "predecessorId": "NREQ-6d5c687ebe51efa7a476aa8e66b81e06",
+    "originalStatement": "The negative matrix must additionally cover missing activation proof",
+    "independentMechanismClass": "ACTIVATION_AND_EMPTY_UNIVERSE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "For an affected F1 conditional obligation in this exact current activation/universe predicate, technical27 binds accepted current B proofExpressions and full target/evidence/scope TRUE/FALSE/UNKNOWN meaning; technical29 prevents missing historical support from becoming favorable proof. An absent binding or unknown prerequisite cannot erase that obligation to create an empty denominator. Independent evidence-supported emptiness remains required, and unaffected universes do not acquire an F1 condition.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6356,
+    "predecessorId": "NREQ-5c12e62d5102a37bca540ab216a4d8b7",
+    "originalStatement": "The final machine acceptance artifact must identify due-stage coverage",
+    "independentMechanismClass": "ACTUAL_DUE_AND_AVAILABILITY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Current source F1 1195 makes availability depend on accepted independently reviewed compatible definition/test/fixture/target/outcome, reached stage and TRUE current conditions. Technical27–29 resolves those preserved relationships under current B proofExpressions only. This exact positive due/readiness predicate consumes that meaning; mere stage arrival, a route label or attaching bytes does not supply every other prerequisite. Preserve original no-premature guard and UNKNOWN states.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6357,
+    "predecessorId": "NREQ-0842862c1adadc8848b9660b5e15530d",
+    "originalStatement": "The final machine acceptance artifact must identify empty-universe metric coverage",
+    "independentMechanismClass": "ACTIVATION_AND_EMPTY_UNIVERSE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "For an affected F1 conditional obligation in this exact current activation/universe predicate, technical27 binds accepted current B proofExpressions and full target/evidence/scope TRUE/FALSE/UNKNOWN meaning; technical29 prevents missing historical support from becoming favorable proof. An absent binding or unknown prerequisite cannot erase that obligation to create an empty denominator. Independent evidence-supported emptiness remains required, and unaffected universes do not acquire an F1 condition.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6589,
+    "predecessorId": "NREQ-9990fb754e64aa575a1cd80198d92d4c",
+    "originalStatement": "workflow-schema.js must reject every unregistered field",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6590,
+    "predecessorId": "NREQ-cda347fb7b67e98b7ac2f7271342cec5",
+    "originalStatement": "workflow-schema.js must reject every unregistered operation",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6632,
+    "predecessorId": "NREQ-bd8508658c765efd5247981d2f82442f",
+    "originalStatement": "response-ingestion.js must bind scope",
+    "independentMechanismClass": "BOUND_INPUT_RESERVATION_COMPLETION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current predicate supplies actual target/input identities, bound reservation/retry, receipt completion/scope or current relationships. Technical29 expressly preserves the accepted test/definition/fixture/target/outcome, selected operation/history, current reservation and abandoned/mixed-version rejection. Link only that conditional-route value and relationship. Existing hash-preimage formula, reservation necessity, owning definitions and APPEND_SCOPED policy remain unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6701,
+    "predecessorId": "NREQ-1cc886af40c91c94e303b455d5906306",
+    "originalStatement": "Phase 3 — introduce /3: Add context metadata. Retain the stated implementation ordering.",
+    "independentMechanismClass": "FIXED_FIELD_TYPE_DECLARATION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "This atom specifies a fixed field/default/type/enum/cardinality/metadata declaration, producer/executor class, independence requirement or file-first carrier. Technical25–29 preserves these closed registries and explicitly supplies no new field, schema, writer or executor. Actual conditional input readiness, relationship values and receipt scope are separately governed; the declaration/shape rule acquires no effective technical governor.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6794,
+    "predecessorId": "NREQ-8d495770bfb68c48081797423e59d86d",
+    "originalStatement": "The exact deployed commit must prove Current-scope selector coverage = 100% under the applicable closed metric universe and independently reviewed empty-universe rule.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6802,
+    "predecessorId": "NREQ-98ac468a7e3eaa529acaf3372d8a76c5",
+    "originalStatement": "The exact deployed commit must prove Stage-operation registry coverage = 100% under the applicable closed metric universe and independently reviewed empty-universe rule.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6803,
+    "predecessorId": "NREQ-6e47de61ca0b14a0c4ada650fd05e2b7",
+    "originalStatement": "The exact deployed commit must prove Stage-operation scope-matrix coverage = 100% under the applicable closed metric universe and independently reviewed empty-universe rule.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6810,
+    "predecessorId": "NREQ-3217ca7c5bef576ed30f615bb5a73d51",
+    "originalStatement": "The exact deployed commit must prove Activation-proof coverage = 100% under the applicable closed metric universe and independently reviewed empty-universe rule.",
+    "independentMechanismClass": "ACTIVATION_AND_EMPTY_UNIVERSE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "For an affected F1 conditional obligation in this exact current activation/universe predicate, technical27 binds accepted current B proofExpressions and full target/evidence/scope TRUE/FALSE/UNKNOWN meaning; technical29 prevents missing historical support from becoming favorable proof. An absent binding or unknown prerequisite cannot erase that obligation to create an empty denominator. Independent evidence-supported emptiness remains required, and unaffected universes do not acquire an F1 condition.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6820,
+    "predecessorId": "NREQ-37dea437a93d3ff2e587c2c715825b4e",
+    "originalStatement": "The exact deployed commit must prove Unauthorized field mutations accepted = 0 within the applicable current scope.",
+    "independentMechanismClass": "CURRENT_AUTHORITY_AND_ADMISSION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The prompt authority/current write-set or submission normalization predicate must apply F1’s current receipt-only target and exact accepted relationship without redefining tests, retirement or unrelated ordinary work. Technical29 resolves that bound execution/receipt interpretation and preserves sole application normalization. It grants no new field/writer/executor and does not replace fixed acceptance-mode rules.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6821,
+    "predecessorId": "NREQ-d8cc1b62360eb60b5f1ccc4dc24a9028",
+    "originalStatement": "The exact deployed commit must prove zero canonical mutations before the acceptance required by the operation contract. Validated application-owned direct commands commit without artificial human proposal approval.",
+    "independentMechanismClass": "ACCEPTANCE_MODE_BOUNDARY",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "independentReason": "Base17.12 and4565/4571/5653 determine required acceptance and validated direct-command treatment. Technical25–29 resolves F1 readiness, receipts and history without changing that acceptance MODE. Preserve zero pre-acceptance mutation and direct application commands; other current admission/scope predicates retain their own links.",
+        "effectiveBranchCondition": null,
+        "proposalDecision": "DIAGNOSTIC_QUALIFIER_ONLY_NO_EFFECTIVE_SCOPE_CHANGE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6839,
+    "predecessorId": "NREQ-e78bc132e66fe4c3227e5473e788ce10",
+    "originalStatement": "The exact deployed commit must prove Unregistered fields or stage operations accepted = 0 within the applicable current scope.",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6843,
+    "predecessorId": "NREQ-ad8f89190c248f5a5b7d5890f2e06710",
+    "originalStatement": "The exact deployed commit must prove Activation decisions without proof obligations = 0 within the applicable current scope.",
+    "independentMechanismClass": "ACTIVATION_AND_EMPTY_UNIVERSE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "For an affected F1 conditional obligation in this exact current activation/universe predicate, technical27 binds accepted current B proofExpressions and full target/evidence/scope TRUE/FALSE/UNKNOWN meaning; technical29 prevents missing historical support from becoming favorable proof. An absent binding or unknown prerequisite cannot erase that obligation to create an empty denominator. Independent evidence-supported emptiness remains required, and unaffected universes do not acquire an F1 condition.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6859,
+    "predecessorId": "NREQ-198144e6cec24e4b4039949f499f029b",
+    "originalStatement": "An empty denominator may pass only when a current independently accepted evidence-supported empty-universe determination exists.",
+    "independentMechanismClass": "ACTIVATION_AND_EMPTY_UNIVERSE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "For an affected F1 conditional obligation in this exact current activation/universe predicate, technical27 binds accepted current B proofExpressions and full target/evidence/scope TRUE/FALSE/UNKNOWN meaning; technical29 prevents missing historical support from becoming favorable proof. An absent binding or unknown prerequisite cannot erase that obligation to create an empty denominator. Independent evidence-supported emptiness remains required, and unaffected universes do not acquire an F1 condition.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6860,
+    "predecessorId": "NREQ-17f87804a3cefab4181493307e5ce301",
+    "originalStatement": "An empty denominator without a current independently accepted evidence-supported empty-universe determination must be UNKNOWN or BLOCKED.",
+    "independentMechanismClass": "ACTIVATION_AND_EMPTY_UNIVERSE",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "For an affected F1 conditional obligation in this exact current activation/universe predicate, technical27 binds accepted current B proofExpressions and full target/evidence/scope TRUE/FALSE/UNKNOWN meaning; technical29 prevents missing historical support from becoming favorable proof. An absent binding or unknown prerequisite cannot erase that obligation to create an empty denominator. Independent evidence-supported emptiness remains required, and unaffected universes do not acquire an F1 condition.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6898,
+    "predecessorId": "NREQ-faadf57dc65ca31e27eb0bd8426ab90d",
+    "originalStatement": "For every accepted result: scope is current",
+    "independentMechanismClass": "BOUND_INPUT_RESERVATION_COMPLETION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current predicate supplies actual target/input identities, bound reservation/retry, receipt completion/scope or current relationships. Technical29 expressly preserves the accepted test/definition/fixture/target/outcome, selected operation/history, current reservation and abandoned/mixed-version rejection. Link only that conditional-route value and relationship. Existing hash-preimage formula, reservation necessity, owning definitions and APPEND_SCOPED policy remain unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 6899,
+    "predecessorId": "NREQ-7ed6462e18ba653cccb0b5f225ec78a3",
+    "originalStatement": "For every accepted result: relationships are exact",
+    "independentMechanismClass": "BOUND_INPUT_RESERVATION_COMPLETION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "The current predicate supplies actual target/input identities, bound reservation/retry, receipt completion/scope or current relationships. Technical29 expressly preserves the accepted test/definition/fixture/target/outcome, selected operation/history, current reservation and abandoned/mixed-version rejection. Link only that conditional-route value and relationship. Existing hash-preimage formula, reservation necessity, owning definitions and APPEND_SCOPED policy remain unchanged.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 7051,
+    "predecessorId": "NREQ-7c8b40afc2ecebf57e8f907d0976fe7e",
+    "originalStatement": "The application must determine current scope",
+    "independentMechanismClass": "CURRENT_OPERATION_AND_SCOPE_DOMAIN",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "This exact current operation universe, allowed combination, scope or rejection duty includes F1’s precisely38 conditional pairs. Their availability and current subject/test/fixture/target/history scope use technical27–29. Preserve the exact list, named dimensions, nullability, classes and ordinary operation sets; no wildcard, new writer or inferred early availability is introduced.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  },
+  {
+    "predecessorIndex": 7142,
+    "predecessorId": "NREQ-cd7dc9b49ddb5b18ed846930b1f5f0e5",
+    "originalStatement": "When inspection establishes run-contamination prompt rules is genuinely correct, the implementation must preserve it.",
+    "independentMechanismClass": "ISOLATION_AND_DISTINCT_EXECUTION",
+    "edges": [
+      {
+        "issueId": "SRC-GAP-DEFERRED-BINDING",
+        "decision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "independentReason": "Actual preservation/proof of fixture isolation, correct context exclusion or distinct post-correction execution includes the F1 conditional branch. Technical29 preserves actual isolation/input custody, current history activation, distinct PRE/POST executions and target identities, and pending saved work without replay. Preserve all existing fresh-context, canonical-project and unauthorized-target protections; no result or test implementation is accepted here.",
+        "effectiveBranchCondition": "Only the exact current predicate’s F1 conditional execution, accepted test/definition/fixture/target/history relationship, current scope or source-required proof/availability branch. Ordinary work and static authorities remain governed by their own source.",
+        "proposalDecision": "ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE",
+        "proposalAdjudication": "ACCEPTED",
+        "exactTechnicalSpan": {
+          "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+          "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+          "endByteExclusive": 9340,
+          "endLine": 29,
+          "spanSha256IncludingLineTerminators": "33ee80ff4b2dba82139617f3bd47e8fda53c64b999d74a112b627eefc5089cf2",
+          "startByte": 5831,
+          "startLine": 23
+        }
+      }
+    ]
+  }
+]

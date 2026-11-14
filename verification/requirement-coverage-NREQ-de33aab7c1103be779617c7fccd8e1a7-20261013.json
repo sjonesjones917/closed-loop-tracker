@@ -1,0 +1,203 @@
+{
+  "schema": "closed-loop-requirement-coverage-review/1",
+  "normativeRequirementId": "NREQ-de33aab7c1103be779617c7fccd8e1a7",
+  "sourceLineSha256": "292a96ddfdb960e5b749fb3dd441ca69832d1180ac4b23c829c4cbec84892063",
+  "specificationSha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d",
+  "declarationSha256": "6930d945882eb73c72f85ec32fe39ab84d3fcb07bc1b80fc2da8dab7b88683ab",
+  "decision": "COMPLETE_COVERAGE",
+  "evidenceBasis": "EXTERNALLY_SUPPORTED",
+  "method": "Independent static review of the exact line-2052 declaration, its complete current verify-test-runtime-v3 source-input union, the closed Stage 22/24 operation registry and app/worker/store/engine caller graph, the separately inventoried external-response entrypoints, and the independently expected positive, failure, retry and command-vocabulary assertions of test-ir.native-stale-recovery and test-ir.native-canonical-identity. The source graph and payload contracts establish that registered application-native results use only the direct native-result command and do not enter external capture, validation, attachment, proposal, acceptance, rejection, abandonment or human-input routes. This review establishes declaration completeness before execution; a current eligible default-owner receipt and canonical aggregation/readback remain separately required before the declaration can yield CONFORMANT_PROVEN.",
+  "author": {
+    "actor": "Codex bounded NREQ-de33 declaration author",
+    "contextId": "review-context:content_record_final_source_review"
+  },
+  "reviewer": {
+    "actor": "Codex independent NREQ-de33 declaration reviewer",
+    "contextId": "review-context:native_consumer_marker_closure"
+  },
+  "reviewPerformed": true,
+  "reviewedInputs": [
+    {
+      "declarationSha256": "6930d945882eb73c72f85ec32fe39ab84d3fcb07bc1b80fc2da8dab7b88683ab"
+    },
+    {
+      "path": "test-runtime-operation-registry.mjs",
+      "sha256": "a6d7dac0522694f7a953c859251564e2008562ab836954aff3ccdbeb42da306d"
+    },
+    {
+      "path": "test-project-store-runtime.mjs",
+      "sha256": "d5a2c93dde17700f524e4e1092e40ee1fdcd650d96022c6e56c117b601beeea0"
+    },
+    {
+      "path": "verifier-runtime.mjs",
+      "sha256": "051318fc24ea587ced6268d4a60278e5155e3fee8ed26309b28b532c921277f9"
+    },
+    {
+      "path": "verification/deferred-definition-compatibility-legacy-fixture-20261005.json",
+      "sha256": "d7a1b076de3d301ee108660c1e7ea5dafdf4e630e202f2c498d32c30d3f72bb1"
+    },
+    {
+      "path": "test-fixtures.mjs",
+      "sha256": "cf29aa183e1f6079fb9ba0ec966a72dedc6a3dcf82549b5f7d154d087d2adda6"
+    },
+    {
+      "path": "test-handoff-authorization.mjs",
+      "sha256": "37bfb4e255afb6701fccaccdf055ee7961e838eaf03927c2963dfcf880cf82b6"
+    },
+    {
+      "path": "workbook.js",
+      "sha256": "11eff4fea42e47a5a70eafdc6b985d064ea2cdfe9a6feb72be6a74ec54c4b062"
+    },
+    {
+      "path": "hash.js",
+      "sha256": "bc1c486855fa2096623b560cfc44b7c5d9e263040546921eb00f54e7f38b7420"
+    },
+    {
+      "path": "workflow-schema.js",
+      "sha256": "12c397f735f7e7154581131a79e19be2ef1f6bf374985dba4af5e445370812e6"
+    },
+    {
+      "path": "test-runtime.js",
+      "sha256": "a9eadc5db096997c51540068fecddaa71dca221b7342eac703d243438a9d1c23"
+    },
+    {
+      "path": "workflow-engine.js",
+      "sha256": "7693262468c7c21026921c7b98205205150c0c3887c8926f3fd6974687dda153"
+    },
+    {
+      "path": "prompt-engine.js",
+      "sha256": "5d67f8096f91a1efc17ad6ce367dfa43ab5990ecaede9b52c9f12dcc34b41d20"
+    },
+    {
+      "path": "response-ingestion.js",
+      "sha256": "01372de4f5f54a480d8ec8a14b21ae595e5d27486add7c882d944b59497ddd21"
+    },
+    {
+      "path": "project-store.js",
+      "sha256": "8493c0048c9bc48d72cd97efcc3efcbd5fd65f995a34c790c64d0ff10ad4b067"
+    },
+    {
+      "path": "app-core.js",
+      "sha256": "38fad6b6170193b5675c4bf2c69374def1f735c100a51a5ac108489daa3b63b9"
+    },
+    {
+      "path": "test-test-ir-author-prerequisite.mjs",
+      "sha256": "76213fa738414d1ae6e610f12b043bccb0a1ab0ba4404e9082f638c5c89c4e6e"
+    },
+    {
+      "path": "test-test-ir-producer-contract.mjs",
+      "sha256": "7c1e2595c34edcba986251b4a5233068f16c96388910fa398f8143c0fb4d5c0e"
+    },
+    {
+      "path": "test-test-ir-native-identity.mjs",
+      "sha256": "38ece104992034a31e6250390fbdc6444d34ea4a94fb9f202348e7ca6b9733d6"
+    },
+    {
+      "path": "test-test-ir-native-recovery.mjs",
+      "sha256": "7c96f7c05ce8e9aff47c9ed234cb72323cfdf8742ea3e03f61cacf6e7fd39a4d"
+    },
+    {
+      "path": "test-verification-routing-fixtures.mjs",
+      "sha256": "41d2bada9f908f604aaba1290cbb91926a9334b29f1a72cc4b7183def3421fed"
+    },
+    {
+      "path": "test-zip.mjs",
+      "sha256": "b5080a8e58eb7b13f421ecce5c63a3d95b765a5b021f5bd4543dce28d171e89d"
+    },
+    {
+      "path": "test-worker.js",
+      "sha256": "56bb680b2adb0e19bb8019b5bc781dea6b42a13fae1cc0c5157ee322863589bd"
+    },
+    {
+      "path": "verify-test-runtime-v3.mjs",
+      "sha256": "4bf4e138ea0409e4e55d2bac7a2152f262aff294a98904411218b46f2c82aa37"
+    },
+    {
+      "path": "verification-evidence-catalog.mjs",
+      "sha256": "d585909462997cc0276d7469a5948901fd17e66336828af3654923a077abda95"
+    },
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "95a6a8b1f8857b35c47cb44874aee2bbada1ccfd2ee7aa9033d92fb39c8bda9d"
+    },
+    {
+      "path": "specification/closed-loop-normative-requirements.json",
+      "sha256": "97b43f690b60219d67f498459439bce30416650b9f26c46c34a89b972a13929f"
+    },
+    {
+      "path": "verification-evidence.mjs",
+      "sha256": "88d88260547473c95c137957da8350d458bbb9be5f905b8e23eaadbf6f09d44e"
+    }
+  ],
+  "findings": [],
+  "createdAt": "2026-10-13T00:47:55.361Z",
+  "sourceLocation": {
+    "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+    "startLine": 2052,
+    "endLine": 2052,
+    "lineSha256": "292a96ddfdb960e5b749fb3dd441ca69832d1180ac4b23c829c4cbec84892063"
+  },
+  "controllingText": "They bypass external response ingestion.",
+  "additionalControllingContext": [
+    {
+      "path": "specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "startLine": 2051,
+      "endLine": 2051,
+      "normativeRequirementId": "NREQ-e9fa75ac680d5b2c3abbcab9d4e8d038",
+      "lineSha256": "7cb25c7e9e05daa06aafcb4809c0e642e746b15e8f55e5c36bc1f6d174762be7",
+      "meaning": "Supplies the pronoun antecedent: application-native deterministic results. It remains a separate requirement and is not claimed complete by this review."
+    }
+  ],
+  "reviewedChecks": [
+    {
+      "suite": "verify-test-runtime-v3.mjs",
+      "checkId": "test-ir.native-stale-recovery"
+    },
+    {
+      "suite": "verify-test-runtime-v3.mjs",
+      "checkId": "test-ir.native-canonical-identity"
+    }
+  ],
+  "registeredReceiptOwnerUnion": [
+    "verify-test-runtime-v3.mjs"
+  ],
+  "productionSourceOwnerUnion": [
+    "workflow-schema.js",
+    "app-core.js",
+    "test-runtime.js",
+    "test-worker.js",
+    "project-store.js",
+    "workflow-engine.js",
+    "response-ingestion.js"
+  ],
+  "independentlyExpectedOutcomes": [
+    "The Stage 22 RUN_NATIVE_TESTS and Stage 24 RUN_NATIVE_ATTACKS registry rows are APPLICATION, DIRECT_COMMAND, acceptsExternalResponse false, expose no response types, and permit no external writable fields.",
+    "The actual app handler executes the isolated Test IR worker and dispatches nativeProductResults through persistReplacement to commitNativeProductResults without creating replacementReview or any raw-response/proposal state.",
+    "The native command vocabulary accepts only job, stage, runtime results, exact input identities, revision/state identity and history view; wrong stage, duplicate test, caller project candidates, caller mutation confirmation, stale identity and malformed batches reject atomically.",
+    "A failed native write preserves stored state and retains the exact uncommitted observations for one retry without another worker execution; an uncertain outcome is not replayed.",
+    "The separately enumerated external-response APIs remain a disjoint caller and payload graph; no fabricated execution of those unrelated APIs is required to prove the bypass route."
+  ],
+  "roleDisposition": {
+    "deterministic": "Two current registered checks from one default owner are required.",
+    "semantic": "NONAPPLICABLE: the exact sentence is a closed route-separation rule with no external actor judgment.",
+    "mutation": "NONAPPLICABLE: the normative manifest requires no mutation role; existing deterministic negatives independently guard the closed command vocabulary and source changes invalidate this review."
+  },
+  "scopeLimit": "Only line 2052 route separation for registered Stage 22/24 application-native deterministic results. Line 2051 ownership, lines 2053-2054 command/review rules, lines 2056-2068 atomic fields, browser/native-storage/external-actor behavior and the rest of Section 22.4 remain separate.",
+  "executionQualification": {
+    "currentReceiptReviewed": false,
+    "currentReceiptRequiredBeforeAdmission": true,
+    "requiredReceiptOwner": "verify-test-runtime-v3.mjs",
+    "requiredObservationCheckIds": [
+      "test-ir.native-stale-recovery",
+      "test-ir.native-canonical-identity"
+    ],
+    "sevenProductionFilesAreNotSevenReceiptProducers": true,
+    "conformantProvenClaimed": false
+  },
+  "timestampQualification": {
+    "kind": "CORRECTION_RECORDED_AT_ACTUAL_CLOCK",
+    "reviewCompletedAtExact": "UNKNOWN",
+    "reason": "The preserved v1 private record used 2026-10-13T00:50:00Z before that instant. This v2 records the actual correction clock and does not infer or backdate the earlier review completion time.",
+    "supersedesPrivateReviewSha256": "80b13dcb44f283197e14d9f7378e8352eda96b0cce036c184b83af69927e3747"
+  }
+}

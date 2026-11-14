@@ -89,11 +89,11 @@ function verifyDagCases(implementation){
 }
 const dagResults=verifyDagCases(runtime),dagFaults=[];
 for(const [fault,before,after,oracle] of [
- ['duplicate-check-bypassed','else if(ids.has(step.stepId))issues.push(`Duplicate stepId ${step.stepId}.`);','', 'duplicate-id'],
- ['prior-reference-check-bypassed','if(!prior.has(ref.stepRef))issues.push(`Step ${index} has a forward, missing, or cyclic reference to ${ref.stepRef}.`);','if(!prior.has(ref.stepRef)){}','forward-reference'],
- ['output-port-check-bypassed','issues.push(`Step ${index} references unknown output port ${ref.output} on ${ref.stepRef}.`);','void 0;','unknown-output-port'],
+ ['duplicate-check-bypassed','else if(ids.has(step.stepId))issues.push(`Duplicate stepId ${diagnosticLabel(step.stepId)}.`);','', 'duplicate-id'],
+ ['prior-reference-check-bypassed','if(!prior.has(ref.stepRef))issues.push(`Step ${index} has a forward, missing, or cyclic reference to ${diagnosticLabel(ref.stepRef)}.`);','if(!prior.has(ref.stepRef)){}','forward-reference'],
+ ['output-port-check-bypassed','issues.push(`Step ${index} references unknown output port ${diagnosticLabel(ref.output)} on ${diagnosticLabel(ref.stepRef)}.`);','void 0;','unknown-output-port'],
  ['output-type-check-bypassed','if(acceptedTypes&&!acceptedTypes.includes(producedType))','if(false)','wrong-output-type'],
- ['explicit-input-check-bypassed','if(!hasOwn(step.inputs,key))issues.push(`Step ${index} operation ${step.op} is missing required input port ${key}.`);','if(false){}','implicit-operand'],
+ ['explicit-input-check-bypassed','if(!hasOwn(step.inputs,key))issues.push(`Step ${index} operation ${diagnosticLabel(step.op)} is missing required input port ${diagnosticLabel(key)}.`);','if(false){}','implicit-operand'],
  ['assertion-result-check-bypassed',"if(contract.outputs[spec.result.output]!=='ASSERTION'||!ASSERTION_OPS.has(prior.get(spec.result.stepRef).op))","if(false)",'non-assertion-result']
 ]){
  assert.equal(runtimeSource.split(before).length,2,'DAG_FAULT_ANCHOR_ORACLE: '+fault);
@@ -133,4 +133,4 @@ const nonAdjacentResult=await runtime.execute({spec:nonAdjacent,artifacts:{PRODU
 assert.equal(nonAdjacentResult.determination,'SATISFIED');
 
 console.log(JSON.stringify({explicitDag:true,typedPorts:true,forwardReferenceRejected:true,legacyCompiledBeforeExecution:true,regexContract:true,jsonSelectorContract:true,dagResults,dagFaults,productionSourceUnchanged:true},null,2));
-console.log('verify-test-runtime-dag: PASS');
+console.error('verify-test-runtime-dag: PASS');

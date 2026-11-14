@@ -1,0 +1,119 @@
+{
+  "schema": "closed-loop-attributed-source-resolution-custody-link/1",
+  "id": "V4-QUALIFIER-LINKAGE-012-XML-GOVERNOR",
+  "status": "LINKED_IN_ADDITIVE_CANDIDATE_SOURCE_GOVERNOR_SET",
+  "actorId": "/root/repair_iteration_receipt_dependencies/reconcile_amendment_source_delta",
+  "attribution": "New separately attributed implementation-aware technical interpretation accepted under delegated intent-consistent authority; not original blind-source entailment. This reconciler consulted only approved source and the exact accepted technical text/acceptance selectors, not implementation or proof results.",
+  "authority": {
+    "delegatedAuthority": {
+      "messageId": "Sentinel_a923e955d0a08191b56d89578d6d0736",
+      "author": "User",
+      "exactText": "Please continue at all costs . If you get done making it live continue the remaining work. You have approval to spend up to $50 on ram or cpu or storage or tokens or whatever you need that will expedite it finish the application. You but make decisions for me in favor of the intent of the application. Please finish the application while I’m sleeping. When I wake up you better have at the least made pr1248 live",
+      "provenance": "Exact transcript_evidence forwarded by the lead to this preparer on 2026-10-15; original message ID retained.",
+      "usedScope": "Intent-consistent technical implementation decisions within exact approved v4 and this independently reviewed narrow reference resolution.",
+      "notInferred": [
+        "Separate owner approval of this record or the technical text",
+        "Approval of material silent behavior changes beyond reviewed scope",
+        "Implementation/CI/deployment acceptance or waiver",
+        "Purchase authority exercised by this record"
+      ]
+    },
+    "leadInstruction": "The exact supplied-node-root technical resolution is already independently accepted in62460d50/fb3e9239. Determine whether those seven can now receive an attributed conditional current identity/governor link, preserving original blind ambiguity and no claim of original-source entailment.",
+    "sender": "/root/repair_iteration_receipt_dependencies"
+  },
+  "sourceBasis": {
+    "BASE_SOURCE": {
+      "role": "BASE_SOURCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/source-only/base-original-2933.txt",
+      "sha256": "8b17763e915b9475898dad5d44e83a1c9552025c699ec28d24a3d12b9b0cf883",
+      "byteLength": 309482
+    },
+    "SUCCESSOR_SOURCE": {
+      "role": "SUCCESSOR_SOURCE",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/specification/closed-loop-reliability-controlling-implementation-specification.txt",
+      "sha256": "3e1efd11b7f2b10995fe48f325d3639016ecbcbed78dd918046cc1131f831be9",
+      "byteLength": 369901
+    },
+    "EXACT_APPROVED_V4": {
+      "role": "EXACT_APPROVED_V4",
+      "path": "/workspace/shared/clrt-v4-adoption-design-2933/candidate/verification/approved-owner-decisions-v4-20261015.txt",
+      "sha256": "aa966b7ac8f38f66b046ce796ab55de5c69dc3f8485f6bba499e32442e29476f",
+      "byteLength": 65481
+    }
+  },
+  "technicalResolution": {
+    "artifact": {
+      "path": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt",
+      "sha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+      "byteLength": 10634
+    },
+    "span": {
+      "artifactSha256": "ccf7950ba080ee07f5274e3f66363da7b49fe864b82f044623403de175c21dc0",
+      "startLine": 31,
+      "endLine": 35,
+      "startByte": 9341,
+      "endByteExclusive": 10421,
+      "spanSha256IncludingLineTerminators": "92cf2a17eea20e7d26c4d79c8970cde0c92dd88be21dfbe6e688e9f96fafc825",
+      "artifactPath": "/workspace/shared/clrt-v4-reference-resolution-b-precedence/proposed-technical-resolution.txt"
+    },
+    "text": "D3/D4: root of SELECT_XML\n\nFor each SELECT_XML invocation, its one eligible input node is that invocation's root/document element. The first absolute child-path segment matches that node at position 1, including when it was selected from a larger parsed tree. Subsequent segments traverse only that node's children in source order. No original-root, ancestor or outside-sibling lookup is implicit. To query the original root, pass that earlier parsed root explicitly through the same execution's DAG. Same-execution XML-node provenance, explicit array extraction, exact four-property canonical node shape/equality, selector grammar, resource limits and v4 UNDETERMINED empty-selection behavior are unchanged.\n\nThis resolves a genuine ambiguity while retaining the observed subtree-root behavior; it is an explicitly recorded engineering interpretation, not a claim that old source uniquely specified it. Automatic original-document-root access would change observable results and scope. Disallowing selected nonroot input would narrow approved D4. Neither alternative is adopted.\n",
+    "relationship": "SELECTS_PREVIOUSLY_AMBIGUOUS_SEMANTICS_WITHIN_DELEGATED_TECHNICAL_AUTHORITY",
+    "wrapper": {
+      "path": "/workspace/shared/clrt-v4-technical-reference-adoption-input-2933-v2/approved-v4-technical-reference-input-20261015.json",
+      "sha256": "62460d5001962238d5f09499545d5bf8bec7d0cac0948a057e7174d327ed6092",
+      "byteLength": 29468
+    },
+    "wrapperIssuePointer": "/issueBindings/2",
+    "technicalReview": {
+      "path": "/workspace/shared/clrt-iteration-repair-evidence/independent-release-review-20261014/approved-v4-reference-resolution-precedence-successor-review.json",
+      "byteLength": 4088,
+      "sha256": "0131a25605ac81d6ac53407252fd2cf7196a9075a1a1ae928806c021b577348b",
+      "role": "INDEPENDENT_IMPLEMENTATION_AWARE_TECHNICAL_SCOPE_REVIEW"
+    },
+    "laterWrapperAcceptance": {
+      "path": "/workspace/shared/clrt-iteration-repair-evidence/independent-release-review-20261014/approved-v4-technical-reference-input-and-current-composition-review.json",
+      "sha256": "fb3e9239516cb6c452466286c245fca7e512955a5f806fc10cd6670bae8a342a",
+      "byteLength": 11236
+    }
+  },
+  "issueResolution": {
+    "issueId": "SRC-AMBIGUITY-XML-SUBNODE-ROOT",
+    "historicalSourceOnlyState": "BLOCKED_AMBIGUOUS",
+    "successorMeaning": "RESOLVED_UNDER_EXACT_LINKED_TECHNICAL_GOVERNOR",
+    "remainingSemanticQuestionWithinThisIssue": null,
+    "interpretation": "For SELECT_XML the one eligible supplied node is this invocation root; first absolute child segment matches it at position 1 and traversal stays within its subtree.",
+    "limits": [
+      "The previous source ambiguity remains acknowledged; this is not asserted to have been uniquely determined by old source.",
+      "No implicit original-root/ancestor/outside-sibling access. Original parsed root must be passed explicitly through the same execution DAG.",
+      "Preserve same-execution provenance, explicit array extraction, exact four-property node shape/equality, selector grammar, bounds and v4 UNDETERMINED empty-selection rule."
+    ]
+  },
+  "governedPredecessorIndexes": [
+    1527,
+    4534,
+    4536,
+    6122,
+    6191
+  ],
+  "activationBoundary": "This exact typed external record is part of the additive candidate effective scope. A consumer must carry its immutable artifact/span/approval relationships into scope identity; v4 bytes alone do not entail it. Original source, source-only uncertainty and active repository source are not rewritten.",
+  "statuses": {
+    "technicalReviewAccepted": true,
+    "candidateGovernorLinked": true,
+    "blindSourceOriginClaim": false,
+    "sourceLedgerActivated": false,
+    "implementationComplete": "UNKNOWN",
+    "testConformance": "UNKNOWN",
+    "proofPromoted": false
+  },
+  "preservedPriorGovernor": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/xml-reviewed-resolution-successor/effective-governor-link.json",
+    "sha256": "20dfd446263cdffd35a8b12b70844cad851cf7abb5ad059548bbb5f088c5875c",
+    "byteLength": 7671
+  },
+  "individualEffectiveScopeDecisions": {
+    "path": "/workspace/shared/clrt-v4-source-delta-reconciliation/qualifier-linkage-reconciliation-012/independent-scope-decisions.json",
+    "sha256": "d502c00096377617dc605b5fa9055d232ed26d05ad12c72f9d0f5d3f8dddd67d",
+    "byteLength": 32054
+  },
+  "scopeBoundary": "Apply only this issue’s ACTUAL_REFERENCE_GOVERNS_CURRENT_SCOPE edge on each exact listed predecessor, under its exact independent branch condition. Every other qualifier is diagnostic or separately linked; no whole-section inheritance."
+}
